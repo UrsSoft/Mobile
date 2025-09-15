@@ -1,0 +1,451 @@
+@model List<SantiyeTalepWebUI.Models.DTOs.SiteDto>
+@{
+    ViewData["Title"] = "Þantiye Yönetimi";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Þantiye Yönetimi</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Þantiyeler</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Þantiye Listesi</h4>
+                            <div class="flex-shrink-0">
+                                <a href="@Url.Action("CreateSite", "Admin")" class="btn btn-primary">
+                                    <i class="ri-add-line align-bottom me-1"></i> Yeni Þantiye Ekle
+                                </a>
+                            </div>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <div class="row g-3 mb-3">
+                                <div class="col-lg-4">
+                                    <div class="search-box">
+                                        <input type="text" class="form-control search" placeholder="Þantiye ara..." id="searchInput">
+                                        <i class="ri-search-line search-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="col-lg-8">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-soft-secondary" onclick="exportToExcel()">
+                                            <i class="ri-file-excel-2-line align-bottom me-1"></i> Excel
+                                        </button>
+                                        <button class="btn btn-soft-secondary" onclick="exportToPDF()">
+                                            <i class="ri-file-pdf-line align-bottom me-1"></i> PDF
+                                        </button>
+                                        <div class="dropdown">
+                                            <button class="btn btn-soft-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="ri-more-2-fill align-bottom me-1"></i> Daha Fazla
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" onclick="bulkAction('activate')"><i class="ri-checkbox-circle-line me-2"></i>Toplu Aktifleþtir</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="bulkAction('deactivate')"><i class="ri-close-circle-line me-2"></i>Toplu Pasifleþtir</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#" onclick="bulkAction('delete')"><i class="ri-delete-bin-line me-2"></i>Seçilenleri Sil</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Model != null && Model.Any())
+                            {
+                                <div class="row" id="siteGrid">
+                                    @foreach (var site in Model)
+                                    {
+                                        <div class="col-xxl-4 col-md-6 site-card" data-site-id="@site.Id">
+                                            <div class="card card-height-100">
+                                                <div class="card-header align-items-center d-flex">
+                                                    <div class="flex-shrink-0 me-2">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input site-checkbox" type="checkbox" value="@site.Id" id="siteCheck@(site.Id)">
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <h5 class="card-title mb-0">
+                                                            <i class="ri-building-2-line text-primary me-2"></i>
+                                                            @site.Name
+                                                        </h5>
+                                                    </div>
+                                                    <div class="flex-shrink-0">
+                                                        <div class="dropdown">
+                                                            <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="ri-more-2-fill text-muted"></i>
+                                                            </a>
+                                                            <ul class="dropdown-menu">
+                                                                <li><a class="dropdown-item" href="#" onclick="viewSite(@site.Id)"><i class="ri-eye-fill me-2 text-muted"></i> Görüntüle</a></li>
+                                                                <li><a class="dropdown-item" href="#" onclick="editSite(@site.Id)"><i class="ri-pencil-fill me-2 text-muted"></i> Düzenle</a></li>
+                                                                <li><a class="dropdown-item" href="#" onclick="viewEmployees(@site.Id)"><i class="ri-group-line me-2 text-muted"></i> Çalýþanlar</a></li>
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteSite(@site.Id, '@site.Name')"><i class="ri-delete-bin-line me-2"></i> Sil</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div><!-- end card header -->
+
+                                                <div class="card-body">
+                                                    <div class="row g-2">
+                                                        <div class="col-12">
+                                                            <div class="d-flex align-items-center mb-2">
+                                                                <i class="ri-map-pin-line text-muted me-2"></i>
+                                                                <span class="text-muted fs-13">@site.Address</span>
+                                                            </div>
+                                                        </div>
+
+                                                        @if (!string.IsNullOrEmpty(site.Description))
+                                                        {
+                                                            <div class="col-12">
+                                                                <p class="text-muted mb-2 fs-13">@site.Description</p>
+                                                            </div>
+                                                        }
+
+                                                        <div class="col-6">
+                                                            <div class="d-flex align-items-center">
+                                                                <i class="ri-group-line text-success me-2"></i>
+                                                                <span class="fw-semibold">@(site.Employees?.Count ?? 0)</span>
+                                                                <small class="text-muted ms-1">Çalýþan</small>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-6">
+                                                            <div class="d-flex align-items-center">
+                                                                <i class="ri-calendar-line text-info me-2"></i>
+                                                                <span class="fw-semibold fs-13">@site.CreatedDate.ToString("dd.MM.yyyy")</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    @if (site.Employees != null && site.Employees.Any())
+                                                    {
+                                                        <div class="mt-3">
+                                                            <h6 class="fs-14 mb-2">Son Çalýþanlar:</h6>
+                                                            <div class="avatar-group">
+                                                                @{
+                                                                    var displayEmployees = site.Employees.Take(3);
+                                                                    var remainingCount = Math.Max(0, site.Employees.Count - 3);
+                                                                }
+                                                                @foreach (var emp in displayEmployees)
+                                                                {
+                                                                    <a href="#" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" title="@emp.FullName">
+                                                                        <div class="avatar-xs">
+                                                                            <div class="avatar-title rounded-circle bg-light text-primary">
+                                                                                @(emp.FullName?.Substring(0, 1).ToUpper() ?? "?")
+                                                                            </div>
+                                                                        </div>
+                                                                    </a>
+                                                                }
+                                                                @if (remainingCount > 0)
+                                                                {
+                                                                    <a href="#" class="avatar-group-item">
+                                                                        <div class="avatar-xs">
+                                                                            <div class="avatar-title rounded-circle bg-light text-body">
+                                                                                +@remainingCount
+                                                                            </div>
+                                                                        </div>
+                                                                    </a>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div><!-- end card body -->
+
+                                                <div class="card-footer bg-light border-top-dashed">
+                                                    <div class="row g-2">
+                                                        <div class="col-6">
+                                                            <button type="button" class="btn btn-soft-primary btn-sm w-100" onclick="viewSite(@site.Id)">
+                                                                <i class="ri-eye-line me-1"></i> Detay
+                                                            </button>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <button type="button" class="btn btn-soft-success btn-sm w-100" onclick="viewEmployees(@site.Id)">
+                                                                <i class="ri-group-line me-1"></i> Çalýþanlar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div><!-- end card footer -->
+                                            </div><!-- end card -->
+                                        </div><!-- end col -->
+                                    }
+                                </div><!-- end row -->
+
+                                <!-- Pagination -->
+                                <div class="row g-0 align-items-center mt-3">
+                                    <div class="col-sm-6">
+                                        <div>
+                                            <p class="mb-sm-0 text-muted">Toplam <span class="fw-semibold">@Model.Count</span> þantiye gösteriliyor</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="pagination-block pagination pagination-separated justify-content-center justify-content-sm-end mb-sm-0">
+                                            <div class="page-item">
+                                                <a href="#" class="page-link" id="page-prev">Önceki</a>
+                                            </div>
+                                            <span id="page-num" class="pagination"></span>
+                                            <div class="page-item">
+                                                <a href="#" class="page-link" id="page-next">Sonraki</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-5">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="ri-building-2-line display-4 text-muted mb-3"></i>
+                                        <h5 class="text-muted">Henüz þantiye bulunmuyor</h5>
+                                        <p class="text-muted mb-4">Sisteme ilk þantiyeyi ekleyerek baþlayýn.</p>
+                                        <a href="@Url.Action("CreateSite", "Admin")" class="btn btn-primary">
+                                            <i class="ri-add-line me-1"></i> Ýlk Þantiyeyi Ekle
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+            </div><!-- end row -->
+
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6">
+                    <script>document.write(new Date().getFullYear())</script> © Þantiye Talep Yönetim Sistemi.
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end d-none d-sm-block">
+                        Velzon Template ile geliþtirilmiþtir.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Site Detail Modal -->
+<div class="modal fade" id="siteDetailModal" tabindex="-1" aria-labelledby="siteDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="siteDetailModalLabel">Þantiye Detaylarý</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="siteDetailContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary" onclick="editSiteFromModal()">Düzenle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Site Employees Modal -->
+<div class="modal fade" id="siteEmployeesModal" tabindex="-1" aria-labelledby="siteEmployeesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="siteEmployeesModalLabel">Þantiye Çalýþanlarý</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="siteEmployeesContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <a href="@Url.Action("CreateEmployee", "Admin")" class="btn btn-primary">
+                    <i class="ri-add-line me-1"></i> Yeni Çalýþan Ekle
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentSiteId = null;
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const siteCards = document.querySelectorAll('.site-card');
+            
+            siteCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // View site details
+        function viewSite(id) {
+            currentSiteId = id;
+            $.get('@Url.Action("GetSiteDetails", "Admin")?id=' + id)
+                .done(function (data) {
+                    $('#siteDetailContent').html(data);
+                    $('#siteDetailModal').modal('show');
+                })
+                .fail(function () {
+                    toastr.error('Þantiye detaylarý yüklenirken bir hata oluþtu.');
+                });
+        }
+
+        // Edit site
+        function editSite(id) {
+            window.location.href = '@Url.Action("EditSite", "Admin")?id=' + id;
+        }
+
+        function editSiteFromModal() {
+            if (currentSiteId) {
+                editSite(currentSiteId);
+            }
+        }
+
+        // View site employees
+        function viewEmployees(id) {
+            $.get('@Url.Action("GetSiteEmployees", "Admin")?id=' + id)
+                .done(function (data) {
+                    $('#siteEmployeesContent').html(data);
+                    $('#siteEmployeesModal').modal('show');
+                })
+                .fail(function () {
+                    toastr.error('Çalýþanlar yüklenirken bir hata oluþtu.');
+                });
+        }
+
+        // Delete site
+        function deleteSite(id, name) {
+            if (confirm(`"${name}" þantiyesini silmek istediðinizden emin misiniz? Bu iþlem geri alýnamaz.`)) {
+                $.post('@Url.Action("DeleteSite", "Admin")', { id: id })
+                    .done(function (response) {
+                        if (response.success) {
+                            toastr.success('Þantiye baþarýyla silindi.');
+                            location.reload();
+                        } else {
+                            toastr.error(response.message || 'Þantiye silinirken bir hata oluþtu.');
+                        }
+                    })
+                    .fail(function () {
+                        toastr.error('Þantiye silinirken bir hata oluþtu.');
+                    });
+            }
+        }
+
+        // Bulk actions
+        function bulkAction(action) {
+            const checkedBoxes = document.querySelectorAll('.site-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                toastr.warning('Lütfen iþlem yapmak için en az bir þantiye seçin.');
+                return;
+            }
+
+            const siteIds = Array.from(checkedBoxes).map(cb => cb.value);
+            let confirmMessage = '';
+            
+            switch(action) {
+                case 'activate':
+                    confirmMessage = `Seçili ${siteIds.length} þantiyeyi aktifleþtirmek istediðinizden emin misiniz?`;
+                    break;
+                case 'deactivate':
+                    confirmMessage = `Seçili ${siteIds.length} þantiyeyi pasifleþtirmek istediðinizden emin misiniz?`;
+                    break;
+                case 'delete':
+                    confirmMessage = `Seçili ${siteIds.length} þantiyeyi silmek istediðinizden emin misiniz? Bu iþlem geri alýnamaz.`;
+                    break;
+            }
+
+            if (confirm(confirmMessage)) {
+                $.post('@Url.Action("BulkSiteAction", "Admin")', { 
+                    siteIds: siteIds, 
+                    action: action 
+                })
+                .done(function (response) {
+                    if (response.success) {
+                        toastr.success('Ýþlem baþarýyla tamamlandý.');
+                        location.reload();
+                    } else {
+                        toastr.error(response.message || 'Ýþlem sýrasýnda bir hata oluþtu.');
+                    }
+                })
+                .fail(function () {
+                    toastr.error('Ýþlem sýrasýnda bir hata oluþtu.');
+                });
+            }
+        }
+
+        // Export functions
+        function exportToExcel() {
+            window.location.href = '@Url.Action("ExportSitesToExcel", "Admin")';
+        }
+
+        function exportToPDF() {
+            window.location.href = '@Url.Action("ExportSitesToPDF", "Admin")';
+        }
+
+        // Select all checkbox functionality
+        function setupSelectAll() {
+            const selectAllBtn = document.createElement('button');
+            selectAllBtn.className = 'btn btn-sm btn-outline-secondary me-2';
+            selectAllBtn.innerHTML = '<i class="ri-checkbox-multiple-line me-1"></i>Tümünü Seç';
+            selectAllBtn.onclick = function() {
+                const checkboxes = document.querySelectorAll('.site-checkbox');
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                checkboxes.forEach(cb => cb.checked = !allChecked);
+                this.innerHTML = allChecked ? 
+                    '<i class="ri-checkbox-multiple-line me-1"></i>Tümünü Seç' : 
+                    '<i class="ri-checkbox-line me-1"></i>Seçimi Kaldýr';
+            };
+            
+            const buttonContainer = document.querySelector('.col-lg-8 .d-flex');
+            if (buttonContainer) {
+                buttonContainer.insertBefore(selectAllBtn, buttonContainer.firstChild);
+            }
+        }
+
+        // Initialize on page load
+        $(document).ready(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+            setupSelectAll();
+        });
+    </script>
+}

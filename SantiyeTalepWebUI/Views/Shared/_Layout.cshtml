@@ -1,0 +1,340 @@
+﻿<!doctype html>
+<html lang="tr" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg" data-sidebar-image="none" data-preloader="disable">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Şantiye Talep Yönetim Sistemi | Velzon - Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="Şantiye Talep Yönetim Sistemi" name="description" />
+    <meta content="Velzon" name="author" />
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="~/assets/images/favicon.ico">
+
+    <!-- Layout config Js -->
+    <script src="~/assets/js/layout.js"></script>
+    <!-- Bootstrap Css -->
+    <link href="~/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!-- Icons Css -->
+    <link href="~/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+    <!-- App Css-->
+    <link href="~/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+    <!-- custom Css-->
+    <link href="~/assets/css/custom.min.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+    <!-- Begin page -->
+    <div id="layout-wrapper">
+
+        <header id="page-topbar">
+            <div class="layout-width">
+                <div class="navbar-header">
+                    <div class="d-flex">
+                        <!-- LOGO -->
+                        <div class="navbar-brand-box horizontal-logo">
+                            <a href="/" class="logo logo-dark">
+                                <span class="logo-sm">
+                                    <img src="~/assets/images/logo-sm.png" alt="" height="22">
+                                </span>
+                                <span class="logo-lg">
+                                    <img src="~/assets/images/logo-dark.png" alt="" height="17">
+                                </span>
+                            </a>
+
+                            <a href="/" class="logo logo-light">
+                                <span class="logo-sm">
+                                    <img src="~/assets/images/logo-sm.png" alt="" height="22">
+                                </span>
+                                <span class="logo-lg">
+                                    <img src="~/assets/images/logo-light.png" alt="" height="17">
+                                </span>
+                            </a>
+                        </div>
+
+                        <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger" id="topnav-hamburger-icon">
+                            <span class="hamburger-icon">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </button>
+
+                        <!-- App Search-->
+                        <form class="app-search d-none d-md-block">
+                            <div class="position-relative">
+                                <input type="text" class="form-control" placeholder="Ara..." autocomplete="off" id="search-options" value="">
+                                <span class="mdi mdi-magnify search-widget-icon"></span>
+                                <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none" id="search-close-options"></span>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div class="ms-1 header-item d-none d-sm-flex">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" data-toggle="fullscreen">
+                                <i class='bx bx-fullscreen fs-22'></i>
+                            </button>
+                        </div>
+
+                        <div class="ms-1 header-item d-none d-sm-flex">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle light-dark-mode">
+                                <i class='bx bx-moon fs-22'></i>
+                            </button>
+                        </div>
+                                               
+                        <div class="dropdown ms-sm-3 header-item topbar-user">
+                            <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="d-flex align-items-center">
+                                    <img class="rounded-circle header-profile-user" src="~/assets/images/users/avatar-1.jpg" alt="Header Avatar">
+                                    <span class="text-start ms-xl-2">
+                                        <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">@User.Identity.Name</span>
+                                        <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">Yönetici</span>
+                                    </span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <h6 class="dropdown-header">Hoşgeldiniz!</h6>
+                                <a class="dropdown-item" href="#"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profil</span></a>
+                                <a class="dropdown-item" href="#"><i class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Ayarlar</span></a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="@Url.Action("Logout", "Account")"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Çıkış Yap</span></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========== App Menu ========== -->
+        <div class="app-menu navbar-menu">
+            <!-- LOGO -->
+            <div class="navbar-brand-box">
+                <!-- Dark Logo-->
+                <a href="/" class="logo logo-dark">
+                    <span class="logo-sm">
+                        <img src="~/assets/images/logo-sm.png" alt="" height="22">
+                    </span>
+                    <span class="logo-lg">
+                        <img src="~/assets/images/logo-dark.png" alt="" height="17">
+                    </span>
+                </a>
+                <!-- Light Logo-->
+                <a href="/" class="logo logo-light">
+                    <span class="logo-sm">
+                        <img src="~/assets/images/logo-sm.png" alt="" height="22">
+                    </span>
+                    <span class="logo-lg">
+                        <img src="~/assets/images/logo-light.png" alt="" height="17">
+                    </span>
+                </a>
+                <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
+                    <i class="ri-record-circle-line"></i>
+                </button>
+            </div>
+
+            <div id="scrollbar">
+                <div class="container-fluid">
+                    <div id="two-column-menu"></div>
+                    <ul class="navbar-nav" id="navbar-nav">
+                        <li class="menu-title"><span>Ana Menü</span></li>
+                        
+                        <!-- Dashboard -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="@Url.Action("Dashboard", "Admin")">
+                                <i class="ri-dashboard-2-line"></i> <span>Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Şantiye Yönetimi -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarSites" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSites">
+                                <i class="ri-building-2-line"></i> <span>Şantiye Yönetimi</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSites">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Sites", "Admin")" class="nav-link">Şantiyeler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("CreateSite", "Admin")" class="nav-link">Yeni Şantiye</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Çalışan Yönetimi -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarEmployees" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarEmployees">
+                                <i class="ri-group-line"></i> <span>Çalışan Yönetimi</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarEmployees">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Employees", "Admin")" class="nav-link">Çalışanlar</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("CreateEmployee", "Admin")" class="nav-link">Çalışan Ekle</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Tedarikçi Yönetimi -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarSuppliers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSuppliers">
+                                <i class="ri-truck-line"></i> <span>Tedarikçi Yönetimi</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSuppliers">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Suppliers", "Admin")" class="nav-link">Tüm Tedarikçiler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("PendingSuppliers", "Admin")" class="nav-link">Onay Bekleyenler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("ApprovedSuppliers", "Admin")" class="nav-link">Onaylı Tedarikçiler</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Talep Yönetimi -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarRequests" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRequests">
+                                <i class="ri-file-list-3-line"></i> <span>Talep Yönetimi</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarRequests">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Requests", "Admin")" class="nav-link">Tüm Talepler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("PendingRequests", "Admin")" class="nav-link">Bekleyen Talepler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("CompletedRequests", "Admin")" class="nav-link">Tamamlanan Talepler</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Teklif Yönetimi -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarOffers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarOffers">
+                                <i class="ri-price-tag-3-line"></i> <span>Teklif Yönetimi</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarOffers">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Offers", "Admin")" class="nav-link">Tüm Teklifler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("PendingOffers", "Admin")" class="nav-link">Bekleyen Teklifler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("ApprovedOffers", "Admin")" class="nav-link">Onaylı Teklifler</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span>Raporlar ve Ayarlar</span></li>
+
+                        <!-- Raporlar -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarReports" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarReports">
+                                <i class="ri-bar-chart-2-line"></i> <span>Raporlar</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarReports">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("RequestReports", "Admin")" class="nav-link">Talep Raporları</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("SupplierReports", "Admin")" class="nav-link">Tedarikçi Raporları</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("CostReports", "Admin")" class="nav-link">Maliyet Raporları</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Sistem Ayarları -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarSettings" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSettings">
+                                <i class="ri-settings-3-line"></i> <span>Sistem Ayarları</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSettings">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Users", "Admin")" class="nav-link">Kullanıcı Yönetimi</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("SystemSettings", "Admin")" class="nav-link">Sistem Ayarları</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("BackupRestore", "Admin")" class="nav-link">Yedekleme</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                    </ul>
+                </div>
+                <!-- Sidebar -->
+            </div>
+
+            <div class="sidebar-background"></div>
+        </div>
+        <!-- Left Sidebar End -->
+        <!-- Vertical Overlay-->
+        <div class="vertical-overlay"></div>
+
+        <!-- ============================================================== -->
+        <!-- Start right Content here -->
+        <!-- ============================================================== -->
+       @RenderBody()
+        <!-- end main content-->
+
+    </div>
+    <!-- END layout-wrapper -->
+    
+    <!--start back-to-top-->
+    <button onclick="topFunction()" class="btn btn-danger btn-icon" id="back-to-top">
+        <i class="ri-arrow-up-line"></i>
+    </button>
+    <!--end back-to-top-->
+    
+    <!--preloader-->
+    <div id="preloader">
+        <div id="status">
+            <div class="spinner-border text-primary avatar-sm" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/libs/simplebar/simplebar.min.js"></script>
+    <script src="~/assets/libs/node-waves/waves.min.js"></script>
+    <script src="~/assets/libs/feather-icons/feather.min.js"></script>
+    <script src="~/assets/js/pages/plugins/lord-icon-2.1.0.js"></script>
+    <script src="~/assets/js/plugins.js"></script>
+
+    <!-- apexcharts -->
+    <script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
+
+    <!-- Dashboard init -->
+    <script src="~/assets/js/pages/dashboard-crm.init.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- App js -->
+  @*   <script src="~/assets/js/app.js"></script> *@
+
+    @RenderSection("Scripts",false)
+</body>
+
+</html>

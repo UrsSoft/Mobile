@@ -1,0 +1,282 @@
+@model SantiyeTalepWebUI.Models.DTOs.CreateSiteDto
+@{
+    ViewData["Title"] = "Yeni Þantiye Ekle";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Yeni Þantiye Ekle</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="@Url.Action("Sites", "Admin")">Þantiyeler</a></li>
+                                <li class="breadcrumb-item active">Yeni Þantiye</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row justify-content-center">
+                <div class="col-xxl-9">
+                    <div class="card">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">
+                                <i class="ri-building-2-line align-middle me-1 text-muted"></i>
+                                Þantiye Bilgileri
+                            </h4>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <form asp-action="CreateSite" method="post" class="needs-validation" novalidate>
+                                @Html.AntiForgeryToken()
+                                
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label asp-for="Name" class="form-label">Þantiye Adý <span class="text-danger">*</span></label>
+                                            <input asp-for="Name" class="form-control" placeholder="Þantiye adýný giriniz" />
+                                            <span asp-validation-for="Name" class="text-danger"></span>
+                                            <div class="form-text">Þantiyenin kolayca tanýnabilir bir adýný girin</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label asp-for="Address" class="form-label">Adres <span class="text-danger">*</span></label>
+                                            <textarea asp-for="Address" class="form-control" rows="3" placeholder="Þantiyenin tam adresini giriniz"></textarea>
+                                            <span asp-validation-for="Address" class="text-danger"></span>
+                                            <div class="form-text">Þantiyenin detaylý adres bilgilerini girin</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label asp-for="Description" class="form-label">Açýklama</label>
+                                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Þantiye hakkýnda ek bilgiler giriniz (isteðe baðlý)"></textarea>
+                                            <span asp-validation-for="Description" class="text-danger"></span>
+                                            <div class="form-text">Þantiye hakkýnda ek açýklamalar yazabilirsiniz (isteðe baðlý)</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Preview Card -->
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="card bg-light border-dashed">
+                                            <div class="card-header">
+                                                <h6 class="card-title mb-0">
+                                                    <i class="ri-eye-line me-2"></i>Önizleme
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-building-2-line text-primary me-2 fs-16"></i>
+                                                            <div>
+                                                                <h6 class="mb-0" id="previewName">Þantiye Adý</h6>
+                                                                <small class="text-muted">Þantiye</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-map-pin-line text-success me-2 fs-16"></i>
+                                                            <div>
+                                                                <p class="mb-0 text-muted" id="previewAddress">Adres bilgisi</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12" id="previewDescriptionContainer" style="display: none;">
+                                                        <div class="d-flex align-items-start">
+                                                            <i class="ri-information-line text-info me-2 fs-16 mt-1"></i>
+                                                            <div>
+                                                                <p class="mb-0 text-muted" id="previewDescription"></p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="hstack gap-2 justify-content-end">
+                                            <a href="@Url.Action("Sites", "Admin")" class="btn btn-light">
+                                                <i class="ri-arrow-left-line align-bottom me-1"></i> Geri Dön
+                                            </a>
+                                            <button type="button" class="btn btn-ghost-secondary" onclick="resetForm()">
+                                                <i class="ri-refresh-line align-bottom me-1"></i> Temizle
+                                            </button>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="ri-save-line align-bottom me-1"></i> Þantiye Ekle
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+            </div><!-- end row -->
+
+            <!-- Additional Tips Card -->
+            <div class="row justify-content-center">
+                <div class="col-xxl-9">
+                    <div class="card bg-info-subtle border-0">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="ri-lightbulb-line fs-24 text-info"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-info mb-2">Ýpuçlarý</h6>
+                                    <ul class="mb-0 text-muted">
+                                        <li>Þantiye adýný mümkün olduðunca açýk ve anlaþýlýr yazýn</li>
+                                        <li>Adres bilgisini detaylý þekilde girin (il, ilçe, mahalle, sokak vb.)</li>
+                                        <li>Açýklama kýsmýnda þantiyenin özelliklerini, proje türünü veya önemli notlarý belirtebilirsiniz</li>
+                                        <li>Þantiye eklendikten sonra çalýþanlarý atayabilir ve talepleri yönetebilirsiniz</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6">
+                    <script>document.write(new Date().getFullYear())</script> © Þantiye Talep Yönetim Sistemi.
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end d-none d-sm-block">
+                        Velzon Template ile geliþtirilmiþtir.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+@section Scripts {
+    <script>
+        // Form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+
+        // Real-time preview update
+        function updatePreview() {
+            const name = document.getElementById('Name').value || 'Þantiye Adý';
+            const address = document.getElementById('Address').value || 'Adres bilgisi';
+            const description = document.getElementById('Description').value;
+
+            document.getElementById('previewName').textContent = name;
+            document.getElementById('previewAddress').textContent = address;
+            
+            const descContainer = document.getElementById('previewDescriptionContainer');
+            const descElement = document.getElementById('previewDescription');
+            
+            if (description.trim()) {
+                descElement.textContent = description;
+                descContainer.style.display = 'block';
+            } else {
+                descContainer.style.display = 'none';
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            if (confirm('Formu temizlemek istediðinizden emin misiniz? Girilen tüm bilgiler silinecektir.')) {
+                document.querySelector('form').reset();
+                document.querySelector('form').classList.remove('was-validated');
+                updatePreview();
+            }
+        }
+
+        // Event listeners for real-time preview
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('Name');
+            const addressInput = document.getElementById('Address');
+            const descriptionInput = document.getElementById('Description');
+
+            nameInput.addEventListener('input', updatePreview);
+            addressInput.addEventListener('input', updatePreview);
+            descriptionInput.addEventListener('input', updatePreview);
+
+            // Character counter for description
+            const maxLength = 500;
+            const counter = document.createElement('div');
+            counter.className = 'form-text text-end';
+            counter.id = 'descriptionCounter';
+            descriptionInput.parentNode.appendChild(counter);
+
+            function updateCounter() {
+                const length = descriptionInput.value.length;
+                counter.textContent = `${length}/${maxLength} karakter`;
+                counter.className = length > maxLength * 0.9 ? 
+                    'form-text text-end text-warning' : 
+                    'form-text text-end text-muted';
+            }
+
+            descriptionInput.addEventListener('input', function() {
+                if (this.value.length > maxLength) {
+                    this.value = this.value.substring(0, maxLength);
+                }
+                updateCounter();
+                updatePreview();
+            });
+
+            updateCounter();
+            updatePreview();
+        });
+
+        // Auto-capitalize first letters
+        function capitalizeInput(input) {
+            input.addEventListener('blur', function() {
+                this.value = this.value.replace(/\b\w/g, function(char) {
+                    return char.toUpperCase();
+                });
+                updatePreview();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            capitalizeInput(document.getElementById('Name'));
+        });
+    </script>
+}

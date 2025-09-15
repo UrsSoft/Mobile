@@ -1,0 +1,6 @@
+@SantiyeTalepApi_HostAddress = http://localhost:5136
+
+GET {{SantiyeTalepApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

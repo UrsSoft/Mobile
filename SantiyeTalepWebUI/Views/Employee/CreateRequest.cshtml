@@ -1,0 +1,536 @@
+@model SantiyeTalepWebUI.Models.ViewModels.CreateRequestViewModel
+@{
+    ViewData["Title"] = "Yeni Talep Oluştur";
+    Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Yeni Talep Oluştur</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Employee")">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="@Url.Action("Requests", "Employee")">Taleplerim</a></li>
+                                <li class="breadcrumb-item active">Yeni Talep</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row justify-content-center">
+                <div class="col-xxl-9">
+                    <div class="card">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">
+                                <i class="ri-file-add-line align-middle me-1 text-muted"></i>
+                                Talep Bilgileri
+                            </h4>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <form asp-action="CreateRequest" method="post" class="needs-validation" novalidate>
+                                @Html.AntiForgeryToken()
+                                
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label asp-for="Title" class="form-label">Talep Başlığı <span class="text-danger">*</span></label>
+                                            <input asp-for="Title" class="form-control" placeholder="Talep başlığını giriniz" />
+                                            <span asp-validation-for="Title" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label asp-for="ProductDescription" class="form-label">Ürün Açıklaması <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <input asp-for="ProductDescription" class="form-control" placeholder="Ürün adı veya açıklaması" id="productSearch" />
+                                                <button type="button" class="btn btn-outline-secondary" id="searchBtn">
+                                                    <i class="ri-search-line"></i> Ara
+                                                </button>
+                                            </div>
+                                            <span asp-validation-for="ProductDescription" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Product Search Modal -->
+                                <div class="modal fade" id="productSearchModal" tabindex="-1" aria-labelledby="productSearchModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="productSearchModalLabel">
+                                                    <i class="ri-search-line me-2"></i>Ürün Arama Sonuçları
+                                                </h5>
+                                                <button type="button" class="btn-close" onclick="closeModal()" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div id="searchResultsModal">
+                                                    <div class="text-center" id="loadingSpinner" style="display: none;">
+                                                        <div class="spinner-border text-primary" role="status">
+                                                            <span class="visually-hidden">Yükleniyor...</span>
+                                                        </div>
+                                                        <div class="mt-2">Ürünler aranıyor...</div>
+                                                    </div>
+                                                    <div id="productListModal"></div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" onclick="closeModal()">Kapat</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="Category" class="form-label">Kategori <span class="text-danger">*</span></label>
+                                            <select asp-for="Category" class="form-select">
+                                                <option value="">Kategori Seçiniz</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.RequestCategory.Material)">Malzeme</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.RequestCategory.Equipment)">Araç-Gereç</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.RequestCategory.Service)">Hizmet</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.RequestCategory.Other)">Diğer</option>
+                                            </select>
+                                            <span asp-validation-for="Category" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="RequiredDate" class="form-label">İhtiyaç Tarihi</label>
+                                            <input asp-for="RequiredDate" type="date" class="form-control" />
+                                            <span asp-validation-for="RequiredDate" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="Quantity" class="form-label">Miktar <span class="text-danger">*</span></label>
+                                            <input asp-for="Quantity" type="number" class="form-control" placeholder="1" min="1" />
+                                            <span asp-validation-for="Quantity" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="Unit" class="form-label">Birim <span class="text-danger">*</span></label>
+                                            <select asp-for="Unit" class="form-select">
+                                                <option value="">Birim Seçiniz</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.Unit.Adet)">Adet</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.Unit.Kilogram)">Kilogram</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.Unit.Metre)">Metre</option>
+                                            </select>
+                                            <span asp-validation-for="Unit" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label asp-for="DeliveryType" class="form-label">Teslim Tipi <span class="text-danger">*</span></label>
+                                            <select asp-for="DeliveryType" class="form-select">
+                                                <option value="">Teslim Tipi Seçiniz</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.DeliveryType.TodayPickup)">Bugün araç gönderip aldıracağım</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.DeliveryType.SameDayDelivery)">Gün içi siz sevk edin</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.DeliveryType.NextDayDelivery)">Yarın siz sevk edin</option>
+                                                <option value="@((int)SantiyeTalepWebUI.Models.DeliveryType.BusinessDays1to2)">1-2 iş günü</option>
+                                            </select>
+                                            <span asp-validation-for="DeliveryType" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label asp-for="Description" class="form-label">Açıklama <span class="text-danger">*</span></label>
+                                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Talep detaylarını açıklayınız..."></textarea>
+                                            <span asp-validation-for="Description" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="hstack gap-2 justify-content-end">
+                                            <a href="@Url.Action("Requests", "Employee")" class="btn btn-light">
+                                                <i class="ri-arrow-left-line align-bottom me-1"></i> Geri Dön
+                                            </a>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="ri-save-line align-bottom me-1"></i> Talep Oluştur
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+            </div><!-- end row -->
+
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6">
+                    <script>document.write(new Date().getFullYear())</script> © Şantiye Talep Yönetim Sistemi.
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end d-none d-sm-block">
+                        Velzon Template ile geliştirilmiştir.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+@section Scripts {
+    <style>
+        /* Modal styles for manual implementation */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1055;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            outline: 0;
+        }
+        
+        .modal.show {
+            display: block !important;
+        }
+        
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1050;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            opacity: 0.5;
+        }
+        
+        body.modal-open {
+            overflow: hidden;
+        }
+    </style>
+    
+    <script>
+        // Form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+
+        // Product search functionality
+        function performProductSearch() {
+            const searchTerm = document.getElementById('productSearch').value.trim();
+            if (searchTerm.length < 2) {
+                alert('Arama terimi en az 2 karakter olmalıdır');
+                return;
+            }
+
+            // Show modal using data attributes instead of JavaScript
+            const modalElement = document.getElementById('productSearchModal');
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            modalElement.setAttribute('aria-modal', 'true');
+            modalElement.setAttribute('role', 'dialog');
+            
+            // Add backdrop
+            if (!document.querySelector('.modal-backdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(backdrop);
+            }
+            
+            document.body.classList.add('modal-open');
+
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const productListModal = document.getElementById('productListModal');
+            
+            // Show loading spinner
+            loadingSpinner.style.display = 'block';
+            productListModal.innerHTML = '';
+
+            // Call the search API
+            fetch(`https://localhost:7014/api/searchapi?query=${encodeURIComponent(searchTerm)}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {                
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text(); // First get as text to see raw response
+            })
+            .then(responseText => {                
+                
+                // Try to parse as JSON
+                let apiResponse;
+                try {
+                    apiResponse = JSON.parse(responseText);
+                   
+                } catch (parseError) {                   
+                    throw new Error(`JSON parse error: ${parseError.message}`);
+                }
+                
+                // Hide loading spinner
+                loadingSpinner.style.display = 'none';
+                
+                // Extract products from API response
+                let products = [];
+                if (apiResponse && apiResponse.data && Array.isArray(apiResponse.data)) {
+                    products = apiResponse.data;
+                   
+                } else if (Array.isArray(apiResponse)) {
+                    products = apiResponse;
+                } else {
+                    console.log('=== UNEXPECTED RESPONSE FORMAT ===');
+                    console.log('Response format not recognized');
+                }
+                
+                if (!products || products.length === 0) {
+                    console.log('=== NO PRODUCTS FOUND ===');
+                    productListModal.innerHTML = `
+                        <div class="text-center text-muted py-4">
+                            <i class="ri-search-line fs-1"></i>
+                            <p class="mt-3">Aradığınız kriterlere uygun ürün bulunamadı.</p>
+                            <small class="text-muted">Arama terimi: "${searchTerm}"</small>
+                            ${apiResponse && apiResponse.message ? `<div class="mt-2"><small class="text-info">API Mesajı: ${apiResponse.message}</small></div>` : ''}
+                            <div class="mt-3">
+                                <details>
+                                    <summary>Raw API Response</summary>
+                                    <pre style="text-align: left; font-size: 12px; background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;">${responseText}</pre>
+                                </details>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    console.log('=== BUILDING PRODUCT TABLE ===');
+                    // Create product table
+                    let tableHtml = `
+                        <div class="alert alert-success">
+                            <strong>✅ ${apiResponse.message || 'Ürünler bulundu'}</strong>                           
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Ürün Kodu</th>
+                                        <th>Marka</th>
+                                        <th>Ürün Açıklaması</th>
+                                        <th width="100">İşlem</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    products.forEach((product, index) => {
+                        console.log(`Processing product ${index}:`, product);
+                        
+                        // API'den gelen field'lara göre mapping
+                        const productCode = product.productCode || product.code || product.id || '';
+                        const brand = product.brand.name;
+                        const description = product.description || product.name || product.title || '';                        
+                        
+                        // Safe encoding
+                        const safeCode = String(productCode).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+                        const safeBrand = String(brand).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+                        const safeDescription = String(description).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+                        
+                        tableHtml += `
+                            <tr>
+                                <td>
+                                    <div class="fw-medium">${productCode}</div>                                  
+
+                                </td>
+                                <td>
+                                    <div class="fw-medium">${brand}</div>
+
+                                </td>
+                                <td>
+                                    <div class="fw-medium">${description}</div>                                   
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="selectProduct('${safeBrand}', '${safeCode}', '${safeDescription}', 'Elektrik Malzemeleri')">
+                                        <i class="ri-add-line"></i> Ekle
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHtml += `
+                                </tbody>
+                            </table>
+                        </div>                        
+                    `;
+                    
+                    productListModal.innerHTML = tableHtml;
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                loadingSpinner.style.display = 'none';
+                productListModal.innerHTML = `
+                    <div class="text-center text-danger py-4">
+                        <i class="ri-error-warning-line fs-1"></i>
+                        <p class="mt-3">Arama sırasında bir hata oluştu: ${error.message}</p>
+                        <small class="text-muted">API URL: https://localhost:7014/api/searchapi?query=${encodeURIComponent(searchTerm)}</small>
+                    </div>
+                `;
+            });
+        }
+
+        // Function to close modal
+        function closeModal() {
+            const modalElement = document.getElementById('productSearchModal');
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
+            modalElement.removeAttribute('aria-modal');
+            modalElement.removeAttribute('role');
+            
+            // Remove backdrop
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            
+            document.body.classList.remove('modal-open');
+        }
+
+        // Function to select a product and fill the form
+        function selectProduct(productName, productCode, description, category) {            
+            
+            // Fill the product description field with product name or description
+            const productSearchField = document.getElementById('productSearch');
+            if (productSearchField) {
+                productSearchField.value = description;
+            }
+            
+            // Auto-fill title if empty
+            const titleField = document.querySelector('input[name="Title"]');
+            if (titleField && !titleField.value.trim()) {
+                titleField.value = `${productName || productCode} Talebi`;
+            }
+            
+            // Auto-fill description if empty
+            const descriptionField = document.querySelector('textarea[name="Description"]');
+            if (descriptionField && !descriptionField.value.trim()) {
+                let desc = productName || description || productCode;
+                if (productCode && productName !== productCode) {
+                    desc += ` (Kod: ${productCode})`;
+                }
+                descriptionField.value = desc;
+            }
+            
+            // Try to auto-select category based on product category
+            const categorySelect = document.querySelector('select[name="Category"]');
+            if (categorySelect && category) {
+                // Basic mapping for electrical products
+                if (category.toLowerCase().includes('elektrik') || category.toLowerCase().includes('electrical')) {
+                    categorySelect.value = '0'; // Material
+                } else if (category.toLowerCase().includes('araç') || category.toLowerCase().includes('gereç')) {
+                    categorySelect.value = '1'; // Equipment
+                } else if (category.toLowerCase().includes('malzeme')) {
+                    categorySelect.value = '0'; // Material
+                } else {
+                    categorySelect.value = '3'; // Other
+                }
+            }
+            
+            // Auto-select appropriate unit for electrical products
+            const unitSelect = document.querySelector('select[name="Unit"]');
+            if (unitSelect && !unitSelect.value) {
+                unitSelect.value = '0'; // Adet - default for electrical components
+            }
+            
+            // Close the modal
+            closeModal();
+            
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+            alertDiv.innerHTML = `
+                <strong>✅ Ürün Seçildi:</strong> ${productName || productCode}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()" aria-label="Close"></button>
+            `;
+            
+            // Insert after the product search field
+            const searchContainer = document.getElementById('productSearch').closest('.mb-3');
+            searchContainer.insertAdjacentElement('afterend', alertDiv);
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        }
+
+        // Search button click event
+        document.getElementById('searchBtn').addEventListener('click', performProductSearch);
+
+        // Enter key support for search input
+        document.getElementById('productSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performProductSearch();
+            }
+        });
+
+        // Set default required date to today + 1 week
+        document.addEventListener("DOMContentLoaded", function() {
+            const requiredDateInput = document.querySelector('input[name="RequiredDate"]');
+            if (requiredDateInput && !requiredDateInput.value) {
+                const nextWeek = new Date();
+                nextWeek.setDate(nextWeek.getDate());
+                requiredDateInput.value = nextWeek.toISOString().split('T')[0];
+            }
+            
+            // Add click event to modal for backdrop close
+            document.getElementById('productSearchModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+}

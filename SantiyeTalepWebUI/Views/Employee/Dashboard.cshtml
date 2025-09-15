@@ -1,0 +1,244 @@
+@model SantiyeTalepWebUI.Models.ViewModels.EmployeeDashboardViewModel
+@{
+    ViewData["Title"] = "Çalýþan Dashboard";
+    Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Dashboard</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item active">Dashboard</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col">
+                    <div class="h-100">
+                        <div class="row mb-3 pb-1">
+                            <div class="col-12">
+                                <div class="d-flex align-items-lg-center flex-lg-row flex-column">
+                                    <div class="flex-grow-1">
+                                        <h4 class="fs-16 mb-1">Hoþgeldiniz, @ViewBag.CurrentUser?.FullName!</h4>
+                                        <p class="text-muted mb-0">Ýþte bugünkü talep durumunuz.</p>
+                                    </div>
+                                    <div class="mt-3 mt-lg-0">
+                                        <a href="@Url.Action("CreateRequest", "Employee")" class="btn btn-success">
+                                            <i class="ri-add-circle-line align-middle me-1"></i> Yeni Talep Oluþtur
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card card-animate">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Toplam Taleplerim</p>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-end justify-content-between mt-4">
+                                            <div>
+                                                <h4 class="fs-22 fw-semibold ff-secondary mb-4">
+                                                    <span class="counter-value" data-target="@(Model?.Stats?.MyRequests ?? 0)">@(Model?.Stats?.MyRequests ?? 0)</span>
+                                                </h4>
+                                            </div>
+                                            <div class="avatar-sm flex-shrink-0">
+                                                <span class="avatar-title bg-success-subtle rounded fs-3">
+                                                    <i class="bx bx-file text-success"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card card-animate">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Açýk Talepler</p>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-end justify-content-between mt-4">
+                                            <div>
+                                                <h4 class="fs-22 fw-semibold ff-secondary mb-4">
+                                                    <span class="counter-value" data-target="@(Model?.Stats?.OpenRequests ?? 0)">@(Model?.Stats?.OpenRequests ?? 0)</span>
+                                                </h4>
+                                            </div>
+                                            <div class="avatar-sm flex-shrink-0">
+                                                <span class="avatar-title bg-warning-subtle rounded fs-3">
+                                                    <i class="bx bx-time text-warning"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card card-animate">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Tamamlanan</p>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-end justify-content-between mt-4">
+                                            <div>
+                                                <h4 class="fs-22 fw-semibold ff-secondary mb-4">
+                                                    <span class="counter-value" data-target="@(Model?.Stats?.CompletedRequests ?? 0)">@(Model?.Stats?.CompletedRequests ?? 0)</span>
+                                                </h4>
+                                            </div>
+                                            <div class="avatar-sm flex-shrink-0">
+                                                <span class="avatar-title bg-primary-subtle rounded fs-3">
+                                                    <i class="bx bx-check-circle text-primary"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-3 col-md-6">
+                                <div class="card card-animate">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Þantiyem</p>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-end justify-content-between mt-4">
+                                            <div>
+                                                <h6 class="fs-16 fw-semibold ff-secondary mb-4">
+                                                    @(Model?.MySite?.Name ?? "Atanmamýþ")
+                                                </h6>
+                                            </div>
+                                            <div class="avatar-sm flex-shrink-0">
+                                                <span class="avatar-title bg-info-subtle rounded fs-3">
+                                                    <i class="bx bx-building text-info"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Son Taleplerim -->
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card">
+                                    <div class="card-header align-items-center d-flex">
+                                        <h4 class="card-title mb-0 flex-grow-1">Son Taleplerim</h4>
+                                        <div class="flex-shrink-0">
+                                            <a href="@Url.Action("Requests", "Employee")" class="btn btn-soft-primary">
+                                                Tümünü Görüntüle <i class="ri-arrow-right-line align-bottom"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-borderless table-centered align-middle table-nowrap mb-0">
+                                                <thead class="text-muted table-light">
+                                                    <tr>
+                                                        <th scope="col">Talep</th>
+                                                        <th scope="col">Kategori</th>
+                                                        <th scope="col">Durum</th>
+                                                        <th scope="col">Tarih</th>
+                                                        <th scope="col">Ýþlem</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @if (Model?.MyRequests != null && Model.MyRequests.Any())
+                                                    {
+                                                        @foreach (var request in Model.MyRequests)
+                                                        {
+                                                            <tr>
+                                                                <td>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <div class="flex-grow-1">
+                                                                            <h6 class="mb-0">@request.Title</h6>
+                                                                            <p class="text-muted mb-0">@request.Description?.Substring(0, Math.Min(50, request.Description.Length))...</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <span class="badge bg-primary-subtle text-primary">@request.Category</span>
+                                                                </td>
+                                                                <td>
+                                                                    @switch (request.Status)
+                                                                    {
+                                                                        case SantiyeTalepWebUI.Models.RequestStatus.Open:
+                                                                            <span class="badge bg-warning-subtle text-warning">Açýk</span>
+                                                                            break;
+                                                                        case SantiyeTalepWebUI.Models.RequestStatus.Completed:
+                                                                            <span class="badge bg-success-subtle text-success">Tamamlandý</span>
+                                                                            break;
+                                                                        case SantiyeTalepWebUI.Models.RequestStatus.Cancelled:
+                                                                            <span class="badge bg-danger-subtle text-danger">Ýptal</span>
+                                                                            break;
+                                                                    }
+                                                                </td>
+                                                                <td>@request.CreatedDate.ToString("dd.MM.yyyy")</td>
+                                                                <td>
+                                                                    <a href="@Url.Action("RequestDetails", "Employee", new { id = request.Id })" class="btn btn-sm btn-outline-primary">
+                                                                        Detay
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr>
+                                                            <td colspan="5" class="text-center">
+                                                                <div class="py-4">
+                                                                    <div class="mb-3">
+                                                                        <i class="ri-file-list-3-line display-4 text-muted"></i>
+                                                                    </div>
+                                                                    <h5>Henüz talep oluþturmadýnýz</h5>
+                                                                    <p class="text-muted">Ýlk talebinizi oluþturmak için butona týklayýn.</p>
+                                                                    <a href="@Url.Action("CreateRequest", "Employee")" class="btn btn-primary">
+                                                                        <i class="ri-add-line me-1"></i> Ýlk Talebi Oluþtur
+                                                                    </a>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
+    <script src="~/assets/js/pages/dashboard-crm.init.js"></script>
+}

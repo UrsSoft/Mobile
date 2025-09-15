@@ -1,0 +1,237 @@
+@model List<SantiyeTalepWebUI.Models.DTOs.SupplierDto>
+@{
+    ViewData["Title"] = "Tedarikçi Yönetimi";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Tedarikçi Yönetimi</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Tedarikçiler</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Tedarikçi Listesi</h4>
+                            <div class="flex-shrink-0">
+                                <div class="dropdown">
+                                    <a class="btn btn-soft-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="ri-filter-3-line align-bottom me-1"></i> Filtrele
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="@Url.Action("Suppliers", "Admin")">Tüm Tedarikçiler</a></li>
+                                        <li><a class="dropdown-item" href="@Url.Action("PendingSuppliers", "Admin")">Onay Bekleyenler</a></li>
+                                        <li><a class="dropdown-item" href="@Url.Action("ApprovedSuppliers", "Admin")">Onaylý Tedarikçiler</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-nowrap table-striped-columns mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">ID</th>
+                                            <th scope="col">Þirket Adý</th>
+                                            <th scope="col">Ýletiþim Kiþisi</th>
+                                            <th scope="col">E-posta</th>
+                                            <th scope="col">Telefon</th>
+                                            <th scope="col">Durum</th>
+                                            <th scope="col">Kayýt Tarihi</th>
+                                            <th scope="col">Ýþlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model != null && Model.Any())
+                                        {
+                                            @foreach (var supplier in Model)
+                                            {
+                                                <tr>
+                                                    <td>@supplier.Id</td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="flex-shrink-0 me-2">
+                                                                <div class="avatar-xs">
+                                                                    <div class="avatar-title bg-light text-primary rounded-circle fs-16">
+                                                                        <i class="ri-building-2-line"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <h6 class="mb-0 text-truncate">@supplier.CompanyName</h6>
+                                                                <p class="mb-0 text-muted fs-12">@supplier.TaxNumber</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>@supplier.FullName</td>
+                                                    <td>@supplier.Email</td>
+                                                    <td>@supplier.Phone</td>
+                                                    <td>
+                                                        @switch (supplier.Status.ToString().ToLower())
+                                                        {
+                                                            case "pending":
+                                                                <span class="badge bg-warning-subtle text-warning">Onay Bekliyor</span>
+                                                                break;
+                                                            case "approved":
+                                                                <span class="badge bg-success-subtle text-success">Onaylý</span>
+                                                                break;
+                                                            case "rejected":
+                                                                <span class="badge bg-danger-subtle text-danger">Reddedildi</span>
+                                                                break;
+                                                            default:
+                                                                <span class="badge bg-secondary-subtle text-secondary">Belirsiz</span>
+                                                                break;
+                                                        }
+                                                    </td>
+                                                    <td>@supplier.CreatedDate.ToString("dd.MM.yyyy")</td>
+                                                    <td>
+                                                        <div class="dropdown">
+                                                            <a href="#" role="button" id="dropdownMenuLink@(supplier.Id)" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="ri-more-2-fill"></i>
+                                                            </a>
+
+                                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink@(supplier.Id)">
+                                                                <li><a class="dropdown-item" href="#" onclick="viewSupplier(@supplier.Id)"><i class="ri-eye-fill align-bottom me-2 text-muted"></i> Görüntüle</a></li>
+                                                                @if (supplier.Status.ToString().ToLower() == "pending")
+                                                                {
+                                                                    <li>
+                                                                        <form method="post" asp-action="ApproveSupplier" style="display: inline;">
+                                                                            <input type="hidden" name="id" value="@supplier.Id" />
+                                                                            <button type="submit" class="dropdown-item" onclick="return confirm('Bu tedarikçiyi onaylamak istediðinizden emin misiniz?')">
+                                                                                <i class="ri-check-fill align-bottom me-2 text-success"></i> Onayla
+                                                                            </button>
+                                                                        </form>
+                                                                    </li>
+                                                                    <li>
+                                                                        <form method="post" asp-action="RejectSupplier" style="display: inline;">
+                                                                            <input type="hidden" name="id" value="@supplier.Id" />
+                                                                            <button type="submit" class="dropdown-item" onclick="return confirm('Bu tedarikçiyi reddetmek istediðinizden emin misiniz?')">
+                                                                                <i class="ri-close-fill align-bottom me-2 text-danger"></i> Reddet
+                                                                            </button>
+                                                                        </form>
+                                                                    </li>
+                                                                }
+                                                                <li><a class="dropdown-item" href="#" onclick="editSupplier(@supplier.Id)"><i class="ri-pencil-fill align-bottom me-2 text-muted"></i> Düzenle</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <i class="ri-inbox-line display-4 text-muted mb-2"></i>
+                                                        <h5 class="text-muted">Henüz tedarikçi bulunmuyor</h5>
+                                                        <p class="text-muted mb-0">Sistem henüz herhangi bir tedarikçi kaydý içermiyor.</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+            </div><!-- end row -->
+
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6">
+                    <script>document.write(new Date().getFullYear())</script> © Þantiye Talep Yönetim Sistemi.
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end d-none d-sm-block">
+                        Velzon Template ile geliþtirilmiþtir.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Supplier Detail Modal -->
+<div class="modal fade" id="supplierDetailModal" tabindex="-1" aria-labelledby="supplierDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supplierDetailModalLabel">Tedarikçi Detaylarý</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="supplierDetailContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function viewSupplier(id) {
+            // Load supplier details via AJAX
+            $.get('@Url.Action("GetSupplierDetails", "Admin")?id=' + id)
+                .done(function (data) {
+                    $('#supplierDetailContent').html(data);
+                    $('#supplierDetailModal').modal('show');
+                })
+                .fail(function () {
+                    toastr.error('Tedarikçi detaylarý yüklenirken bir hata oluþtu.');
+                });
+        }
+
+        function editSupplier(id) {
+            // Redirect to edit page
+            window.location.href = '@Url.Action("EditSupplier", "Admin")?id=' + id;
+        }
+
+        // Initialize tooltips
+        $(document).ready(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
+    </script>
+}

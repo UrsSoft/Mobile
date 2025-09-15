@@ -1,0 +1,291 @@
+@model List<SantiyeTalepWebUI.Models.DTOs.EmployeeDto>
+@{
+    ViewData["Title"] = "Çalýþan Yönetimi";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Çalýþan Yönetimi</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Çalýþanlar</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Çalýþan Listesi</h4>
+                            <div class="flex-shrink-0">
+                                <a href="@Url.Action("CreateEmployee", "Admin")" class="btn btn-primary">
+                                    <i class="ri-add-line align-bottom me-1"></i> Yeni Çalýþan Ekle
+                                </a>
+                            </div>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <div class="row g-3 mb-3">
+                                <div class="col-lg-4">
+                                    <div class="search-box">
+                                        <input type="text" class="form-control search" placeholder="Çalýþan ara..." id="searchInput">
+                                        <i class="ri-search-line search-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="col-lg-8">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-soft-secondary">
+                                            <i class="ri-file-excel-2-line align-bottom me-1"></i> Excel
+                                        </button>
+                                        <button class="btn btn-soft-secondary">
+                                            <i class="ri-file-pdf-line align-bottom me-1"></i> PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-nowrap table-striped-columns mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">Çalýþan</th>
+                                            <th scope="col">Ýletiþim</th>
+                                            <th scope="col">Pozisyon</th>
+                                            <th scope="col">Þantiye</th>
+                                            <th scope="col">Durum</th>
+                                            <th scope="col">Kayýt Tarihi</th>
+                                            <th scope="col">Ýþlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="employeeTableBody">
+                                        @if (Model != null && Model.Any())
+                                        {
+                                            @foreach (var employee in Model)
+                                            {
+                                                <tr class="employee-row">
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="flex-shrink-0 me-3">
+                                                                <div class="avatar-sm">
+                                                                    <div class="avatar-title bg-light text-primary rounded-circle fs-16">
+                                                                        @((!string.IsNullOrWhiteSpace(employee.FullName) && employee.FullName.Length > 0) ? employee.FullName.Substring(0, 1).ToUpper() : "?")
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <h6 class="mb-0">@(string.IsNullOrWhiteSpace(employee.FullName) ? "Ad belirtilmemiþ" : employee.FullName)</h6>
+                                                                <p class="mb-0 text-muted fs-12">#@employee.Id</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div>
+                                                            <p class="mb-1">@(string.IsNullOrWhiteSpace(employee.Email) ? "E-posta belirtilmemiþ" : employee.Email)</p>
+                                                            @if (!string.IsNullOrEmpty(employee.Phone))
+                                                            {
+                                                                <p class="mb-0 text-muted fs-12">@employee.Phone</p>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-info-subtle text-info">@(string.IsNullOrWhiteSpace(employee.Position) ? "Pozisyon belirtilmemiþ" : employee.Position)</span>
+                                                    </td>
+                                                    <td>
+                                                        <div>
+                                                            <h6 class="mb-0">@(string.IsNullOrWhiteSpace(employee.SiteName) ? "Þantiye belirtilmemiþ" : employee.SiteName)</h6>
+                                                            <p class="mb-0 text-muted fs-12">ID: @employee.SiteId</p>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        @if (employee.IsActive)
+                                                        {
+                                                            <span class="badge bg-success-subtle text-success">
+                                                                <i class="ri-checkbox-circle-line align-bottom me-1"></i>Aktif
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-danger-subtle text-danger">
+                                                                <i class="ri-close-circle-line align-bottom me-1"></i>Pasif
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td>@employee.CreatedDate.ToString("dd.MM.yyyy")</td>
+                                                    <td>
+                                                        <div class="dropdown">
+                                                            <a href="#" role="button" id="dropdownMenuLink@(employee.Id)" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="ri-more-2-fill"></i>
+                                                            </a>
+
+                                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink@(employee.Id)">
+                                                                <li><a class="dropdown-item" href="#" onclick="viewEmployee(@employee.Id)"><i class="ri-eye-fill align-bottom me-2 text-muted"></i> Görüntüle</a></li>
+                                                                <li><a class="dropdown-item" href="#" onclick="editEmployee(@employee.Id)"><i class="ri-pencil-fill align-bottom me-2 text-muted"></i> Düzenle</a></li>
+                                                                @if (employee.IsActive)
+                                                                {
+                                                                    <li><a class="dropdown-item" href="#" onclick="toggleEmployeeStatus(@employee.Id, false)"><i class="ri-pause-circle-line align-bottom me-2 text-warning"></i> Pasif Yap</a></li>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <li><a class="dropdown-item" href="#" onclick="toggleEmployeeStatus(@employee.Id, true)"><i class="ri-play-circle-line align-bottom me-2 text-success"></i> Aktif Yap</a></li>
+                                                                }
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li><a class="dropdown-item" href="#" onclick="deleteEmployee(@employee.Id, '@(string.IsNullOrWhiteSpace(employee.FullName) ? "Bu çalýþan" : employee.FullName)')"><i class="ri-delete-bin-fill align-bottom me-2 text-danger"></i> Sil</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="7" class="text-center py-4">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <i class="ri-group-line display-4 text-muted mb-2"></i>
+                                                        <h5 class="text-muted">Henüz çalýþan bulunmuyor</h5>
+                                                        <p class="text-muted mb-3">Sisteme ilk çalýþaný ekleyerek baþlayýn.</p>
+                                                        <a href="@Url.Action("CreateEmployee", "Admin")" class="btn btn-primary">
+                                                            <i class="ri-add-line me-1"></i> Ýlk Çalýþaný Ekle
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+            </div><!-- end row -->
+
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6">
+                    <script>document.write(new Date().getFullYear())</script> © Þantiye Talep Yönetim Sistemi.
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end d-none d-sm-block">
+                        Velzon Template ile geliþtirilmiþtir.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Employee Detail Modal -->
+<div class="modal fade" id="employeeDetailModal" tabindex="-1" aria-labelledby="employeeDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="employeeDetailModalLabel">Çalýþan Detaylarý</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="employeeDetailContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.employee-row');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        function viewEmployee(id) {
+            // Load employee details via AJAX
+            $.get('@Url.Action("GetEmployeeDetails", "Admin")?id=' + id)
+                .done(function (data) {
+                    $('#employeeDetailContent').html(data);
+                    $('#employeeDetailModal').modal('show');
+                })
+                .fail(function () {
+                    toastr.error('Çalýþan detaylarý yüklenirken bir hata oluþtu.');
+                });
+        }
+
+        function editEmployee(id) {
+            // Redirect to edit page
+            window.location.href = '@Url.Action("EditEmployee", "Admin")?id=' + id;
+        }
+
+        function toggleEmployeeStatus(id, newStatus) {
+            const action = newStatus ? 'aktif' : 'pasif';
+            if (confirm(`Bu çalýþaný ${action} yapmak istediðinizden emin misiniz?`)) {
+                // AJAX call to toggle status
+                $.post('@Url.Action("ToggleEmployeeStatus", "Admin")', { id: id, isActive: newStatus })
+                    .done(function () {
+                        location.reload();
+                    })
+                    .fail(function () {
+                        toastr.error('Durum deðiþtirilirken bir hata oluþtu.');
+                    });
+            }
+        }
+
+        function deleteEmployee(id, name) {
+            if (confirm(`"${name}" adlý çalýþaný silmek istediðinizden emin misiniz?`)) {
+                $.post('@Url.Action("DeleteEmployee", "Admin")', { id: id })
+                    .done(function () {
+                        toastr.success('Çalýþan baþarýyla silindi.');
+                        location.reload();
+                    })
+                    .fail(function () {
+                        toastr.error('Çalýþan silinirken bir hata oluþtu.');
+                    });
+            }
+        }
+
+        // Initialize tooltips
+        $(document).ready(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
+    </script>
+}

@@ -1,0 +1,105 @@
+@model SantiyeTalepWebUI.Models.ViewModels.RegisterSupplierViewModel
+@{
+    ViewData["Title"] = "Tedarikçi Kayıt";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h3><i class="fas fa-user-plus text-primary"></i> Tedarikçi Kayıt</h3>
+                    <p class="text-muted">Şantiye Talep Sistemi'ne katılın</p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>@Model.ErrorMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                {
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>@Model.SuccessMessage
+                    </div>
+                }
+
+                <form asp-action="RegisterSupplier" method="post">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="RegisterDto.FullName" class="form-label">Ad Soyad *</label>
+                                <input asp-for="RegisterDto.FullName" class="form-control" placeholder="Ad Soyadınızı giriniz" />
+                                <span asp-validation-for="RegisterDto.FullName" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="RegisterDto.CompanyName" class="form-label">Şirket Adı *</label>
+                                <input asp-for="RegisterDto.CompanyName" class="form-control" placeholder="Şirket adını giriniz" />
+                                <span asp-validation-for="RegisterDto.CompanyName" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="RegisterDto.Email" class="form-label">E-posta *</label>
+                                <input asp-for="RegisterDto.Email" type="email" class="form-control" placeholder="E-posta adresinizi giriniz" />
+                                <span asp-validation-for="RegisterDto.Email" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="RegisterDto.Phone" class="form-label">Telefon</label>
+                                <input asp-for="RegisterDto.Phone" class="form-control" placeholder="Telefon numaranızı giriniz" />
+                                <span asp-validation-for="RegisterDto.Phone" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="RegisterDto.Password" class="form-label">Şifre *</label>
+                                <input asp-for="RegisterDto.Password" type="password" class="form-control" placeholder="Şifrenizi giriniz" />
+                                <span asp-validation-for="RegisterDto.Password" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="RegisterDto.TaxNumber" class="form-label">Vergi Numarası</label>
+                                <input asp-for="RegisterDto.TaxNumber" class="form-control" placeholder="Vergi numaranızı giriniz" />
+                                <span asp-validation-for="RegisterDto.TaxNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="RegisterDto.Address" class="form-label">Adres</label>
+                        <textarea asp-for="RegisterDto.Address" class="form-control" rows="3" placeholder="Adresinizi giriniz"></textarea>
+                        <span asp-validation-for="RegisterDto.Address" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i>Kayıt Ol
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p class="mb-0">Zaten hesabınız var mı? <a asp-action="Login" class="text-decoration-none">Giriş yapın</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
