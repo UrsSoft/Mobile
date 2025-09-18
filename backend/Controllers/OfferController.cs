@@ -116,9 +116,8 @@ namespace SantiyeTalepApi.Controllers
                     break;
 
                 case "Employee":
-                    if (offer.Request.Employee.UserId != userId)
-                        return Forbid();
-                    break;
+                    // Employees are now restricted from viewing offer details for security
+                    return Forbid("Çalışanlar teklif detaylarını görüntüleyemez. Bu bilgiler güvenlik amacıyla sadece yönetim tarafından görüntülenebilir.");
 
                 case "Admin":
                     // Admin tüm teklifleri görebilir
@@ -149,9 +148,8 @@ namespace SantiyeTalepApi.Controllers
             switch (userRole)
             {
                 case "Employee":
-                    if (request.Employee.UserId != userId)
-                        return Forbid();
-                    break;
+                    // Employees are now restricted from viewing offer details for security
+                    return Forbid("Çalışanlar teklif detaylarını görüntüleyemez. Bu bilgiler güvenlik amacıyla sadece yönetim tərəfindən görüntülenebilir.");
 
                 case "Supplier":
                     // Tedarikçiler sadece kendi tekliflerini görebilir

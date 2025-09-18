@@ -102,20 +102,7 @@
                                                             @site.Name
                                                         </h5>
                                                     </div>
-                                                    <div class="flex-shrink-0">
-                                                        <div class="dropdown">
-                                                            <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                <i class="ri-more-2-fill text-muted"></i>
-                                                            </a>
-                                                            <ul class="dropdown-menu">
-                                                                <li><a class="dropdown-item" href="#" onclick="viewSite(@site.Id)"><i class="ri-eye-fill me-2 text-muted"></i> Görüntüle</a></li>
-                                                                <li><a class="dropdown-item" href="#" onclick="editSite(@site.Id)"><i class="ri-pencil-fill me-2 text-muted"></i> Düzenle</a></li>
-                                                                <li><a class="dropdown-item" href="#" onclick="viewEmployees(@site.Id)"><i class="ri-group-line me-2 text-muted"></i> Çalýþanlar</a></li>
-                                                                <li><hr class="dropdown-divider"></li>
-                                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteSite(@site.Id, '@site.Name')"><i class="ri-delete-bin-line me-2"></i> Sil</a></li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
+                                                   
                                                 </div><!-- end card header -->
 
                                                 <div class="card-body">
@@ -150,51 +137,24 @@
                                                         </div>
                                                     </div>
 
-                                                    @if (site.Employees != null && site.Employees.Any())
-                                                    {
-                                                        <div class="mt-3">
-                                                            <h6 class="fs-14 mb-2">Son Çalýþanlar:</h6>
-                                                            <div class="avatar-group">
-                                                                @{
-                                                                    var displayEmployees = site.Employees.Take(3);
-                                                                    var remainingCount = Math.Max(0, site.Employees.Count - 3);
-                                                                }
-                                                                @foreach (var emp in displayEmployees)
-                                                                {
-                                                                    <a href="#" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" title="@emp.FullName">
-                                                                        <div class="avatar-xs">
-                                                                            <div class="avatar-title rounded-circle bg-light text-primary">
-                                                                                @(emp.FullName?.Substring(0, 1).ToUpper() ?? "?")
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                }
-                                                                @if (remainingCount > 0)
-                                                                {
-                                                                    <a href="#" class="avatar-group-item">
-                                                                        <div class="avatar-xs">
-                                                                            <div class="avatar-title rounded-circle bg-light text-body">
-                                                                                +@remainingCount
-                                                                            </div>
-                                                                        </div>
-                                                                    </a>
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                    }
                                                 </div><!-- end card body -->
 
                                                 <div class="card-footer bg-light border-top-dashed">
-                                                    <div class="row g-2">
-                                                        <div class="col-6">
-                                                            <button type="button" class="btn btn-soft-primary btn-sm w-100" onclick="viewSite(@site.Id)">
-                                                                <i class="ri-eye-line me-1"></i> Detay
-                                                            </button>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <button type="button" class="btn btn-soft-success btn-sm w-100" onclick="viewEmployees(@site.Id)">
-                                                                <i class="ri-group-line me-1"></i> Çalýþanlar
-                                                            </button>
+                                                    <div class="row g-2">                                                       
+                                                        <div class="col-12">
+                                                            <div class="dropdown">
+                                                                <button type="button" class="btn btn-soft-success btn-sm w-100" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <i class="ri-tools-line me-1"></i> Ýþlemler
+                                                                </button>
+                                                              
+                                                                <ul class="dropdown-menu">
+                                                                    <li><a class="dropdown-item" href="#" onclick="viewSite(@site.Id)"><i class="ri-eye-fill me-2 text-muted"></i> Görüntüle</a></li>
+                                                                    <li><a class="dropdown-item" href="#" onclick="editSite(@site.Id)"><i class="ri-pencil-fill me-2 text-muted"></i> Düzenle</a></li>
+                                                                    <li><a class="dropdown-item" href="#" onclick="viewEmployees(@site.Id)"><i class="ri-group-line me-2 text-muted"></i> Çalýþanlar</a></li>
+                                                                    <li><hr class="dropdown-divider"></li>
+                                                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteSite(@site.Id, '@site.Name')"><i class="ri-delete-bin-line me-2"></i> Sil</a></li>
+                                                                </ul>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div><!-- end card footer -->
@@ -266,16 +226,23 @@
 <div class="modal fade" id="siteDetailModal" tabindex="-1" aria-labelledby="siteDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="siteDetailModalLabel">Þantiye Detaylarý</h5>
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="siteDetailModalLabel">
+                    <i class="ri-building-2-line text-primary me-2"></i>
+                    Þantiye Detaylarý
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="siteDetailContent">
                 <!-- Content will be loaded here -->
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
-                <button type="button" class="btn btn-primary" onclick="editSiteFromModal()">Düzenle</button>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ri-close-line me-1"></i>Kapat
+                </button>
+                <button type="button" class="btn btn-primary" onclick="editSiteFromModal()">
+                    <i class="ri-pencil-line me-1"></i>Düzenle
+                </button>
             </div>
         </div>
     </div>
@@ -285,15 +252,20 @@
 <div class="modal fade" id="siteEmployeesModal" tabindex="-1" aria-labelledby="siteEmployeesModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="siteEmployeesModalLabel">Þantiye Çalýþanlarý</h5>
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="siteEmployeesModalLabel">
+                    <i class="ri-group-line text-success me-2"></i>
+                    Þantiye Çalýþanlarý
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="siteEmployeesContent">
                 <!-- Content will be loaded here -->
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ri-close-line me-1"></i>Kapat
+                </button>
                 <a href="@Url.Action("CreateEmployee", "Admin")" class="btn btn-primary">
                     <i class="ri-add-line me-1"></i> Yeni Çalýþan Ekle
                 </a>
@@ -320,14 +292,48 @@
         // View site details
         function viewSite(id) {
             currentSiteId = id;
-            $.get('@Url.Action("GetSiteDetails", "Admin")?id=' + id)
-                .done(function (data) {
-                    $('#siteDetailContent').html(data);
-                    $('#siteDetailModal').modal('show');
-                })
-                .fail(function () {
-                    toastr.error('Þantiye detaylarý yüklenirken bir hata oluþtu.');
-                });
+            
+            // Show loading spinner in modal
+            $('#siteDetailContent').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Yükleniyor...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Þantiye detaylarý yükleniyor...</p>
+                </div>
+            `);
+            
+            // Show modal immediately
+            $('#siteDetailModal').modal('show');
+            
+            // Load site details
+            $.ajax({
+                url: '@Url.Action("GetSiteDetails", "Admin")',
+                type: 'GET',
+                data: { id: id },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        $('#siteDetailContent').html(response.html);
+                    } else {
+                        $('#siteDetailContent').html(`
+                            <div class="alert alert-danger" role="alert">
+                                <i class="ri-error-warning-line me-2"></i>
+                                ${response.message || 'Þantiye detaylarý yüklenirken bir hata oluþtu.'}
+                            </div>
+                        `);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading site details:', error);
+                    $('#siteDetailContent').html(`
+                        <div class="alert alert-danger" role="alert">
+                            <i class="ri-error-warning-line me-2"></i>
+                            Þantiye detaylarý yüklenirken bir hata oluþtu. Lütfen tekrar deneyin.
+                        </div>
+                    `);
+                }
+            });
         }
 
         // Edit site
@@ -343,19 +349,51 @@
 
         // View site employees
         function viewEmployees(id) {
-            $.get('@Url.Action("GetSiteEmployees", "Admin")?id=' + id)
-                .done(function (data) {
-                    $('#siteEmployeesContent').html(data);
-                    $('#siteEmployeesModal').modal('show');
-                })
-                .fail(function () {
-                    toastr.error('Çalýþanlar yüklenirken bir hata oluþtu.');
-                });
+            // Show loading spinner in employees modal
+            $('#siteEmployeesContent').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Yükleniyor...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Çalýþanlar yükleniyor...</p>
+                </div>
+            `);
+            
+            // Show modal immediately
+            $('#siteEmployeesModal').modal('show');
+            
+            $.ajax({
+                url: '@Url.Action("GetSiteEmployees", "Admin")',
+                type: 'GET',
+                data: { id: id },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        $('#siteEmployeesContent').html(response.html);
+                    } else {
+                        $('#siteEmployeesContent').html(`
+                            <div class="alert alert-danger" role="alert">
+                                <i class="ri-error-warning-line me-2"></i>
+                                ${response.message || 'Çalýþanlar yüklenirken bir hata oluþtu.'}
+                            </div>
+                        `);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading site employees:', error);
+                    $('#siteEmployeesContent').html(`
+                        <div class="alert alert-danger" role="alert">
+                            <i class="ri-error-warning-line me-2"></i>
+                            Çalýþanlar yüklenirken bir hata oluþtu. Lütfen tekrar deneyin.
+                        </div>
+                    `);
+                }
+            });
         }
 
         // Delete site
         function deleteSite(id, name) {
-            if (confirm(`"${name}" þantiyesini silmek istediðinizden emin misiniz? Bu iþlem geri alýnamaz.`)) {
+            if (confirm(`"${name}" þantiyesini silmek istediðinizden emin misiniz?\n\nUyarý: Bu þantiyede çalýþan varsa silme iþlemi baþarýsýz olacaktýr.`)) {
                 $.post('@Url.Action("DeleteSite", "Admin")', { id: id })
                     .done(function (response) {
                         if (response.success) {
@@ -365,8 +403,13 @@
                             toastr.error(response.message || 'Þantiye silinirken bir hata oluþtu.');
                         }
                     })
-                    .fail(function () {
-                        toastr.error('Þantiye silinirken bir hata oluþtu.');
+                    .fail(function (xhr) {
+                        // Check if it's a 400 Bad Request error
+                        if (xhr.status === 400) {
+                            toastr.error('Bu þantiyede çalýþan bulunduðu için silinemez. Önce çalýþanlarý baþka þantiyelere transfer edin veya hesaplarýný silin.');
+                        } else {
+                            toastr.error('Þantiye silinirken bir hata oluþtu.');
+                        }
                     });
             }
         }
@@ -390,7 +433,7 @@
                     confirmMessage = `Seçili ${siteIds.length} þantiyeyi pasifleþtirmek istediðinizden emin misiniz?`;
                     break;
                 case 'delete':
-                    confirmMessage = `Seçili ${siteIds.length} þantiyeyi silmek istediðinizden emin misiniz? Bu iþlem geri alýnamaz.`;
+                    confirmMessage = `Seçili ${siteIds.length} þantiyeyi silmek istediðinizden emin misiniz?\n\nUyarý: Çalýþan bulunan þantiyeler silinemez.`;
                     break;
             }
 
@@ -407,8 +450,13 @@
                         toastr.error(response.message || 'Ýþlem sýrasýnda bir hata oluþtu.');
                     }
                 })
-                .fail(function () {
-                    toastr.error('Ýþlem sýrasýnda bir hata oluþtu.');
+                .fail(function (xhr) {
+                    // Check if it's a 400 Bad Request error for bulk operations
+                    if (xhr.status === 400 && action === 'delete') {
+                        toastr.error('Seçilen þantiyelerden bazýlarýnda çalýþan bulunduðu için silme iþlemi tamamlanamadý. Önce tüm çalýþanlarý transfer edin veya silin.');
+                    } else {
+                        toastr.error('Ýþlem sýrasýnda bir hata oluþtu.');
+                    }
                 });
             }
         }

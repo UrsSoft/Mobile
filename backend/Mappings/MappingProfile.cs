@@ -24,18 +24,36 @@ namespace SantiyeTalepApi.Mappings
             // User to UserDto mapping
             CreateMap<User, UserDto>();
             
-            // Site to SiteDto mapping
-            CreateMap<Site, SiteDto>();
+            // Brand mappings
+            CreateMap<Brand, BrandDto>();
+            CreateMap<CreateBrandDto, Brand>()
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+            
+            // Site to SiteDto mapping with brands
+            CreateMap<Site, SiteDto>()
+                .ForMember(dest => dest.Employees, opt => opt.MapFrom(src => src.Employees))
+                .ForMember(dest => dest.Brands, opt => opt.MapFrom(src => src.SiteBrands.Select(sb => sb.Brand)));
 
             // CreateSiteDto to Site mapping
             CreateMap<CreateSiteDto, Site>()
-                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.SiteBrands, opt => opt.Ignore()); // Handle manually in controller
             
-            // Request to RequestDto mapping
-            CreateMap<Request, RequestDto>();
+            // Request to RequestDto mapping with flattened properties
+            CreateMap<Request, RequestDto>()
+                .ForMember(dest => dest.EmployeeName, opt => opt.MapFrom(src => src.Employee.User.FullName))
+                .ForMember(dest => dest.SiteId, opt => opt.MapFrom(src => src.Employee.SiteId))
+                .ForMember(dest => dest.SiteName, opt => opt.MapFrom(src => src.Employee.Site.Name))
+                .ForMember(dest => dest.Offers, opt => opt.MapFrom(src => src.Offers))
+                .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.RequestDate));
             
-            // Offer to OfferDto mapping
-            CreateMap<Offer, OfferDto>();
+            // Offer to OfferDto mapping with flattened properties
+            CreateMap<Offer, OfferDto>()
+                .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Supplier.CompanyName))
+                .ForMember(dest => dest.SupplierContact, opt => opt.MapFrom(src => src.Supplier.User.FullName))
+                .ForMember(dest => dest.RequestTitle, opt => opt.MapFrom(src => src.Request.ProductDescription))
+                .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.OfferDate))
+                .ForMember(dest => dest.DeliveryDate, opt => opt.MapFrom(src => src.OfferDate.AddDays(src.DeliveryDays)));
             
             // Supplier to SupplierDto mapping with flattened properties
             CreateMap<Supplier, SupplierDto>()

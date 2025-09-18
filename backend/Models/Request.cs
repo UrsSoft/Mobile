@@ -14,26 +14,20 @@ namespace SantiyeTalepApi.Models
         public int SiteId { get; set; }
         
         [Required]
-        public string Title { get; set; } = string.Empty;
-        
-        public string Description { get; set; } = string.Empty;
+        public string ProductDescription { get; set; } = string.Empty; // Ürün açıklaması
         
         [Required]
-        public string ProductDescription { get; set; } = string.Empty; // Açıklama (ürün arama için)
-        
-        [Required]
-        public Unit Unit { get; set; } // Birim
+        [Range(1, int.MaxValue)]
+        public int Quantity { get; set; } // Miktar
         
         [Required]
         public DeliveryType DeliveryType { get; set; } // Teslim Tipi
         
-        public RequestCategory Category { get; set; }
+        public string Description { get; set; } = string.Empty; // Açıklama
         
         public RequestStatus Status { get; set; } = RequestStatus.Open;
         
         public DateTime RequestDate { get; set; } = DateTime.UtcNow;
-        
-        public DateTime? RequiredDate { get; set; }
         
         // Navigation Properties
         [ForeignKey("EmployeeId")]

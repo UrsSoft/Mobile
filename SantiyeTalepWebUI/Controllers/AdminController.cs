@@ -35,17 +35,37 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
-                var stats = new DashboardStats();
+                // API'den gerçek istatistikleri çek
+                var stats = await _apiService.GetAsync<dynamic>("api/Admin/stats", token);
                 var pendingSuppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers/pending", token) ?? new List<SupplierDto>();
                 var recentRequests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
-                var sites = await _apiService.GetAsync<List<SiteDto>>("api/Admin/sites", token) ?? new List<SiteDto>();
+                var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
+                var employees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees", token) ?? new List<EmployeeDto>();
+
+                // Eğer stats null ise varsayılan değerler kullan
+                var dashboardStats = new DashboardStats();
+                if (stats != null)
+                {
+                    var statsJson = System.Text.Json.JsonSerializer.Serialize(stats);
+                    var statsDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(statsJson);
+                    
+                    if (statsDict != null)
+                    {
+                        dashboardStats.TotalRequests = GetIntValue(statsDict, "totalRequests");
+                        dashboardStats.TotalSites = GetIntValue(statsDict, "activeSites");
+                        dashboardStats.PendingSuppliers = GetIntValue(statsDict, "pendingSuppliers");
+                        // Employee count from actual employees list
+                        dashboardStats.TotalUsers = employees.Count;
+                    }
+                }
 
                 var model = new AdminDashboardViewModel
                 {
-                    Stats = stats,
+                    Stats = dashboardStats,
                     PendingSuppliers = pendingSuppliers,
                     RecentRequests = recentRequests.Take(10).ToList(),
-                    Sites = sites
+                    Sites = sites,
+                    Employees = employees.Take(10).ToList()
                 };
 
                 return View(model);
@@ -57,6 +77,22 @@ namespace SantiyeTalepWebUI.Controllers
             }
         }
 
+        private int GetIntValue(Dictionary<string, object> dict, string key)
+        {
+            if (dict.TryGetValue(key, out var value))
+            {
+                if (value is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    return element.GetInt32();
+                }
+                if (int.TryParse(value.ToString(), out var intValue))
+                {
+                    return intValue;
+                }
+            }
+            return 0;
+        }
+
         // Sites Management
         public async Task<IActionResult> Sites()
         {
@@ -64,26 +100,57 @@ namespace SantiyeTalepWebUI.Controllers
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Account");
 
-            var sites = await _apiService.GetAsync<List<SiteDto>>("api/Admin/sites", token) ?? new List<SiteDto>();
+            var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
             return View(sites);
         }
 
         [HttpGet]
-        public IActionResult CreateSite()
+        public async Task<IActionResult> CreateSite()
         {
-            return View(new CreateSiteDto());
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Account");
+
+            try
+            {
+                // Get brands for selection
+                var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
+                ViewBag.Brands = brands;
+                
+                return View(new Models.DTOs.CreateSiteDto());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading brands for site creation");
+                TempData["ErrorMessage"] = "Markalar yüklenirken bir hata oluştu";
+                ViewBag.Brands = new List<BrandDto>();
+                return View(new Models.DTOs.CreateSiteDto());
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateSite(CreateSiteDto model)
+        public async Task<IActionResult> CreateSite(Models.DTOs.CreateSiteDto model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
-
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Account");
+
+            if (!ModelState.IsValid)
+            {
+                // Reload brands for validation error case
+                try
+                {
+                    var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
+                    ViewBag.Brands = brands;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error loading brands for validation error case");
+                    ViewBag.Brands = new List<BrandDto>();
+                }
+                return View(model);
+            }
 
             try
             {
@@ -95,12 +162,20 @@ namespace SantiyeTalepWebUI.Controllers
                 }
 
                 TempData["ErrorMessage"] = "Şantiye oluşturulurken bir hata oluştu";
+                
+                // Reload brands for error case
+                var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
+                ViewBag.Brands = brands;
                 return View(model);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating site");
                 TempData["ErrorMessage"] = "Şantiye oluşturulurken bir hata oluştu";
+                
+                // Reload brands for error case
+                var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
+                ViewBag.Brands = brands;
                 return View(model);
             }
         }
@@ -114,23 +189,101 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
-                var site = await _apiService.GetAsync<SiteDto>($"api/Admin/sites/{id}", token);
+                var site = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{id}", token);
                 if (site == null)
                     return Json(new { success = false, message = "Şantiye bulunamadı" });
 
-                // Basit HTML döndürme, partial view olmadan
+                // Build brands HTML
+                var brandsHtml = "";
+                if (site.Brands?.Any() == true)
+                {
+                    brandsHtml = string.Join("", site.Brands.Select(b => 
+                        $"<span class='badge bg-primary me-1 mb-1'>{b.Name}</span>"));
+                }
+                else
+                {
+                    brandsHtml = "<span class='text-muted'>Henüz marka atanmamış</span>";
+                }
+
+                // Build HTML response with enhanced styling
                 var html = $@"
                     <div class='row'>
-                        <div class='col-md-6'>
-                            <h6>Şantiye Bilgileri</h6>
-                            <p><strong>Ad:</strong> {site.Name}</p>
-                            <p><strong>Adres:</strong> {site.Address}</p>
-                            <p><strong>Açıklama:</strong> {site.Description}</p>
-                            <p><strong>Oluşturulma Tarihi:</strong> {site.CreatedDate:dd.MM.yyyy}</p>
+                        <div class='col-md-8'>
+                            <div class='card h-100'>
+                                <div class='card-header'>
+                                    <h6 class='card-title mb-0'>
+                                        <i class='ri-building-2-line text-primary me-2'></i>
+                                        Şantiye Bilgileri
+                                    </h6>
+                                </div>
+                                <div class='card-body'>
+                                    <div class='row g-3'>
+                                        <div class='col-12'>
+                                            <label class='form-label fw-semibold text-muted'>Şantiye Adı</label>
+                                            <p class='mb-0'>{site.Name}</p>
+                                        </div>
+                                        <div class='col-12'>
+                                            <label class='form-label fw-semibold text-muted'>Adres</label>
+                                            <p class='mb-0'>
+                                                <i class='ri-map-pin-line text-primary me-2'></i>
+                                                {site.Address}
+                                            </p>
+                                        </div>
+                                        {(string.IsNullOrEmpty(site.Description) ? "" : $@"
+                                        <div class='col-12'>
+                                            <label class='form-label fw-semibold text-muted'>Açıklama</label>
+                                            <p class='mb-0'>{site.Description}</p>
+                                        </div>")}
+                                        <div class='col-6'>
+                                            <label class='form-label fw-semibold text-muted'>Durum</label>
+                                            <div>
+                                                {(site.IsActive ? 
+                                                    "<span class='badge bg-success'><i class='ri-checkbox-circle-line me-1'></i>Aktif</span>" : 
+                                                    "<span class='badge bg-danger'><i class='ri-close-circle-line me-1'></i>Pasif</span>")}
+                                            </div>
+                                        </div>
+                                        <div class='col-6'>
+                                            <label class='form-label fw-semibold text-muted'>Oluşturulma Tarihi</label>
+                                            <div>
+                                                <i class='ri-calendar-line text-info me-2'></i>
+                                                {site.CreatedDate:dd.MM.yyyy}
+                                            </div>
+                                        </div>
+                                        <div class='col-12'>
+                                            <label class='form-label fw-semibold text-muted'>Şantiye Markaları</label>
+                                            <div>{brandsHtml}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class='col-md-6'>
-                            <h6>Çalışan Bilgileri</h6>
-                            <p><strong>Toplam Çalışan:</strong> {site.Employees?.Count ?? 0}</p>
+                        <div class='col-md-4'>
+                            <div class='card h-100'>
+                                <div class='card-header'>
+                                    <h6 class='card-title mb-0'>
+                                        <i class='ri-group-line text-success me-2'></i>
+                                        Çalışan Özeti
+                                    </h6>
+                                </div>
+                                <div class='card-body'>
+                                    <div class='text-center mb-3'>
+                                        <div class='avatar-lg mx-auto mb-2'>
+                                            <div class='avatar-title bg-primary-subtle text-primary rounded-circle'>
+                                                <i class='ri-team-line display-6'></i>
+                                            </div>
+                                        </div>
+                                        <h4 class='mb-1'>{site.Employees?.Count ?? 0}</h4>
+                                        <p class='text-muted mb-0'>Toplam Çalışan</p>
+                                    </div>
+                                    {(site.Employees?.Any() == true ? $@"
+                                    <div class='mt-3 text-center'>
+                                        <button type='button' class='btn btn-soft-success btn-sm' onclick='viewEmployees({site.Id})'>
+                                            <i class='ri-eye-line me-1'></i>
+                                            Tüm Çalışanları Görüntüle
+                                        </button>
+                                    </div>" : "")}
+                                </div>
+                            </div>
                         </div>
                     </div>";
 
@@ -155,26 +308,116 @@ namespace SantiyeTalepWebUI.Controllers
                 var employees = await _apiService.GetAsync<List<EmployeeDto>>($"api/Admin/sites/{id}/employees", token) ?? new List<EmployeeDto>();
                 
                 var html = new StringBuilder();
-                html.Append("<div class='table-responsive'>");
-                html.Append("<table class='table table-sm'>");
-                html.Append("<thead><tr><th>Ad Soyad</th><th>Pozisyon</th><th>E-posta</th><th>Durum</th></tr></thead>");
-                html.Append("<tbody>");
-
-                foreach (var emp in employees)
+                
+                if (employees.Any())
                 {
-                    var statusBadge = emp.IsActive ? 
-                        "<span class='badge bg-success'>Aktif</span>" : 
-                        "<span class='badge bg-danger'>Pasif</span>";
+                    // Add summary cards
+                    var activeCount = employees.Count(e => e.IsActive);
+                    var inactiveCount = employees.Count - activeCount;
                     
-                    html.Append($"<tr><td>{emp.FullName}</td><td>{emp.Position}</td><td>{emp.Email}</td><td>{statusBadge}</td></tr>");
+                    html.Append($@"
+                        <div class='row g-3 mb-4'>
+                            <div class='col-md-4'>
+                                <div class='card text-center'>
+                                    <div class='card-body'>
+                                        <i class='ri-team-line text-primary display-6 mb-2'></i>
+                                        <h4 class='mb-1'>{employees.Count}</h4>
+                                        <p class='text-muted mb-0'>Toplam Çalışan</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class='col-md-4'>
+                                <div class='card text-center'>
+                                    <div class='card-body'>
+                                        <i class='ri-user-line text-success display-6 mb-2'></i>
+                                        <h4 class='mb-1 text-success'>{activeCount}</h4>
+                                        <p class='text-muted mb-0'>Aktif Çalışan</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class='col-md-4'>
+                                <div class='card text-center'>
+                                    <div class='card-body'>
+                                        <i class='ri-user-unfollow-line text-warning display-6 mb-2'></i>
+                                        <h4 class='mb-1 text-warning'>{inactiveCount}</h4>
+                                        <p class='text-muted mb-0'>Pasif Çalışan</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>");
+
+                    html.Append("<div class='table-responsive'>");
+                    html.Append("<table class='table table-hover table-striped'>");
+                    html.Append(@"
+                        <thead class='table-light'>
+                            <tr>
+                                <th><i class='ri-user-line me-1'></i>Ad Soyad</th>
+                                <th><i class='ri-briefcase-line me-1'></i>Pozisyon</th>
+                                <th><i class='ri-mail-line me-1'></i>E-posta</th>
+                                <th><i class='ri-phone-line me-1'></i>Telefon</th>
+                                <th><i class='ri-calendar-line me-1'></i>Kayıt Tarihi</th>
+                                <th><i class='ri-shield-check-line me-1'></i>Durum</th>
+                            </tr>
+                        </thead>");
+                    html.Append("<tbody>");
+                    foreach (var emp in employees.OrderBy(e => e.FullName))
+                    {
+                        var statusBadge = emp.IsActive ? 
+                            "<span class='badge bg-success'><i class='ri-checkbox-circle-line me-1'></i>Aktif</span>" : 
+                            "<span class='badge bg-danger'><i class='ri-close-circle-line me-1'></i>Pasif</span>";
+                        
+                        var rowClass = emp.IsActive ? "" : "table-secondary";
+                        
+                        html.Append($@"
+                            <tr class='{rowClass}'>
+                                <td>
+                                    <div class='d-flex align-items-center'>
+                                        <div class='avatar-xs me-2'>
+                                            <div class='avatar-title bg-primary-subtle text-primary rounded-circle'>
+                                                {(emp.FullName?.Substring(0, 1).ToUpper() ?? "?")}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h6 class='mb-0'>{emp.FullName}</h6>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class='badge bg-info-subtle text-info'>{emp.Position}</span>
+                                </td>
+                                <td>
+                                    <a href='mailto:{emp.Email}' class='text-decoration-none'>
+                                        <i class='ri-mail-line me-1'></i>{emp.Email}
+                                    </a>
+                                </td>
+                                <td>
+                                    {(string.IsNullOrEmpty(emp.Phone) ? 
+                                        "<span class='text-muted'>-</span>" : 
+                                        $"<a href='tel:{emp.Phone}' class='text-decoration-none'><i class='ri-phone-line me-1'></i>{emp.Phone}</a>")}
+                                </td>
+                                <td>
+                                    <small class='text-muted'>{emp.CreatedDate:dd.MM.yyyy}</small>
+                                </td>
+                                <td>{statusBadge}</td>
+                            </tr>");
+                    }
+
+                    html.Append("</tbody></table></div>");
                 }
-
-                html.Append("</tbody></table></div>");
-
-                if (!employees.Any())
+                else
                 {
-                    html.Clear();
-                    html.Append("<div class='text-center py-3'><p class='text-muted'>Bu şantiyede henüz çalışan bulunmuyor.</p></div>");
+                    var createEmployeeUrl = "/Admin/CreateEmployee";
+                    html.Append($@"
+                        <div class='text-center py-5'>
+                            <div class='d-flex flex-column align-items-center'>
+                                <i class='ri-user-line display-4 text-muted mb-3'></i>
+                                <h5 class='text-muted'>Bu şantiyede henüz çalışan bulunmuyor</h5>
+                                <p class='text-muted mb-4'>Şantiyeye ilk çalışanı ekleyerek başlayın.</p>
+                                <button type='button' class='btn btn-primary' onclick='window.location.href=""{createEmployeeUrl}""'>
+                                    <i class='ri-add-line me-1'></i> İlk Çalışanı Ekle
+                                </button>
+                            </div>
+                        </div>");
                 }
 
                 return Json(new { success = true, html = html.ToString() });
@@ -198,6 +441,21 @@ namespace SantiyeTalepWebUI.Controllers
                 var result = await _apiService.DeleteAsync($"api/Admin/sites/{id}", token);
                 return Json(new { success = true, message = "Şantiye başarıyla silindi" });
             }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error deleting site");
+                
+                // API'den gelen hata mesajını parse et
+                if (httpEx.Message.Contains("400") || httpEx.Message.Contains("Bad Request"))
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = "Bu şantiyede çalışan bulunduğu için silinemez. Önce çalışanları başka şantiyelere transfer edin veya hesaplarını silin." 
+                    });
+                }
+                
+                return Json(new { success = false, message = "Şantiye silinirken hata oluştu" });
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting site");
@@ -213,15 +471,125 @@ namespace SantiyeTalepWebUI.Controllers
                 return Json(new { success = false, message = "Oturum süresi dolmuş" });
 
             try
-            {https://localhost:50276/Admin/Employees
+            {
                 var payload = new { siteIds = siteIds, action = action };
                 var result = await _apiService.PostAsync<object>("api/Admin/sites/bulk", payload, token);
                 return Json(new { success = true, message = "İşlem başarıyla tamamlandı" });
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error in bulk site action");
+                
+                // API'den gelen hata mesajını parse et
+                if (httpEx.Message.Contains("400") || httpEx.Message.Contains("Bad Request"))
+                {
+                    if (action == "delete")
+                    {
+                        return Json(new { 
+                            success = false, 
+                            message = "Seçilen şantiyelerden bazılarında çalışan bulunduğu için silme işlemi tamamlanamadı. Önce tüm çalışanları transfer edin veya silin." 
+                        });
+                    }
+                }
+                
+                return Json(new { success = false, message = "Toplu işlem sırasında hata oluştu" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in bulk site action");
                 return Json(new { success = false, message = "Toplu işlem sırasında hata oluştu" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditSite(int id)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Account");
+
+            try
+            {
+                var site = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{id}", token);
+                if (site == null)
+                {
+                    TempData["ErrorMessage"] = "Şantiye bulunamadı";
+                    return RedirectToAction("Sites");
+                }
+
+                // Get brands for selection
+                var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
+                ViewBag.Brands = brands;
+
+                var model = new UpdateSiteDto
+                {
+                    Id = site.Id,
+                    Name = site.Name,
+                    Address = site.Address,
+                    Description = site.Description,
+                    IsActive = site.IsActive,
+                    BrandIds = site.Brands?.Select(b => b.Id).ToList() ?? new List<int>()
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading site for edit");
+                TempData["ErrorMessage"] = "Şantiye yüklenirken bir hata oluştu";
+                return RedirectToAction("Sites");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditSite(UpdateSiteDto model)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Account");
+
+            if (!ModelState.IsValid)
+            {
+                // Reload brands for validation error case
+                try
+                {
+                    var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
+                    ViewBag.Brands = brands;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error loading brands for validation error case");
+                    ViewBag.Brands = new List<BrandDto>();
+                }
+                return View(model);
+            }
+
+            try
+            {
+                var result = await _apiService.PutAsync<object>($"api/Admin/sites/{model.Id}", model, token);
+                if (result != null)
+                {
+                    TempData["SuccessMessage"] = "Şantiye başarıyla güncellendi";
+                    return RedirectToAction("Sites");
+                }
+
+                TempData["ErrorMessage"] = "Şantiye güncellenirken bir hata oluştu";
+                
+                // Reload brands for error case
+                var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
+                ViewBag.Brands = brands;
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating site");
+                TempData["ErrorMessage"] = "Şantiye güncellenirken bir hata oluştu";
+                
+                // Reload brands for error case
+                var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
+                ViewBag.Brands = brands;
+                return View(model);
             }
         }
 
@@ -243,7 +611,7 @@ namespace SantiyeTalepWebUI.Controllers
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Account");
 
-            var sites = await _apiService.GetAsync<List<SiteDto>>("api/Admin/sites", token) ?? new List<SiteDto>();
+            var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
             ViewBag.Sites = sites;
             return View(new CreateEmployeeDto());
         }
@@ -258,7 +626,7 @@ namespace SantiyeTalepWebUI.Controllers
 
             if (!ModelState.IsValid)
             {
-                var sites = await _apiService.GetAsync<List<SiteDto>>("api/Admin/sites", token) ?? new List<SiteDto>();
+                var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
                 ViewBag.Sites = sites;
                 return View(model);
             }
@@ -273,7 +641,7 @@ namespace SantiyeTalepWebUI.Controllers
                 }
 
                 TempData["ErrorMessage"] = "Çalışan oluşturulurken bir hata oluştu";
-                var sitesForError = await _apiService.GetAsync<List<SiteDto>>("api/Admin/sites", token) ?? new List<SiteDto>();
+                var sitesForError = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
                 ViewBag.Sites = sitesForError;
                 return View(model);
             }
@@ -281,7 +649,7 @@ namespace SantiyeTalepWebUI.Controllers
             {
                 _logger.LogError(ex, "Error creating employee");
                 TempData["ErrorMessage"] = "Çalışan oluşturulurken bir hata oluştu";
-                var sitesForError = await _apiService.GetAsync<List<SiteDto>>("api/Admin/sites", token) ?? new List<SiteDto>();
+                var sitesForError = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
                 ViewBag.Sites = sitesForError;
                 return View(model);
             }

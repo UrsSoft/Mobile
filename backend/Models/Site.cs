@@ -15,8 +15,13 @@ namespace SantiyeTalepApi.Models
         
         public bool IsActive { get; set; } = true;
         
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        
         // Navigation Properties
         public ICollection<Employee> Employees { get; set; } = new List<Employee>();
         public ICollection<Request> Requests { get; set; } = new List<Request>();
+        
+        // Many-to-many relationship with Brand through SiteBrand
+        public ICollection<SiteBrand> SiteBrands { get; set; } = new List<SiteBrand>();
     }
 }

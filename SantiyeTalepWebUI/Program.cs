@@ -15,8 +15,10 @@ builder.Services.AddHttpContextAccessor();
 // HTTP Client for API calls
 builder.Services.AddHttpClient("SantiyeTalepAPI", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7001/");
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7141/";
+    client.BaseAddress = new Uri(baseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30); // 30 second timeout
 });
 
 // Custom services

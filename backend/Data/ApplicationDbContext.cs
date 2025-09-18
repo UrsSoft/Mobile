@@ -15,6 +15,10 @@ namespace SantiyeTalepApi.Data
         public DbSet<Site> Sites { get; set; }
         public DbSet<Request> Requests { get; set; }
         public DbSet<Offer> Offers { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Brand> Brands { get; set; }
+        public DbSet<CategoryBrand> CategoryBrands { get; set; }
+        public DbSet<SiteBrand> SiteBrands { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -76,7 +80,6 @@ namespace SantiyeTalepApi.Data
             modelBuilder.Entity<Request>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Title).HasMaxLength(255);
                 entity.Property(e => e.Description).HasMaxLength(2000);
                 
                 entity.HasOne(r => r.Employee)
@@ -107,6 +110,64 @@ namespace SantiyeTalepApi.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            #region Category Fluent API
+            modelBuilder.Entity<Category>()
+                .HasKey(c => c.Id);
+
+            modelBuilder.Entity<Category>()
+                .Property(c => c.Name)
+                .HasColumnType("varchar(100)")
+                .HasAnnotation("Display", "Kategori Adı");
+
+            #endregion
+
+            #region CategoryBrand Many-to-Many Configuration
+            modelBuilder.Entity<CategoryBrand>()
+                .HasKey(cb => new { cb.CategoryId, cb.BrandId });
+
+            modelBuilder.Entity<CategoryBrand>()
+                .HasOne(cb => cb.Category)
+                .WithMany(c => c.CategoryBrands)
+                .HasForeignKey(cb => cb.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CategoryBrand>()
+                .HasOne(cb => cb.Brand)
+                .WithMany(b => b.CategoryBrands)
+                .HasForeignKey(cb => cb.BrandId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            #endregion
+
+            #region SiteBrand Many-to-Many Configuration
+            modelBuilder.Entity<SiteBrand>()
+                .HasKey(sb => new { sb.SiteId, sb.BrandId });
+
+            modelBuilder.Entity<SiteBrand>()
+                .HasOne(sb => sb.Site)
+                .WithMany(s => s.SiteBrands)
+                .HasForeignKey(sb => sb.SiteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SiteBrand>()
+                .HasOne(sb => sb.Brand)
+                .WithMany(b => b.SiteBrands)
+                .HasForeignKey(sb => sb.BrandId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            #endregion
+
+            #region Brand Fluent API
+            modelBuilder.Entity<Brand>()
+                .HasKey(b => b.Id);
+
+            modelBuilder.Entity<Brand>()
+                .Property(b => b.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            #endregion
+
             // Seed data
             SeedData(modelBuilder);
         }
@@ -129,25 +190,6 @@ namespace SantiyeTalepApi.Data
                 }
             );
             
-            // Sample site
-            modelBuilder.Entity<Site>().HasData(
-                new Site
-                {
-                    Id = 1,
-                    Name = "Ana Şantiye",
-                    Address = "İstanbul, Türkiye",
-                    Description = "Ana şantiye lokasyonu",
-                    IsActive = true
-                },
-                new Site
-                {
-                    Id = 2,
-                    Name = "Ankara Şantiye",
-                    Address = "Ankara, Türkiye",
-                    Description = "İkinci şantiye lokasyonu",
-                    IsActive = true
-                }
-            );
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

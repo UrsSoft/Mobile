@@ -72,7 +72,7 @@
                                 </div>
                             </div>
 
-                            <div class="table-responsive">
+                            <div class="table-responsive" style="min-height: 300px;">
                                 <table class="table table-nowrap table-striped-columns mb-0">
                                     <thead class="table-light">
                                         <tr>
@@ -85,7 +85,7 @@
                                             <th scope="col">Ýþlemler</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="employeeTableBody">
+                                    <tbody id="employeeTableBody" style="min-height: 240px;">
                                         @if (Model != null && Model.Any())
                                         {
                                             @foreach (var employee in Model)
@@ -146,7 +146,7 @@
                                                             </a>
 
                                                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink@(employee.Id)">
-                                                                <li><a class="dropdown-item" href="#" onclick="viewEmployee(@employee.Id)"><i class="ri-eye-fill align-bottom me-2 text-muted"></i> Görüntüle</a></li>
+                                                               
                                                                 <li><a class="dropdown-item" href="#" onclick="editEmployee(@employee.Id)"><i class="ri-pencil-fill align-bottom me-2 text-muted"></i> Düzenle</a></li>
                                                                 @if (employee.IsActive)
                                                                 {
@@ -161,6 +161,13 @@
                                                             </ul>
                                                         </div>
                                                     </td>
+                                                </tr>
+                                            }
+                                            @* Add empty rows if there are fewer than 3 records to maintain table height *@
+                                            @for (int i = Model.Count; i < 3; i++)
+                                            {
+                                                <tr class="empty-row" style="height: 80px;">
+                                                    <td colspan="7">&nbsp;</td>
                                                 </tr>
                                             }
                                         }

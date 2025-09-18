@@ -34,49 +34,178 @@ namespace SantiyeTalepApi.Controllers
         [Authorize(Roles = "Employee")]
         public async Task<IActionResult> CreateRequest([FromBody] CreateRequestDto model)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            _logger.LogInformation("=== CREATE REQUEST STARTED ===");
+            _logger.LogInformation("Request data: {Data}", System.Text.Json.JsonSerializer.Serialize(model));
+            
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("Invalid model state for CreateRequest");
+                    foreach (var error in ModelState)
+                    {
+                        _logger.LogWarning("Model error - Key: {Key}, Errors: {Errors}", 
+                            error.Key, string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage)));
+                    }
+                    return BadRequest(ModelState);
+                }
 
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    _logger.LogError("No user ID claim found in token");
+                    return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
+                }
+
+                var userId = int.Parse(userIdClaim.Value);
+                _logger.LogInformation("Creating request for user ID: {UserId}", userId);
+
+                var employee = await _context.Employees
+                    .Include(e => e.Site)
+                    .FirstOrDefaultAsync(e => e.UserId == userId);
+
+                if (employee == null)
+                {
+                    _logger.LogError("Employee not found for user ID: {UserId}", userId);
+                    return BadRequest(new { message = "Çalışan bilgisi bulunamadı" });
+                }
+
+                _logger.LogInformation("Found employee: {EmployeeId} at site: {SiteId}", employee.Id, employee.SiteId);
+
+                var request = new Request
+                {
+                    EmployeeId = employee.Id,
+                    SiteId = employee.SiteId,
+                    ProductDescription = model.ProductDescription,
+                    Quantity = model.Quantity,
+                    DeliveryType = model.DeliveryType,
+                    Description = model.Description,
+                    Status = RequestStatus.Open,
+                    RequestDate = DateTime.UtcNow
+                };
+
+                _logger.LogInformation("Adding request to database");
+                _context.Requests.Add(request);
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation("Request created with ID: {RequestId}", request.Id);
+
+                // Request'i detaylarıyla birlikte geri döndür
+                var createdRequest = await _context.Requests
+                    .Include(r => r.Employee)
+                        .ThenInclude(e => e.User)
+                    .Include(r => r.Site)
+                    .Include(r => r.Offers)
+                        .ThenInclude(o => o.Supplier)
+                            .ThenInclude(s => s.User)
+                    .FirstOrDefaultAsync(r => r.Id == request.Id);
+
+                if (createdRequest == null)
+                {
+                    _logger.LogError("Could not retrieve created request with ID: {RequestId}", request.Id);
+                    return StatusCode(500, new { message = "Talep oluşturuldu ancak detayları alınamadı" });
+                }
+
+                var requestDto = _mapper.Map<RequestDto>(createdRequest);
+                _logger.LogInformation("=== CREATE REQUEST COMPLETED SUCCESSFULLY ===");
+                _logger.LogInformation("Created request DTO: {RequestDto}", System.Text.Json.JsonSerializer.Serialize(requestDto));
+
+                return CreatedAtAction(nameof(GetRequest), new { id = request.Id }, requestDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "=== ERROR IN CREATE REQUEST ===");
+                _logger.LogError("Failed to create request for model: {Model}", System.Text.Json.JsonSerializer.Serialize(model));
+                return StatusCode(500, new { 
+                    message = "Talep oluşturulurken bir hata oluştu", 
+                    error = ex.Message,
+                    stackTrace = _logger.IsEnabled(LogLevel.Debug) ? ex.StackTrace : null
+                });
+            }
+        }
+
+        // Employee-specific endpoints that return EmployeeRequestDto without offers
+        [HttpGet("employee")]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> GetEmployeeRequests()
+        {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = int.Parse(userIdClaim?.Value ?? "0");
-            var employee = await _context.Employees
-                .Include(e => e.Site)
-                .FirstOrDefaultAsync(e => e.UserId == userId);
 
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == userId);
             if (employee == null)
                 return BadRequest(new { message = "Çalışan bilgisi bulunamadı" });
 
-            var request = new Request
-            {
-                EmployeeId = employee.Id,
-                SiteId = employee.SiteId,
-                Title = model.Title,
-                Description = model.Description,
-                ProductDescription = model.ProductDescription,
-                Unit = model.Unit,
-                DeliveryType = model.DeliveryType,
-                Category = model.Category,
-                RequiredDate = model.RequiredDate,
-                Status = RequestStatus.Open
-            };
-
-            _context.Requests.Add(request);
-            await _context.SaveChangesAsync();
-
-            // Request'i detaylarıyla birlikte geri döndür
-            var createdRequest = await _context.Requests
+            var requests = await _context.Requests
                 .Include(r => r.Employee)
                     .ThenInclude(e => e.User)
                 .Include(r => r.Site)
-                .Include(r => r.Offers)
-                    .ThenInclude(o => o.Supplier)
-                        .ThenInclude(s => s.User)
-                .FirstAsync(r => r.Id == request.Id);
+                .Include(r => r.Offers) // Include for count only
+                .Where(r => r.EmployeeId == employee.Id)
+                .OrderByDescending(r => r.RequestDate)
+                .ToListAsync();
 
-            var requestDto = _mapper.Map<RequestDto>(createdRequest);
-            return CreatedAtAction(nameof(GetRequest), new { id = request.Id }, requestDto);
+            var employeeRequestDtos = requests.Select(r => new EmployeeRequestDto
+            {
+                Id = r.Id,
+                ProductDescription = r.ProductDescription,
+                Quantity = r.Quantity,
+                DeliveryType = r.DeliveryType,
+                Description = r.Description,
+                Status = r.Status,
+                RequestDate = r.RequestDate,
+                EmployeeId = r.EmployeeId,
+                EmployeeName = r.Employee.User.FullName,
+                SiteId = r.SiteId,
+                SiteName = r.Site.Name,
+                OfferCount = r.Offers.Count() // Only provide count, not details
+            }).ToList();
+
+            return Ok(employeeRequestDtos);
         }
 
+        [HttpGet("employee/{id}")]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> GetEmployeeRequest(int id)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = int.Parse(userIdClaim?.Value ?? "0");
+
+            var request = await _context.Requests
+                .Include(r => r.Employee)
+                    .ThenInclude(e => e.User)
+                .Include(r => r.Site)
+                .Include(r => r.Offers) // Include for count only
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (request == null)
+                return NotFound();
+
+            // Verify employee owns this request
+            if (request.Employee.UserId != userId)
+                return Forbid();
+
+            var employeeRequestDto = new EmployeeRequestDto
+            {
+                Id = request.Id,
+                ProductDescription = request.ProductDescription,
+                Quantity = request.Quantity,
+                DeliveryType = request.DeliveryType,
+                Description = request.Description,
+                Status = request.Status,
+                RequestDate = request.RequestDate,
+                EmployeeId = request.EmployeeId,
+                EmployeeName = request.Employee.User.FullName,
+                SiteId = request.SiteId,
+                SiteName = request.Site.Name,
+                OfferCount = request.Offers.Count() // Only provide count, not details
+            };
+
+            return Ok(employeeRequestDto);
+        }
+
+        // Keep original endpoints for admin use
         [HttpGet]
         public async Task<IActionResult> GetRequests()
         {
@@ -92,17 +221,12 @@ namespace SantiyeTalepApi.Controllers
                     .ThenInclude(o => o.Supplier)
                         .ThenInclude(s => s.User);
 
-            // Role-based filtering
+            // Role-based filtering - this endpoint is now primarily for admin use
             switch (userRole)
             {
                 case "Employee":
-                    var employee = await _context.Employees
-                        .FirstOrDefaultAsync(e => e.UserId == userId);
-                    if (employee == null)
-                        return BadRequest(new { message = "Çalışan bilgisi bulunamadı" });
-                    
-                    query = query.Where(r => r.EmployeeId == employee.Id);
-                    break;
+                    // Redirect employees to use the employee-specific endpoint
+                    return BadRequest(new { message = "Çalışanlar için employee endpoint kullanın" });
 
                 case "Supplier":
                     // Tedarikçiler sadece açık talepleri ve kendi tekliflerini görebilir
@@ -126,6 +250,14 @@ namespace SantiyeTalepApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetRequest(int id)
         {
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            
+            // Redirect employees to use employee-specific endpoint
+            if (userRole == "Employee")
+            {
+                return BadRequest(new { message = "Çalışanlar için employee/{id} endpoint kullanın" });
+            }
+
             var request = await _context.Requests
                 .Include(r => r.Employee)
                     .ThenInclude(e => e.User)
@@ -141,15 +273,9 @@ namespace SantiyeTalepApi.Controllers
             // Access control
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             var userId = int.Parse(userIdClaim?.Value ?? "0");
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
             switch (userRole)
             {
-                case "Employee":
-                    if (request.Employee.UserId != userId)
-                        return Forbid();
-                    break;
-
                 case "Supplier":
                     var supplier = await _context.Suppliers
                         .FirstOrDefaultAsync(s => s.UserId == userId);
@@ -461,6 +587,56 @@ namespace SantiyeTalepApi.Controllers
                 _logger.LogError(ex, "=== EXCEPTION IN GET PRODUCTS FROM API ===");
                 _logger.LogError("Error occurred while calling external product API");
                 return new List<ProductDto>();
+            }
+        }
+
+        [HttpGet("my-site")]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> GetMySite()
+        {
+            _logger.LogInformation("=== GET MY SITE STARTED ===");
+            
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    _logger.LogError("No user ID claim found in token");
+                    return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
+                }
+
+                var userId = int.Parse(userIdClaim.Value);
+                _logger.LogInformation("Getting site for user ID: {UserId}", userId);
+
+                var employee = await _context.Employees
+                    .Include(e => e.Site)
+                    .FirstOrDefaultAsync(e => e.UserId == userId);
+
+                if (employee == null)
+                {
+                    _logger.LogError("Employee not found for user ID: {UserId}", userId);
+                    return NotFound(new { message = "Çalışan bilgisi bulunamadı" });
+                }
+
+                if (employee.Site == null)
+                {
+                    _logger.LogWarning("Site not found for employee ID: {EmployeeId}", employee.Id);
+                    return NotFound(new { message = "Şantiye bilgisi bulunamadı" });
+                }
+
+                var siteDto = _mapper.Map<SiteDto>(employee.Site);
+                _logger.LogInformation("=== GET MY SITE COMPLETED SUCCESSFULLY ===");
+                _logger.LogInformation("Site: {SiteName} (ID: {SiteId})", siteDto.Name, siteDto.Id);
+
+                return Ok(siteDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "=== ERROR IN GET MY SITE ===");
+                return StatusCode(500, new { 
+                    message = "Şantiye bilgisi alınırken bir hata oluştu", 
+                    error = ex.Message 
+                });
             }
         }
     }

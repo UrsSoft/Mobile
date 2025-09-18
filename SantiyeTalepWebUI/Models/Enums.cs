@@ -29,21 +29,6 @@ namespace SantiyeTalepWebUI.Models
         Rejected = 3
     }
 
-    public enum RequestCategory
-    {
-        Material = 1,
-        Service = 2,
-        Equipment = 3,
-        Other = 4
-    }
-
-    public enum Unit
-    {
-        Adet = 1,
-        Kilogram = 2,
-        Metre = 3
-    }
-
     public enum DeliveryType
     {
         TodayPickup = 1, // Bugün araç gönderip aldıracağım

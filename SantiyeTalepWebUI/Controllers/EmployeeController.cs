@@ -29,7 +29,8 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
-                var myRequests = await _apiService.GetAsync<List<RequestDto>>("api/Request", token) ?? new List<RequestDto>();
+                // Use employee-specific endpoint that returns EmployeeRequestDto without offers
+                var myRequests = await _apiService.GetAsync<List<EmployeeRequestDto>>("api/Request/employee", token) ?? new List<EmployeeRequestDto>();
                 var mySite = await _apiService.GetAsync<SiteDto>("api/Request/my-site", token);
 
                 var stats = new DashboardStats
@@ -61,8 +62,9 @@ namespace SantiyeTalepWebUI.Controllers
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Account");
 
-            var requests = await _apiService.GetAsync<List<RequestDto>>("api/Request", token) ?? new List<RequestDto>();
-            var model = new RequestListViewModel
+            // Use employee-specific endpoint that returns EmployeeRequestDto without offers
+            var requests = await _apiService.GetAsync<List<EmployeeRequestDto>>("api/Request/employee", token) ?? new List<EmployeeRequestDto>();
+            var model = new EmployeeRequestListViewModel
             {
                 Requests = requests
             };
@@ -91,14 +93,10 @@ namespace SantiyeTalepWebUI.Controllers
             {
                 var createDto = new CreateRequestDto
                 {
-                    Title = model.Title,
-                    Description = model.Description,
                     ProductDescription = model.ProductDescription,
-                    Unit = model.Unit,
-                    DeliveryType = model.DeliveryType,
-                    Category = model.Category,
                     Quantity = model.Quantity,
-                    RequiredDate = model.RequiredDate
+                    DeliveryType = model.DeliveryType,
+                    Description = model.Description
                 };
 
                 var result = await _apiService.PostAsync<object>("api/Request", createDto, token);
@@ -146,7 +144,8 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
-                var request = await _apiService.GetAsync<RequestDto>($"api/Request/{id}", token);
+                // Use employee-specific endpoint that returns EmployeeRequestDto without offers
+                var request = await _apiService.GetAsync<EmployeeRequestDto>($"api/Request/employee/{id}", token);
                 if (request == null)
                 {
                     TempData["ErrorMessage"] = "Talep bulunamadı";
@@ -163,25 +162,27 @@ namespace SantiyeTalepWebUI.Controllers
             }
         }
 
-        public async Task<IActionResult> RequestOffers(int requestId)
+        [HttpPost]
+        public async Task<IActionResult> CancelRequest(int id)
         {
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
-                return RedirectToAction("Login", "Account");
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
 
             try
             {
-                var offers = await _apiService.GetAsync<List<OfferDto>>($"api/Offer/request/{requestId}", token) ?? new List<OfferDto>();
-                var request = await _apiService.GetAsync<RequestDto>($"api/Request/{requestId}", token);
+                var result = await _apiService.PutAsync<object>($"api/Request/{id}/cancel", new { }, token);
+                if (result != null)
+                {
+                    return Json(new { success = true, message = "Talep başarıyla iptal edildi" });
+                }
 
-                ViewBag.Request = request;
-                return View(offers);
+                return Json(new { success = false, message = "Talep iptal edilirken bir hata oluştu" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading request offers");
-                TempData["ErrorMessage"] = "Teklifler yüklenirken bir hata oluştu";
-                return RedirectToAction("Requests");
+                _logger.LogError(ex, "Error cancelling request");
+                return Json(new { success = false, message = "Talep iptal edilirken bir hata oluştu" });
             }
         }
     }

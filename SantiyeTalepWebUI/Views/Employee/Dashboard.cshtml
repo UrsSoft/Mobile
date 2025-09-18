@@ -159,10 +159,11 @@
                                                 <thead class="text-muted table-light">
                                                     <tr>
                                                         <th scope="col">Talep</th>
-                                                        <th scope="col">Kategori</th>
+                                                        <th scope="col">Teslim Tipi</th>
+                                                        <th scope="col">Miktar</th>
                                                         <th scope="col">Durum</th>
                                                         <th scope="col">Tarih</th>
-                                                        <th scope="col">Ýþlem</th>
+                                                     @*    <th scope="col">Ýþlem</th> *@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -174,13 +175,30 @@
                                                                 <td>
                                                                     <div class="d-flex align-items-center">
                                                                         <div class="flex-grow-1">
-                                                                            <h6 class="mb-0">@request.Title</h6>
+                                                                            <h6 class="mb-0">@request.ProductDescription</h6>
                                                                             <p class="text-muted mb-0">@request.Description?.Substring(0, Math.Min(50, request.Description.Length))...</p>
                                                                         </div>
                                                                     </div>
                                                                 </td>
                                                                 <td>
-                                                                    <span class="badge bg-primary-subtle text-primary">@request.Category</span>
+                                                                    @switch (request.DeliveryType)
+                                                                    {
+                                                                        case SantiyeTalepWebUI.Models.DeliveryType.TodayPickup:
+                                                                            <span class="badge bg-danger-subtle text-danger">Bugün araç gönderip aldýracaðým</span>
+                                                                            break;
+                                                                        case SantiyeTalepWebUI.Models.DeliveryType.SameDayDelivery:
+                                                                            <span class="badge bg-warning-subtle text-warning">Gün içi siz sevk edin</span>
+                                                                            break;
+                                                                        case SantiyeTalepWebUI.Models.DeliveryType.NextDayDelivery:
+                                                                            <span class="badge bg-info-subtle text-info">Yarýn siz sevk edin</span>
+                                                                            break;
+                                                                        case SantiyeTalepWebUI.Models.DeliveryType.BusinessDays1to2:
+                                                                            <span class="badge bg-primary-subtle text-primary">1-2 iþ günü</span>
+                                                                            break;
+                                                                    }
+                                                                </td>
+                                                                <td>
+                                                                    <span class="badge bg-primary-subtle text-primary">@request.Quantity</span>
                                                                 </td>
                                                                 <td>
                                                                     @switch (request.Status)
@@ -196,12 +214,12 @@
                                                                             break;
                                                                     }
                                                                 </td>
-                                                                <td>@request.CreatedDate.ToString("dd.MM.yyyy")</td>
-                                                                <td>
+                                                                <td>@request.RequestDate.ToString("dd.MM.yyyy")</td>
+                                                                @* <td>
                                                                     <a href="@Url.Action("RequestDetails", "Employee", new { id = request.Id })" class="btn btn-sm btn-outline-primary">
                                                                         Detay
                                                                     </a>
-                                                                </td>
+                                                                </td> *@
                                                             </tr>
                                                         }
                                                     }

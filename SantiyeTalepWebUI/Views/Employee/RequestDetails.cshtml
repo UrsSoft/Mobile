@@ -1,0 +1,415 @@
+@model SantiyeTalepWebUI.Models.DTOs.EmployeeRequestDto
+@{
+    ViewData["Title"] = "Talep Detaylarý";
+    Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Talep Detaylarý</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Employee")">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="@Url.Action("Requests", "Employee")">Taleplerim</a></li>
+                                <li class="breadcrumb-item active">Talep Detaylarý</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col-xxl-9">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center">
+                                <h5 class="card-title flex-grow-1 mb-0">
+                                    <i class="ri-file-text-line align-middle me-1 text-muted"></i>
+                                    Talep #@Model.Id
+                                </h5>
+                                <div class="flex-shrink-0">
+                                    @switch (Model.Status)
+                                    {
+                                        case SantiyeTalepWebUI.Models.RequestStatus.Open:
+                                            <span class="badge badge-soft-warning fs-11">
+                                                <i class="ri-time-line align-bottom me-1"></i> Açýk
+                                            </span>
+                                            break;
+                                        case SantiyeTalepWebUI.Models.RequestStatus.InProgress:
+                                            <span class="badge badge-soft-info fs-11">
+                                                <i class="ri-loader-4-line align-bottom me-1"></i> Ýþlemde
+                                            </span>
+                                            break;
+                                        case SantiyeTalepWebUI.Models.RequestStatus.Completed:
+                                            <span class="badge badge-soft-success fs-11">
+                                                <i class="ri-check-double-line align-bottom me-1"></i> Tamamlandý
+                                            </span>
+                                            break;
+                                        case SantiyeTalepWebUI.Models.RequestStatus.Cancelled:
+                                            <span class="badge badge-soft-danger fs-11">
+                                                <i class="ri-close-line align-bottom me-1"></i> Ýptal
+                                            </span>
+                                            break;
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="card border card-border-primary">
+                                        <div class="card-header bg-primary-subtle border-primary">
+                                            <h5 class="card-title mb-0 text-primary">
+                                                <i class="ri-information-line align-middle me-1"></i> Temel Bilgiler
+                                            </h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-muted">Ürün Açýklamasý</label>
+                                                        <p class="text-dark fw-semibold">@Model.ProductDescription</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-3">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-muted">Miktar</label>
+                                                        <p class="text-dark fw-semibold">@Model.Quantity</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-3">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-muted">Talep Tarihi</label>
+                                                        <p class="text-dark fw-semibold">@Model.RequestDate.ToString("dd.MM.yyyy HH:mm")</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-muted">Teslim Tipi</label>
+                                                        <p class="text-dark fw-semibold">
+                                                            @switch (Model.DeliveryType)
+                                                            {
+                                                                case SantiyeTalepWebUI.Models.DeliveryType.TodayPickup:
+                                                                    <span class="badge bg-danger-subtle text-danger">Bugün araç gönderip aldýracaðým</span>
+                                                                    break;
+                                                                case SantiyeTalepWebUI.Models.DeliveryType.SameDayDelivery:
+                                                                    <span class="badge bg-warning-subtle text-warning">Gün içi siz sevk edin</span>
+                                                                    break;
+                                                                case SantiyeTalepWebUI.Models.DeliveryType.NextDayDelivery:
+                                                                    <span class="badge bg-info-subtle text-info">Yarýn siz sevk edin</span>
+                                                                    break;
+                                                                case SantiyeTalepWebUI.Models.DeliveryType.BusinessDays1to2:
+                                                                    <span class="badge bg-primary-subtle text-primary">1-2 iþ günü</span>
+                                                                    break;
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label text-muted">Açýklama</label>
+                                                        <div class="border rounded p-3 bg-light">
+                                                            <p class="mb-0">@Model.Description</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Offer Status Info - Only show count for employees -->
+                            @if (Model.OfferCount > 0)
+                            {
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="card border card-border-info">
+                                            <div class="card-header bg-info-subtle border-info">
+                                                <h5 class="card-title mb-0 text-info">
+                                                    <i class="ri-price-tag-3-line align-middle me-1"></i> Teklif Durumu
+                                                </h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="text-center py-4">
+                                                    <div class="mb-3">
+                                                        <div class="avatar-lg mx-auto">
+                                                            <div class="avatar-title bg-info-subtle text-info rounded-circle fs-2">
+                                                                <i class="ri-price-tag-3-line"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <h5 class="fs-16 mb-1">@Model.OfferCount Teklif Alýndý</h5>
+                                                    <p class="text-muted mb-0">Talebiniz için @Model.OfferCount adet teklif gelmiþtir. Teklifler yönetim tarafýndan deðerlendirilmektedir.</p>
+                                                    <div class="mt-3">
+                                                        <p class="text-muted mb-0 fs-12">
+                                                            <i class="ri-information-line"></i> 
+                                                            Teklif detaylarý güvenlik amacýyla sadece yönetim tarafýndan görüntülenebilir.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="card border card-border-warning">
+                                            <div class="card-body text-center py-5">
+                                                <div class="mb-4">
+                                                    <lord-icon src="https://cdn.lordicon.com/zrgcgjjz.json" trigger="loop" colors="primary:#405189,secondary:#f7b84b" style="width:100px;height:100px"></lord-icon>
+                                                </div>
+                                                <h5>Henüz Teklif Gelmedi</h5>
+                                                <p class="text-muted mb-0">Bu talep için henüz hiçbir tedarikçiden teklif gelmemiþtir. Teklifler geldiðinde burada bildirilecektir.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Action Buttons -->
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="hstack gap-2 justify-content-end">
+                                        <a href="@Url.Action("Requests", "Employee")" class="btn btn-light">
+                                            <i class="ri-arrow-left-line align-bottom me-1"></i> Geri Dön
+                                        </a>
+                                        @if (Model.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)
+                                        {
+                                            <button type="button" class="btn btn-danger" onclick="cancelRequest(@Model.Id)">
+                                                <i class="ri-close-line align-bottom me-1"></i> Talebi Ýptal Et
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+
+                <div class="col-xxl-3">
+                    <!-- Request Timeline -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-time-line align-middle me-1"></i> Talep Geçmiþi
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="acitivity-timeline">
+                                <div class="acitivity-item d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="avatar-xs acitivity-avatar">
+                                            <div class="avatar-title bg-success-subtle text-success rounded-circle">
+                                                <i class="ri-file-add-line"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">Talep Oluþturuldu</h6>
+                                        <p class="text-muted mb-1">Talep sisteme kaydedildi</p>
+                                        <small class="mb-0 text-muted">@Model.RequestDate.ToString("dd.MM.yyyy HH:mm")</small>
+                                    </div>
+                                </div>
+
+                                @if (Model.OfferCount > 0)
+                                {
+                                    <div class="acitivity-item d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-xs acitivity-avatar">
+                                                <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
+                                                    <i class="ri-price-tag-3-line"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1">Teklifler Geldi</h6>
+                                            <p class="text-muted mb-1">@Model.OfferCount adet teklif alýndý</p>
+                                            <small class="mb-0 text-muted">Yakýn zamanda</small>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (Model.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed)
+                                {
+                                    <div class="acitivity-item d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-xs acitivity-avatar">
+                                                <div class="avatar-title bg-success-subtle text-success rounded-circle">
+                                                    <i class="ri-check-double-line"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1">Talep Tamamlandý</h6>
+                                            <p class="text-muted mb-1">Talep baþarýyla tamamlandý</p>
+                                            <small class="mb-0 text-muted">Yakýn zamanda</small>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (Model.Status == SantiyeTalepWebUI.Models.RequestStatus.Cancelled)
+                                {
+                                    <div class="acitivity-item d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-xs acitivity-avatar">
+                                                <div class="avatar-title bg-danger-subtle text-danger rounded-circle">
+                                                    <i class="ri-close-line"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-1">Talep Ýptal Edildi</h6>
+                                            <p class="text-muted mb-1">Talep iptal edildi</p>
+                                            <small class="mb-0 text-muted">Yakýn zamanda</small>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-bar-chart-line align-middle me-1"></i> Hýzlý Bilgiler
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flex-shrink-0">
+                                    <i class="ri-calendar-line text-muted fs-16"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <p class="text-muted mb-0">Talep Süresi</p>
+                                    <h6 class="mb-0">@((DateTime.Now - Model.RequestDate).Days) gün</h6>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="ri-price-tag-3-line text-muted fs-16"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <p class="text-muted mb-0">Teklif Sayýsý</p>
+                                    <h6 class="mb-0">@Model.OfferCount</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end row -->
+
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6">
+                    <script>document.write(new Date().getFullYear())</script> © Þantiye Talep Yönetim Sistemi.
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end d-none d-sm-block">
+                        Velzon Template ile geliþtirilmiþtir.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+@section Scripts {
+    <script>
+        // Cancel request function
+        function cancelRequest(requestId) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu talebi iptal etmek istediðinizden emin misiniz?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f06548',
+                cancelButtonColor: '#74788d',
+                confirmButtonText: 'Evet, Ýptal Et!',
+                cancelButtonText: 'Vazgeç'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Ýþleniyor...',
+                        text: 'Talep iptal ediliyor',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading()
+                        }
+                    });
+
+                    fetch(`/Employee/CancelRequest/${requestId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Baþarýlý!',
+                                text: 'Talep baþarýyla iptal edildi.',
+                                icon: 'success',
+                                confirmButtonColor: '#299cdb'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Hata!',
+                                text: data.message || 'Talep iptal edilirken bir hata oluþtu.',
+                                icon: 'error',
+                                confirmButtonColor: '#f06548'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Hata!',
+                            text: 'Talep iptal edilirken bir hata oluþtu.',
+                            icon: 'error',
+                            confirmButtonColor: '#f06548'
+                        });
+                    });
+                }
+            });
+        }
+
+        // Auto refresh for offers (reduced frequency since employees can't see detailed offers)
+        setInterval(function() {
+            // Only refresh if request is still open
+            @if (Model.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)
+            {
+                <text>
+                location.reload();
+                </text>
+            }
+        }, 120000); // Refresh every 2 minutes for open requests
+    </script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+}

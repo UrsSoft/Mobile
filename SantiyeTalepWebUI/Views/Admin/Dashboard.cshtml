@@ -1,3 +1,4 @@
+@model SantiyeTalepWebUI.Models.ViewModels.AdminDashboardViewModel
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -33,7 +34,7 @@
                                                 <i class="ri-file-list-3-line display-6 text-muted"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <h2 class="mb-0"><span class="counter-value" data-target="156">0</span></h2>
+                                                <h2 class="mb-0"><span class="counter-value" data-target="@Model.Stats.TotalRequests">@Model.Stats.TotalRequests</span></h2>
                                             </div>
                                         </div>
                                     </div>
@@ -46,7 +47,7 @@
                                                 <i class="ri-timer-line display-6 text-muted"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <h2 class="mb-0"><span class="counter-value" data-target="42">0</span></h2>
+                                                <h2 class="mb-0"><span class="counter-value" data-target="@Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)">@Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)</span></h2>
                                             </div>
                                         </div>
                                     </div>
@@ -59,7 +60,7 @@
                                                 <i class="ri-checkbox-circle-line display-6 text-muted"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <h2 class="mb-0"><span class="counter-value" data-target="89">0</span></h2>
+                                                <h2 class="mb-0"><span class="counter-value" data-target="@Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed)">@Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed)</span></h2>
                                             </div>
                                         </div>
                                     </div>
@@ -72,7 +73,7 @@
                                                 <i class="ri-building-2-line display-6 text-muted"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <h2 class="mb-0"><span class="counter-value" data-target="12">0</span></h2>
+                                                <h2 class="mb-0"><span class="counter-value" data-target="@Model.Sites.Count(s => s.IsActive)">@Model.Sites.Count(s => s.IsActive)</span></h2>
                                             </div>
                                         </div>
                                     </div>
@@ -85,7 +86,7 @@
                                                 <i class="ri-group-line display-6 text-muted"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <h2 class="mb-0"><span class="counter-value" data-target="128">0</span></h2>
+                                                <h2 class="mb-0"><span class="counter-value" data-target="@Model.Stats.TotalUsers">@Model.Stats.TotalUsers</span></h2>
                                             </div>
                                         </div>
                                     </div>
@@ -167,15 +168,15 @@
                         <div class="card-body px-0">
                             <ul class="list-inline main-chart text-center mb-0">
                                 <li class="list-inline-item chart-border-left me-0 border-0">
-                                    <h4 class="text-primary">₺2.8M <span class="text-muted d-inline-block fs-13 align-middle ms-2">Toplam Maliyet</span></h4>
+                                    <h4 class="text-primary">₺@(Model.RecentRequests.Where(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed).Sum(r => (decimal?)r.EstimatedCost ?? 0).ToString("N0")) <span class="text-muted d-inline-block fs-13 align-middle ms-2">Toplam Maliyet</span></h4>
                                 </li>
                                 <li class="list-inline-item chart-border-left me-0">
                                     <h4>
-                                        ₺2.1M<span class="text-muted d-inline-block fs-13 align-middle ms-2">Onaylanan</span>
+                                        ₺@(Model.RecentRequests.Where(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed).Sum(r => (decimal?)r.EstimatedCost ?? 0).ToString("N0"))<span class="text-muted d-inline-block fs-13 align-middle ms-2">Onaylanan</span>
                                     </h4>
                                 </li>
                                 <li class="list-inline-item chart-border-left me-0">
-                                    <h4><span data-plugin="counterup">75</span>%<span class="text-muted d-inline-block fs-13 align-middle ms-2">Verimlilik</span></h4>
+                                    <h4><span data-plugin="counterup">@(Model.Stats.TotalRequests > 0 ? Math.Round((double)Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed) / Model.Stats.TotalRequests * 100, 0) : 0)</span>%<span class="text-muted d-inline-block fs-13 align-middle ms-2">Verimlilik</span></h4>
                                 </li>
                             </ul>
 
@@ -220,66 +221,48 @@
                                     </thead>
 
                                     <tbody>
-                                        <tr>
-                                            <td>#TLP-2024-001</td>
-                                            <td>Ankara Residence</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-1.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Mehmet Yılmaz</a>
-                                            </td>
-                                            <td><span class="badge bg-success-subtle text-success p-2">Onaylandı</span></td>
-                                            <td>
-                                                <div class="text-nowrap">25 Ara, 2024</div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#TLP-2024-002</td>
-                                            <td>İstanbul Plaza</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-2.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Ayşe Demir</a>
-                                            </td>
-                                            <td><span class="badge bg-warning-subtle text-warning p-2">Bekliyor</span></td>
-                                            <td>
-                                                <div class="text-nowrap">24 Ara, 2024</div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#TLP-2024-003</td>
-                                            <td>İzmir Towers</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-3.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Ali Kaya</a>
-                                            </td>
-                                            <td><span class="badge bg-danger-subtle text-danger p-2">Reddedildi</span></td>
-                                            <td>
-                                                <div class="text-nowrap">23 Ara, 2024</div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#TLP-2024-004</td>
-                                            <td>Bursa Complex</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-4.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Fatma Şen</a>
-                                            </td>
-                                            <td><span class="badge bg-success-subtle text-success p-2">Onaylandı</span></td>
-                                            <td>
-                                                <div class="text-nowrap">22 Ara, 2024</div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#TLP-2024-005</td>
-                                            <td>Antalya Resort</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-6.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Hasan Özkan</a>
-                                            </td>
-                                            <td><span class="badge bg-info-subtle text-info p-2">İncelemede</span></td>
-                                            <td>
-                                                <div class="text-nowrap">21 Ara, 2024</div>
-                                            </td>
-                                        </tr>
+                                        @if (Model.RecentRequests?.Any() == true)
+                                        {
+                                            @foreach (var request in Model.RecentRequests.Take(5))
+                                            {
+                                                <tr>
+                                                    <td>#TLP-@request.Id.ToString("D4")</td>
+                                                    <td>@(request.SiteName ?? "Bilinmiyor")</td>
+                                                    <td>
+                                                        <img src="~/assets/images/users/avatar-1.jpg" alt="" class="avatar-xs rounded-circle me-2">
+                                                        <a href="#javascript: void(0);" class="text-body fw-medium">@(request.EmployeeName ?? "Bilinmiyor")</a>
+                                                    </td>
+                                                    <td>
+                                                        @{
+                                                            var statusClass = request.Status switch
+                                                            {
+                                                                SantiyeTalepWebUI.Models.RequestStatus.Open => "bg-warning-subtle text-warning",
+                                                                SantiyeTalepWebUI.Models.RequestStatus.Completed => "bg-success-subtle text-success",
+                                                                SantiyeTalepWebUI.Models.RequestStatus.Cancelled => "bg-danger-subtle text-danger",
+                                                                _ => "bg-info-subtle text-info"
+                                                            };
+                                                            var statusText = request.Status switch
+                                                            {
+                                                                SantiyeTalepWebUI.Models.RequestStatus.Open => "Açık",
+                                                                SantiyeTalepWebUI.Models.RequestStatus.Completed => "Tamamlandı",
+                                                                SantiyeTalepWebUI.Models.RequestStatus.Cancelled => "İptal",
+                                                                _ => "İncelemede"
+                                                            };
+                                                        }
+                                                        <span class="badge @statusClass p-2">@statusText</span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="text-nowrap">@request.RequestDate.ToString("dd MMM, yyyy")</div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">Henüz talep bulunmuyor</td>
+                                            </tr>
+                                        }
                                     </tbody><!-- end tbody -->
                                 </table><!-- end table -->
                             </div><!-- end table responsive -->
@@ -288,297 +271,6 @@
                 </div><!-- end col -->
 
                 <div class="col-xl-5">
-                    <div class="card card-height-100">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Bugünkü Görevler</h4>
-                            <div class="flex-shrink-0">
-                                <div class="dropdown card-header-dropdown">
-                                    <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="text-muted"><i class="ri-settings-4-line align-middle me-1 fs-15"></i>Ayarlar</span>
-                                    </a>
-                                    <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Düzenle</a>
-                                        <a class="dropdown-item" href="#">Sil</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div><!-- end card header -->
-
-                        <div class="card-body p-0">
-                            <div class="align-items-center p-3 justify-content-between d-flex">
-                                <div class="flex-shrink-0">
-                                    <div class="text-muted"><span class="fw-semibold">6</span> / <span class="fw-semibold">12</span> görev tamamlandı</div>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-success"><i class="ri-add-line align-middle me-1"></i> Görev Ekle</button>
-                            </div><!-- end card header -->
-
-                            <div data-simplebar style="max-height: 219px;">
-                                <ul class="list-group list-group-flush border-dashed px-3">
-                                    <li class="list-group-item ps-0">
-                                        <div class="d-flex align-items-start">
-                                            <div class="form-check ps-0 flex-sharink-0">
-                                                <input type="checkbox" class="form-check-input ms-0" id="task_one" checked>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <label class="form-check-label mb-0 ps-2" for="task_one">Ankara Residence malzeme listesi kontrolü</label>
-                                            </div>
-                                            <div class="flex-shrink-0 ms-2">
-                                                <p class="text-muted fs-12 mb-0">Bugün</p>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="list-group-item ps-0">
-                                        <div class="d-flex align-items-start">
-                                            <div class="form-check ps-0 flex-sharink-0">
-                                                <input type="checkbox" class="form-check-input ms-0" id="task_two">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <label class="form-check-label mb-0 ps-2" for="task_two">İstanbul Plaza talep onayları</label>
-                                            </div>
-                                            <div class="flex-shrink-0 ms-2">
-                                                <p class="text-muted fs-12 mb-0">Bugün</p>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="list-group-item ps-0">
-                                        <div class="d-flex align-items-start">
-                                            <div class="form-check flex-sharink-0 ps-0">
-                                                <input type="checkbox" class="form-check-input ms-0" id="task_three" checked>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <label class="form-check-label mb-0 ps-2" for="task_three">Haftalık maliyet raporu hazırlama</label>
-                                            </div>
-                                            <div class="flex-shrink-0 ms-2">
-                                                <p class="text-muted fs-12 mb-0">Bugün</p>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="list-group-item ps-0">
-                                        <div class="d-flex align-items-start">
-                                            <div class="form-check ps-0 flex-sharink-0">
-                                                <input type="checkbox" class="form-check-input ms-0" id="task_four">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <label class="form-check-label mb-0 ps-2" for="task_four">Şantiye güvenlik denetimi</label>
-                                            </div>
-                                            <div class="flex-shrink-0 ms-2">
-                                                <p class="text-muted fs-12 mb-0">Yarın</p>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="list-group-item ps-0">
-                                        <div class="d-flex align-items-start">
-                                            <div class="form-check ps-0 flex-sharink-0">
-                                                <input type="checkbox" class="form-check-input ms-0" id="task_five" checked>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <label class="form-check-label mb-0 ps-2" for="task_five">Çalışan izin talepleri değerlendirme</label>
-                                            </div>
-                                            <div class="flex-shrink-0 ms-2">
-                                                <p class="text-muted fs-12 mb-0">Bugün</p>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="list-group-item ps-0">
-                                        <div class="d-flex align-items-start">
-                                            <div class="form-check ps-0 flex-sharink-0">
-                                                <input type="checkbox" class="form-check-input ms-0" id="task_six">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <label class="form-check-label mb-0 ps-2" for="task_six">Yeni şantiye kurulum planlaması</label>
-                                            </div>
-                                            <div class="flex-shrink-0 ms-2">
-                                                <p class="text-muted fs-12 mb-0">Bu hafta</p>
-                                            </div>
-                                        </div>
-                                    </li>
-                                </ul><!-- end ul -->
-                            </div>
-                            <div class="p-3 pt-2">
-                                <a href="javascript:void(0);" class="text-muted text-decoration-underline">Daha fazla göster...</a>
-                            </div>
-                        </div><!-- end card body -->
-                    </div><!-- end card -->
-                </div><!-- end col -->
-            </div><!-- end row -->
-
-            <!-- Activities and Projects Row -->
-            <div class="row">
-                <div class="col-xxl-5">
-                    <div class="card">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Yaklaşan Etkinlikler</h4>
-                            <div class="flex-shrink-0">
-                                <div class="dropdown card-header-dropdown">
-                                    <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="text-muted fs-18"><i class="mdi mdi-dots-vertical"></i></span>
-                                    </a>
-                                    <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Düzenle</a>
-                                        <a class="dropdown-item" href="#">Sil</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div><!-- end card header -->
-                        <div class="card-body pt-0">
-                            <ul class="list-group list-group-flush border-dashed">
-                                <li class="list-group-item ps-0">
-                                    <div class="row align-items-center g-3">
-                                        <div class="col-auto">
-                                            <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3">
-                                                <div class="text-center">
-                                                    <h5 class="mb-0">26</h5>
-                                                    <div class="text-muted">Per</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col">
-                                            <h5 class="text-muted mt-0 mb-1 fs-13">09:00 - 12:00</h5>
-                                            <a href="#" class="text-reset fs-14 mb-0">Ankara Residence şantiye toplantısı</a>
-                                        </div>
-                                        <div class="col-sm-auto">
-                                            <div class="avatar-group">
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);" class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Mehmet Yılmaz">
-                                                        <img src="~/assets/images/users/avatar-1.jpg" alt="" class="rounded-circle avatar-xxs">
-                                                    </a>
-                                                </div>
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);" class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Ayşe Demir">
-                                                        <img src="~/assets/images/users/avatar-2.jpg" alt="" class="rounded-circle avatar-xxs">
-                                                    </a>
-                                                </div>
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);" class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Ali Kaya">
-                                                        <img src="~/assets/images/users/avatar-3.jpg" alt="" class="rounded-circle avatar-xxs">
-                                                    </a>
-                                                </div>
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);">
-                                                        <div class="avatar-xxs">
-                                                            <span class="avatar-title rounded-circle bg-info text-white">
-                                                                +3
-                                                            </span>
-                                                        </div>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- end row -->
-                                </li><!-- end -->
-                                <li class="list-group-item ps-0">
-                                    <div class="row align-items-center g-3">
-                                        <div class="col-auto">
-                                            <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3">
-                                                <div class="text-center">
-                                                    <h5 class="mb-0">27</h5>
-                                                    <div class="text-muted">Cum</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col">
-                                            <h5 class="text-muted mt-0 mb-1 fs-13">14:00 - 16:30</h5>
-                                            <a href="#" class="text-reset fs-14 mb-0">İstanbul Plaza güvenlik eğitimi</a>
-                                        </div>
-                                        <div class="col-sm-auto">
-                                            <div class="avatar-group">
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);" class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Fatma Şen">
-                                                        <img src="~/assets/images/users/avatar-4.jpg" alt="" class="rounded-circle avatar-xxs">
-                                                    </a>
-                                                </div>
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);" class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Hasan Özkan">
-                                                        <img src="~/assets/images/users/avatar-5.jpg" alt="" class="rounded-circle avatar-xxs">
-                                                    </a>
-                                                </div>
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);">
-                                                        <div class="avatar-xxs">
-                                                            <span class="avatar-title rounded-circle bg-success text-white">
-                                                                +8
-                                                            </span>
-                                                        </div>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- end row -->
-                                </li><!-- end -->
-                                <li class="list-group-item ps-0">
-                                    <div class="row align-items-center g-3">
-                                        <div class="col-auto">
-                                            <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3">
-                                                <div class="text-center">
-                                                    <h5 class="mb-0">30</h5>
-                                                    <div class="text-muted">Pzt</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col">
-                                            <h5 class="text-muted mt-0 mb-1 fs-13">10:00 - 18:00</h5>
-                                            <a href="#" class="text-reset fs-14 mb-0">Yeni şantiye kurulum denetimi</a>
-                                        </div>
-                                        <div class="col-sm-auto">
-                                            <div class="avatar-group">
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);" class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Mehmet Yılmaz">
-                                                        <img src="~/assets/images/users/avatar-1.jpg" alt="" class="rounded-circle avatar-xxs">
-                                                    </a>
-                                                </div>
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);" class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Ali Kaya">
-                                                        <img src="~/assets/images/users/avatar-3.jpg" alt="" class="rounded-circle avatar-xxs">
-                                                    </a>
-                                                </div>
-                                                <div class="avatar-group-item">
-                                                    <a href="javascript: void(0);">
-                                                        <div class="avatar-xxs">
-                                                            <span class="avatar-title rounded-circle bg-primary text-white">
-                                                                +2
-                                                            </span>
-                                                        </div>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- end row -->
-                                </li><!-- end -->
-                            </ul><!-- end -->
-                            <div class="align-items-center mt-2 row g-3 text-center text-sm-start">
-                                <div class="col-sm">
-                                    <div class="text-muted">
-                                        <span class="fw-semibold">3</span> etkinlik gösteriliyor, toplam <span class="fw-semibold">15</span> etkinlik
-                                    </div>
-                                </div>
-                                <div class="col-sm-auto">
-                                    <ul class="pagination pagination-separated pagination-sm justify-content-center justify-content-sm-start mb-0">
-                                        <li class="page-item disabled">
-                                            <a href="#" class="page-link">←</a>
-                                        </li>
-                                        <li class="page-item active">
-                                            <a href="#" class="page-link">1</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a href="#" class="page-link">2</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a href="#" class="page-link">3</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a href="#" class="page-link">→</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div><!-- end card body -->
-                    </div><!-- end card -->
-                </div><!-- end col -->
-
-                <div class="col-xxl-7">
                     <div class="card card-height-100">
                         <div class="card-header align-items-center d-flex">
                             <h4 class="card-title mb-0 flex-grow-1">Aktif Şantiyeler</h4>
@@ -597,79 +289,109 @@
                                 <table class="table table-bordered table-nowrap align-middle mb-0">
                                     <thead>
                                         <tr>
-                                            <th scope="col" style="width: 30%;">Şantiye Adı</th>
-                                            <th scope="col" style="width: 25%;">Proje Yöneticisi</th>
-                                            <th scope="col" style="width: 20%;">İlerleme</th>
-                                            <th scope="col" style="width: 25%;">Bitiş Tarihi</th>
+                                            <th scope="col" style="width: 50%;">Şantiye Adı</th>
+                                            <th scope="col" style="width: 30%;">Çalışan Sayısı</th>
+                                            <th scope="col" style="width: 20%;">Durum</th>
                                         </tr>
                                     </thead>
 
                                     <tbody>
-                                        <tr>
-                                            <td>Ankara Residence</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-1.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Mehmet Yılmaz</a>
-                                            </td>
-                                            <td>
-                                                <div class="progress progress-sm">
-                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100">85%</div>
-                                                </div>
-                                            </td>
-                                            <td>15 Şub 2025</td>
+                                        @if (Model.Sites?.Any() == true)
+                                        {
+                                            @foreach (var site in Model.Sites.Take(5))
+                                            {
+                                                <tr>
+                                                    <td>@site.Name</td>
+                                                    <td>
+                                                        <span class="badge bg-primary">@(site.Employees?.Count ?? 0) çalışan</span>
+                                                    </td>
+                                                    <td>
+                                                        @if (site.IsActive)
+                                                        {
+                                                            <span class="badge bg-success">Aktif</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-secondary">Pasif</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted">Henüz şantiye bulunmuyor</td>
+                                            </tr>
+                                        }
+                                    </tbody><!-- end tbody -->
+                                </table><!-- end table -->
+                            </div><!-- end table responsive -->
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+            </div><!-- end row -->
+
+            <!-- Employee List Row -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Son Eklenen Çalışanlar</h4>
+                            <div class="flex-shrink-0">
+                                <a href="@Url.Action("Employees", "Admin")" class="btn btn-primary btn-sm">Tümünü Gör</a>
+                            </div>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <div class="table-responsive table-card">
+                                <table class="table table-borderless table-hover table-nowrap align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr class="text-muted">
+                                            <th scope="col">Çalışan</th>
+                                            <th scope="col">Şantiye</th>
+                                            <th scope="col">Pozisyon</th>
+                                            <th scope="col">E-posta</th>
+                                            <th scope="col">Durum</th>
+                                            <th scope="col">Kayıt Tarihi</th>
                                         </tr>
-                                        <tr>
-                                            <td>İstanbul Plaza</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-2.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Ayşe Demir</a>
-                                            </td>
-                                            <td>
-                                                <div class="progress progress-sm">
-                                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">65%</div>
-                                                </div>
-                                            </td>
-                                            <td>30 Mar 2025</td>
-                                        </tr>
-                                        <tr>
-                                            <td>İzmir Towers</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-3.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Ali Kaya</a>
-                                            </td>
-                                            <td>
-                                                <div class="progress progress-sm">
-                                                    <div class="progress-bar bg-info" role="progressbar" style="width: 45%" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">45%</div>
-                                                </div>
-                                            </td>
-                                            <td>20 May 2025</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Bursa Complex</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-4.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Fatma Şen</a>
-                                            </td>
-                                            <td>
-                                                <div class="progress progress-sm">
-                                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">75%</div>
-                                                </div>
-                                            </td>
-                                            <td>10 Nis 2025</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Antalya Resort</td>
-                                            <td>
-                                                <img src="~/assets/images/users/avatar-5.jpg" alt="" class="avatar-xs rounded-circle me-2">
-                                                <a href="#javascript: void(0);" class="text-body fw-medium">Hasan Özkan</a>
-                                            </td>
-                                            <td>
-                                                <div class="progress progress-sm">
-                                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
-                                                </div>
-                                            </td>
-                                            <td>15 Haz 2025</td>
-                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @if (Model.Employees?.Any() == true)
+                                        {
+                                            @foreach (var employee in Model.Employees.Take(5))
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <img src="~/assets/images/users/avatar-1.jpg" alt="" class="avatar-xs rounded-circle me-2">
+                                                        <a href="#javascript: void(0);" class="text-body fw-medium">@employee.FullName</a>
+                                                    </td>
+                                                    <td>@(employee.SiteName ?? "Atanmamış")</td>
+                                                    <td>@(employee.Position ?? "-")</td>
+                                                    <td>@employee.Email</td>
+                                                    <td>
+                                                        @if (employee.IsActive)
+                                                        {
+                                                            <span class="badge bg-success-subtle text-success p-2">Aktif</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-danger-subtle text-danger p-2">Pasif</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <div class="text-nowrap">@employee.CreatedDate.ToString("dd MMM, yyyy")</div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">Henüz çalışan bulunmuyor</td>
+                                            </tr>
+                                        }
                                     </tbody><!-- end tbody -->
                                 </table><!-- end table -->
                             </div><!-- end table responsive -->
@@ -699,3 +421,64 @@
     </footer>
 </div>
 <!-- end main content-->
+
+<script>
+    // Initialize charts with real data
+    document.addEventListener('DOMContentLoaded', function() {
+        // Request Status Chart
+        var openCount = @Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open);
+        var completedCount = @Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed);
+        var cancelledCount = @Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Cancelled);
+        
+        var requestStatusOptions = {
+            series: [openCount, completedCount, cancelledCount],
+            chart: {
+                type: 'donut',
+                height: 230
+            },
+            labels: ['Açık', 'Tamamlanan', 'İptal'],
+            colors: ['#f1b44c', '#34c38f', '#f46a6a'],
+            legend: {
+                position: 'bottom'
+            }
+        };
+        var requestStatusChart = new ApexCharts(document.querySelector("#request-status-chart"), requestStatusOptions);
+        requestStatusChart.render();
+
+        // Site Performance Chart (dummy data for now)
+        var sitePerformanceOptions = {
+            series: [{
+                name: 'Talep Sayısı',
+                data: [44, 55, 41, 67, 22, 43]
+            }],
+            chart: {
+                type: 'bar',
+                height: 200
+            },
+            xaxis: {
+                categories: [@Html.Raw(string.Join(",", Model.Sites.Take(6).Select(s => "'" + s.Name + "'")))]
+            },
+            colors: ['#556ee6']
+        };
+        var sitePerformanceChart = new ApexCharts(document.querySelector("#site-performance-chart"), sitePerformanceOptions);
+        sitePerformanceChart.render();
+
+        // Cost Analysis Chart (dummy data for now)
+        var costAnalysisOptions = {
+            series: [{
+                name: 'Onaylanan',
+                data: [44, 55, 41, 67, 22, 43, 21, 49]
+            }, {
+                name: 'Bekleyen',
+                data: [13, 23, 20, 8, 13, 27, 33, 12]
+            }],
+            chart: {
+                type: 'area',
+                height: 150
+            },
+            colors: ['#34c38f', '#f46a6a']
+        };
+        var costAnalysisChart = new ApexCharts(document.querySelector("#cost-analysis-chart"), costAnalysisOptions);
+        costAnalysisChart.render();
+    });
+</script>

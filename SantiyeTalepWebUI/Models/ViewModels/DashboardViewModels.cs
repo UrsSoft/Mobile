@@ -35,12 +35,13 @@ namespace SantiyeTalepWebUI.Models.ViewModels
         public List<SupplierDto> PendingSuppliers { get; set; } = new();
         public List<RequestDto> RecentRequests { get; set; } = new();
         public List<SiteDto> Sites { get; set; } = new();
+        public List<EmployeeDto> Employees { get; set; } = new();
     }
 
     public class EmployeeDashboardViewModel
     {
         public DashboardStats Stats { get; set; } = new();
-        public List<RequestDto> MyRequests { get; set; } = new();
+        public List<EmployeeRequestDto> MyRequests { get; set; } = new(); // Updated to use EmployeeRequestDto
         public SiteDto? MySite { get; set; }
     }
 

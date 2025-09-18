@@ -1,0 +1,369 @@
+@model SantiyeTalepWebUI.Models.DTOs.EmployeeRequestListViewModel
+@{
+    ViewData["Title"] = "Taleplerim";
+    Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Taleplerim</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Employee")">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Taleplerim</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <div class="flex-grow-1">
+                                    <h4 class="card-title mb-0">
+                                        <i class="ri-file-list-3-line align-middle me-1 text-muted"></i>
+                                        Talep Listesi
+                                    </h4>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="d-flex gap-1 flex-wrap">
+                                        <a href="@Url.Action("CreateRequest", "Employee")" class="btn btn-primary">
+                                            <i class="ri-add-line align-bottom me-1"></i> Yeni Talep
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <!-- Filters -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-sm-3">
+                                    <div class="search-box">
+                                        <input type="text" class="form-control search" placeholder="Talep ara..." id="searchInput">
+                                        <i class="ri-search-line search-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="col-sm-auto">
+                                    <select class="form-select" id="statusFilter">
+                                        <option value="">Tüm Durumlar</option>
+                                        <option value="1">Açýk</option>
+                                        <option value="2">Ýþlemde</option>
+                                        <option value="3">Tamamlandý</option>
+                                        <option value="4">Ýptal</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-auto">
+                                    <select class="form-select" id="deliveryTypeFilter">
+                                        <option value="">Tüm Teslim Tipleri</option>
+                                        <option value="1">Bugün araç gönderip aldýracaðým</option>
+                                        <option value="2">Gün içi siz sevk edin</option>
+                                        <option value="3">Yarýn siz sevk edin</option>
+                                        <option value="4">1-2 iþ günü</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-auto">
+                                    <button type="button" class="btn btn-success" id="clearFilters">
+                                        <i class="ri-refresh-line align-bottom"></i> Temizle
+                                    </button>
+                                </div>
+                            </div>
+
+                            @if (Model?.Requests != null && Model.Requests.Any())
+                            {
+                                <div class="table-responsive table-card mb-3">
+                                    <table class="table align-middle table-nowrap mb-0" id="requestsTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th scope="col">Ürün Açýklamasý</th>
+                                                <th scope="col">Miktar</th>
+                                                <th scope="col">Teslim Tipi</th>
+                                                <th scope="col">Durum</th>
+                                                <th scope="col">Talep Tarihi</th>
+                                                <th scope="col">Teklif Sayýsý</th>
+                                                <th scope="col">Ýþlemler</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="list form-check-all">
+                                            @foreach (var request in Model.Requests)
+                                            {
+                                                <tr data-status="@((int)request.Status)" data-delivery="@((int)request.DeliveryType)">
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="flex-grow-1">
+                                                                <h6 class="fs-14 mb-1">@request.ProductDescription</h6>
+                                                                <p class="text-muted mb-0">@(request.Description?.Length > 60 ? request.Description.Substring(0, 60) + "..." : request.Description)</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-light text-dark fs-12">@request.Quantity</span>
+                                                    </td>
+                                                    <td>
+                                                        @switch (request.DeliveryType)
+                                                        {
+                                                            case SantiyeTalepWebUI.Models.DeliveryType.TodayPickup:
+                                                                <span class="badge bg-danger-subtle text-danger">Bugün araç gönderip aldýracaðým</span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.DeliveryType.SameDayDelivery:
+                                                                <span class="badge bg-warning-subtle text-warning">Gün içi siz sevk edin</span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.DeliveryType.NextDayDelivery:
+                                                                <span class="badge bg-info-subtle text-info">Yarýn siz sevk edin</span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.DeliveryType.BusinessDays1to2:
+                                                                <span class="badge bg-primary-subtle text-primary">1-2 iþ günü</span>
+                                                                break;
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @switch (request.Status)
+                                                        {
+                                                            case SantiyeTalepWebUI.Models.RequestStatus.Open:
+                                                                <span class="badge bg-warning-subtle text-warning">
+                                                                    <i class="ri-time-line align-bottom me-1"></i> Açýk
+                                                                </span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.RequestStatus.InProgress:
+                                                                <span class="badge bg-info-subtle text-info">
+                                                                    <i class="ri-loader-4-line align-bottom me-1"></i> Ýþlemde
+                                                                </span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.RequestStatus.Completed:
+                                                                <span class="badge bg-success-subtle text-success">
+                                                                    <i class="ri-check-double-line align-bottom me-1"></i> Tamamlandý
+                                                                </span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.RequestStatus.Cancelled:
+                                                                <span class="badge bg-danger-subtle text-danger">
+                                                                    <i class="ri-close-line align-bottom me-1"></i> Ýptal
+                                                                </span>
+                                                                break;
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-muted">@request.RequestDate.ToString("dd.MM.yyyy HH:mm")</span>
+                                                    </td>
+                                                    <td>
+                                                        @if (request.OfferCount > 0)
+                                                        {
+                                                            <span class="badge bg-primary">@request.OfferCount</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">-</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <div class="dropdown d-inline-block">
+                                                            <button class="btn btn-soft-secondary btn-sm dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="ri-more-fill align-middle"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                                <li><a href="@Url.Action("RequestDetails", "Employee", new { id = request.Id })" class="dropdown-item"><i class="ri-eye-fill align-bottom me-2 text-muted"></i> Detaylarý Görüntüle</a></li>
+                                                                @if (request.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)
+                                                                {
+                                                                    <li>
+                                                                        <hr class="dropdown-divider">
+                                                                    </li>
+                                                                    <li><a href="#" class="dropdown-item text-danger" onclick="cancelRequest(@request.Id)"><i class="ri-delete-bin-fill align-bottom me-2 text-danger"></i> Ýptal Et</a></li>
+                                                                }
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <div class="d-flex justify-content-end">
+                                    <div class="pagination-wrap hstack gap-2">
+                                        <a class="page-item pagination-prev disabled" href="#">
+                                            Önceki
+                                        </a>
+                                        <ul class="pagination listjs-pagination mb-0"></ul>
+                                        <a class="page-item pagination-next" href="#">
+                                            Sonraki
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- No requests state -->
+                                <div class="text-center">
+                                    <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px"></lord-icon>
+                                    <div class="mt-4">
+                                        <h5>Henüz talep oluþturmadýnýz!</h5>
+                                        <p class="text-muted mb-4">Ýlk talebinizi oluþturmak için aþaðýdaki butona týklayýn.</p>
+                                        <a href="@Url.Action("CreateRequest", "Employee")" class="btn btn-success">
+                                            <i class="ri-add-line me-1"></i> Ýlk Talebi Oluþtur
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div><!-- end card-body -->
+                    </div><!-- end card -->
+                </div>
+                <!-- end col -->
+            </div>
+            <!-- end row -->
+
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+    <footer class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-6">
+                    <script>document.write(new Date().getFullYear())</script> © Þantiye Talep Yönetim Sistemi.
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end d-none d-sm-block">
+                        Velzon Template ile geliþtirilmiþtir.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+@section Scripts {
+    <script>
+        // Global variables
+        let allRequests = [];
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Store all requests for filtering
+            allRequests = Array.from(document.querySelectorAll('#requestsTable tbody tr')).map(row => {
+                return {
+                    element: row,
+                    productDescription: row.querySelector('td:first-child h6').textContent.toLowerCase(),
+                    description: row.querySelector('td:first-child p').textContent.toLowerCase(),
+                    status: row.getAttribute('data-status'),
+                    deliveryType: row.getAttribute('data-delivery')
+                };
+            });
+
+            // Setup event listeners
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Search input
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            
+            // Filter selects
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('deliveryTypeFilter').addEventListener('change', applyFilters);
+            
+            // Clear filters button
+            document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const deliveryTypeFilter = document.getElementById('deliveryTypeFilter').value;
+
+            allRequests.forEach(request => {
+                let showRequest = true;
+
+                // Search filter
+                if (searchTerm && !request.productDescription.includes(searchTerm) && !request.description.includes(searchTerm)) {
+                    showRequest = false;
+                }
+
+                // Status filter
+                if (statusFilter && request.status !== statusFilter) {
+                    showRequest = false;
+                }
+
+                // Delivery type filter
+                if (deliveryTypeFilter && request.deliveryType !== deliveryTypeFilter) {
+                    showRequest = false;
+                }
+
+                // Show/hide the row
+                request.element.style.display = showRequest ? '' : 'none';
+            });
+
+            // Update result count
+            updateResultCount();
+        }
+
+        function clearAllFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('deliveryTypeFilter').value = '';
+            
+            // Show all requests
+            allRequests.forEach(request => {
+                request.element.style.display = '';
+            });
+
+            updateResultCount();
+        }
+
+        function updateResultCount() {
+            const visibleRequests = allRequests.filter(request => request.element.style.display !== 'none').length;
+            const totalRequests = allRequests.length;
+            
+            // You can add a result count display here if needed
+            console.log(`Showing ${visibleRequests} of ${totalRequests} requests`);
+        }
+
+        // Cancel request function
+        function cancelRequest(requestId) {
+            if (confirm('Bu talebi iptal etmek istediðinizden emin misiniz?')) {
+                fetch(`/Employee/CancelRequest/${requestId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload page to reflect changes
+                        location.reload();
+                    } else {
+                        alert('Talep iptal edilirken bir hata oluþtu: ' + (data.message || 'Bilinmeyen hata'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Talep iptal edilirken bir hata oluþtu.');
+                });
+            }
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(function() {
+            // Only refresh if no filters are applied
+            const hasFilters = document.getElementById('searchInput').value || 
+                              document.getElementById('statusFilter').value || 
+                              document.getElementById('deliveryTypeFilter').value;
+            
+            if (!hasFilters) {
+                location.reload();
+            }
+        }, 30000);
+    </script>
+}

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SantiyeTalepApi.Data;
 
@@ -11,9 +12,11 @@ using SantiyeTalepApi.Data;
 namespace SantiyeTalepApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250918153041_AddingCategoryBrand")]
+    partial class AddingCategoryBrand
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,8 +38,7 @@ namespace SantiyeTalepApi.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -202,9 +204,6 @@ namespace SantiyeTalepApi.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -221,21 +220,24 @@ namespace SantiyeTalepApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Sites");
-                });
 
-            modelBuilder.Entity("SantiyeTalepApi.Models.SiteBrand", b =>
-                {
-                    b.Property<int>("SiteId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BrandId")
-                        .HasColumnType("int");
-
-                    b.HasKey("SiteId", "BrandId");
-
-                    b.HasIndex("BrandId");
-
-                    b.ToTable("SiteBrands");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Address = "İstanbul, Türkiye",
+                            Description = "Ana şantiye lokasyonu",
+                            IsActive = true,
+                            Name = "Ana Şantiye"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Address = "Ankara, Türkiye",
+                            Description = "İkinci şantiye lokasyonu",
+                            IsActive = true,
+                            Name = "Ankara Şantiye"
+                        });
                 });
 
             modelBuilder.Entity("SantiyeTalepApi.Models.Supplier", b =>
@@ -420,25 +422,6 @@ namespace SantiyeTalepApi.Migrations
                     b.Navigation("Site");
                 });
 
-            modelBuilder.Entity("SantiyeTalepApi.Models.SiteBrand", b =>
-                {
-                    b.HasOne("SantiyeTalepApi.Models.Brand", "Brand")
-                        .WithMany("SiteBrands")
-                        .HasForeignKey("BrandId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SantiyeTalepApi.Models.Site", "Site")
-                        .WithMany("SiteBrands")
-                        .HasForeignKey("SiteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Brand");
-
-                    b.Navigation("Site");
-                });
-
             modelBuilder.Entity("SantiyeTalepApi.Models.Supplier", b =>
                 {
                     b.HasOne("SantiyeTalepApi.Models.User", "User")
@@ -453,8 +436,6 @@ namespace SantiyeTalepApi.Migrations
             modelBuilder.Entity("SantiyeTalepApi.Models.Brand", b =>
                 {
                     b.Navigation("CategoryBrands");
-
-                    b.Navigation("SiteBrands");
                 });
 
             modelBuilder.Entity("SantiyeTalepApi.Models.Category", b =>
@@ -477,8 +458,6 @@ namespace SantiyeTalepApi.Migrations
                     b.Navigation("Employees");
 
                     b.Navigation("Requests");
-
-                    b.Navigation("SiteBrands");
                 });
 
             modelBuilder.Entity("SantiyeTalepApi.Models.Supplier", b =>

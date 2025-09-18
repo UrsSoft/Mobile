@@ -1,6 +1,6 @@
-@model CreateSiteDto
+@model UpdateSiteDto
 @{
-    ViewData["Title"] = "Yeni Þantiye Ekle";
+    ViewData["Title"] = "Þantiye Düzenle";
     var brands = ViewBag.Brands as List<BrandDto> ?? new List<BrandDto>();
 }
 
@@ -12,13 +12,13 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">Yeni Þantiye Ekle</h4>
+                        <h4 class="mb-sm-0">Þantiye Düzenle</h4>
 
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
                                 <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
                                 <li class="breadcrumb-item"><a href="@Url.Action("Sites", "Admin")">Þantiyeler</a></li>
-                                <li class="breadcrumb-item active">Yeni Þantiye</li>
+                                <li class="breadcrumb-item active">Þantiye Düzenle</li>
                             </ol>
                         </div>
                     </div>
@@ -31,15 +31,25 @@
                     <div class="card">
                         <div class="card-header align-items-center d-flex">
                             <h4 class="card-title mb-0 flex-grow-1">
-                                <i class="ri-building-2-line align-middle me-1 text-muted"></i>
-                                Þantiye Bilgileri
+                                <i class="ri-edit-2-line align-middle me-1 text-muted"></i>
+                                Þantiye Bilgilerini Düzenle
                             </h4>
+                            <div class="flex-shrink-0">
+                                <div class="form-check form-switch form-switch-lg">
+                                    <input class="form-check-input" type="checkbox" role="switch" 
+                                           id="isActiveSwitch" asp-for="IsActive">
+                                    <label class="form-check-label fw-medium text-muted" for="isActiveSwitch">
+                                        <span id="statusText">@(Model.IsActive ? "Aktif" : "Pasif")</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div><!-- end card header -->
 
                         <div class="card-body">
-                            <form asp-action="CreateSite" method="post" class="needs-validation" novalidate>
+                            <form asp-action="EditSite" method="post" class="needs-validation" novalidate>
                                 @Html.AntiForgeryToken()
-                                
+                                <input asp-for="Id" type="hidden" />
+                                <input asp-for="IsActive" type="hidden" id="isActiveHidden" />
 
                                 <div class="row">
                                     <div class="col-lg-12">
@@ -82,64 +92,63 @@
                                             <span asp-validation-for="BrandIds" class="text-danger d-block"></span>
                                             <div class="form-text mb-3">Bu þantiyede kullanýlacak markalarý seçiniz. En az bir marka seçilmelidir.</div>
                                             
-
-                                                    <div class="card border">
-                                                        <div class="card-header bg-light">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <h6 class="mb-0">
-                                                                    <i class="ri-price-tag-line me-2"></i>Marka Seçimi
-                                                                </h6>
-                                                                <div>
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllBrands()">
-                                                                        <i class="ri-check-double-line me-1"></i>Tümünü Seç
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="clearAllBrands()">
-                                                                        <i class="ri-close-line me-1"></i>Temizle
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            @if (brands.Any())
-                                                            {
-                                                                <div class="row g-3">
-                                                                    @foreach (var brand in brands)
-                                                                    {
-                                                                        <div class="col-md-4 col-sm-6">
-                                                                            <div class="form-check form-check-custom">
-                                                                                <input class="form-check-input brand-checkbox" type="checkbox" 
-                                                                                       name="BrandIds" value="@brand.Id" id="brand_@brand.Id"
-                                                                                       @(Model.BrandIds != null && Model.BrandIds.Contains(brand.Id) ? "checked" : "") />
-                                                                                <label class="form-check-label d-flex align-items-center" for="brand_@brand.Id">
-                                                                                    <div class="flex-grow-1">
-                                                                                        <div class="fw-medium">@brand.Name</div>          
-                                                                                    </div>
-                                                                                </label>
-                                                                            </div>
-                                                                        </div>
-                                                                    }
-                                                                </div>
-                                                                
-                                                                <div class="mt-3">
-                                                                    <div class="alert alert-info d-none" id="brandSelectionInfo">
-                                                                        <i class="ri-information-line me-2"></i>
-                                                                        <span id="selectedBrandCount">0</span> marka seçildi.
-                                                                    </div>
-                                                                </div>
-                                                            }
-                                                            else
-                                                            {
-                                                                <div class="text-center py-3">
-                                                                    <i class="ri-error-warning-line fs-24 text-warning mb-2"></i>
-                                                                    <p class="text-muted mb-0">Henüz sistem marka bulunamadý.</p>
-                                                                    <small class="text-muted">Lütfen önce sistem yöneticisi ile iletiþime geçin.</small>
-                                                                </div>
-                                                            }
+                                            <div class="card border">
+                                                <div class="card-header bg-light">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <h6 class="mb-0">
+                                                            <i class="ri-price-tag-line me-2"></i>Marka Seçimi
+                                                        </h6>
+                                                        <div>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllBrands()">
+                                                                <i class="ri-check-double-line me-1"></i>Tümünü Seç
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="clearAllBrands()">
+                                                                <i class="ri-close-line me-1"></i>Temizle
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="card-body">
+                                                    @if (brands.Any())
+                                                    {
+                                                        <div class="row g-3">
+                                                            @foreach (var brand in brands)
+                                                            {
+                                                                <div class="col-md-4 col-sm-6">
+                                                                    <div class="form-check form-check-custom">
+                                                                        <input class="form-check-input brand-checkbox" type="checkbox" 
+                                                                               name="BrandIds" value="@brand.Id" id="brand_@brand.Id"
+                                                                               @(Model.BrandIds != null && Model.BrandIds.Contains(brand.Id) ? "checked" : "") />
+                                                                        <label class="form-check-label d-flex align-items-center" for="brand_@brand.Id">
+                                                                            <div class="flex-grow-1">
+                                                                                <div class="fw-medium">@brand.Name</div>          
+                                                                            </div>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                        
+                                                        <div class="mt-3">
+                                                            <div class="alert alert-info d-none" id="brandSelectionInfo">
+                                                                <i class="ri-information-line me-2"></i>
+                                                                <span id="selectedBrandCount">0</span> marka seçildi.
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="text-center py-3">
+                                                            <i class="ri-error-warning-line fs-24 text-warning mb-2"></i>
+                                                            <p class="text-muted mb-0">Henüz sistem marka bulunamadý.</p>
+                                                            <small class="text-muted">Lütfen önce sistem yöneticisi ile iletiþime geçin.</small>
+                                                        </div>
+                                                    }
+                                                </div>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
 
                                 <!-- Preview Card -->
                                 <div class="row">
@@ -147,7 +156,7 @@
                                         <div class="card bg-light border-dashed">
                                             <div class="card-header">
                                                 <h6 class="card-title mb-0">
-                                                    <i class="ri-eye-line me-2"></i>Önizleme
+                                                    <i class="ri-eye-line me-2"></i>Güncel Önizleme
                                                 </h6>
                                             </div>
                                             <div class="card-body">
@@ -156,24 +165,33 @@
                                                         <div class="d-flex align-items-center">
                                                             <i class="ri-building-2-line text-primary me-2 fs-16"></i>
                                                             <div>
-                                                                <h6 class="mb-0" id="previewName">Þantiye Adý</h6>
+                                                                <h6 class="mb-0" id="previewName">@Model.Name</h6>
                                                                 <small class="text-muted">Þantiye</small>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="d-flex align-items-center">
-                                                            <i class="ri-map-pin-line text-success me-2 fs-16"></i>
+                                                            <i class="ri-toggle-line me-2 fs-16" id="previewStatusIcon"></i>
                                                             <div>
-                                                                <p class="mb-0 text-muted" id="previewAddress">Adres bilgisi</p>
+                                                                <span class="fw-medium" id="previewStatus">@(Model.IsActive ? "Aktif" : "Pasif")</span>
+                                                                <div><small class="text-muted">Durum</small></div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-12" id="previewDescriptionContainer" style="display: none;">
+                                                    <div class="col-md-12">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-map-pin-line text-success me-2 fs-16"></i>
+                                                            <div>
+                                                                <p class="mb-0 text-muted" id="previewAddress">@Model.Address</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12" id="previewDescriptionContainer" style="@(string.IsNullOrEmpty(Model.Description) ? "display: none;" : "")">
                                                         <div class="d-flex align-items-start">
                                                             <i class="ri-information-line text-info me-2 fs-16 mt-1"></i>
                                                             <div>
-                                                                <p class="mb-0 text-muted" id="previewDescription"></p>
+                                                                <p class="mb-0 text-muted" id="previewDescription">@Model.Description</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -183,7 +201,7 @@
                                                             <div class="flex-grow-1">
                                                                 <h6 class="mb-1">Seçili Markalar</h6>
                                                                 <div id="previewBrands" class="d-flex flex-wrap gap-1">
-                                                                    <span class="badge bg-secondary">Henüz marka seçilmedi</span>
+                                                                    <!-- Brands will be populated by JavaScript -->
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -201,10 +219,10 @@
                                                 <i class="ri-arrow-left-line align-bottom me-1"></i> Geri Dön
                                             </a>
                                             <button type="button" class="btn btn-ghost-secondary" onclick="resetForm()">
-                                                <i class="ri-refresh-line align-bottom me-1"></i> Temizle
+                                                <i class="ri-refresh-line align-bottom me-1"></i> Deðiþiklikleri Geri Al
                                             </button>
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="ri-save-line align-bottom me-1"></i> Þantiye Ekle
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="ri-save-line align-bottom me-1"></i> Deðiþiklikleri Kaydet
                                             </button>
                                         </div>
                                     </div>
@@ -215,23 +233,24 @@
                 </div><!-- end col -->
             </div><!-- end row -->
 
-            <!-- Additional Tips Card -->
+            <!-- Site Information Card -->
             <div class="row justify-content-center">
                 <div class="col-xxl-9">
-                    <div class="card bg-info-subtle border-0">
+                    <div class="card bg-primary-subtle border-0">
                         <div class="card-body">
                             <div class="d-flex align-items-start">
                                 <div class="flex-shrink-0">
-                                    <i class="ri-lightbulb-line fs-24 text-info"></i>
+                                    <i class="ri-information-line fs-24 text-primary"></i>
                                 </div>
                                 <div class="flex-grow-1 ms-3">
-                                    <h6 class="text-info mb-2">Ýpuçlarý</h6>
+                                    <h6 class="text-primary mb-2">Þantiye Düzenleme Notlarý</h6>
                                     <ul class="mb-0 text-muted">
-                                        <li>Þantiye adýný mümkün olduðunca açýk ve anlaþýlýr yazýn</li>
-                                        <li>Adres bilgisini detaylý þekilde girin (il, ilçe, mahalle, sokak vb.)</li>
-                                        <li>Açýklama kýsmýnda þantiyenin özelliklerini, proje türünü veya önemli notlarý belirtebilirsiniz</li>
-                                        <li><strong>En az bir marka</strong> seçimi zorunludur - þantiyede kullanýlacak markalarý seçin</li>
-                                        <li>Þantiye eklendikten sonra çalýþanlarý atayabilir ve talepleri yönetebilirsiniz</li>
+                                        <li>Þantiye adýný deðiþtirmek mevcut talepleri etkilemez</li>
+                                        <li>Adres deðiþikliði tüm çalýþanlara bildirilir</li>
+                                        <li>Marka deðiþiklikleri yeni taleplerde geçerli olur</li>
+                                        <li><strong>Þantiyeyi pasif yapmak</strong> yeni talep oluþturulmasýný engeller</li>
+                                        <li>Pasif þantiyedeki mevcut talepler devam eder ancak yeni talepler alýnmaz</li>
+                                        <li>Deðiþiklikler anýnda aktif olur ve sistem genelinde güncellenir</li>
                                     </ul>
                                 </div>
                             </div>
@@ -263,6 +282,18 @@
 
 @section Scripts {
     <script>
+        // Store original values for reset functionality
+        const originalValues = {
+            name: '@Html.Raw(Model.Name)',
+            address: '@Html.Raw(Model.Address.Replace("\r\n", "\\n").Replace("\n", "\\n"))',
+            description: '@Html.Raw(Model.Description.Replace("\r\n", "\\n").Replace("\n", "\\n"))',
+            isActive: @Model.IsActive.ToString().ToLower(),
+            brandIds: [@Html.Raw(string.Join(",", Model.BrandIds ?? new List<int>()))]
+        };
+
+        // Form change tracking
+        let formChanged = false;
+
         // Form validation
         (function() {
             'use strict';
@@ -272,13 +303,11 @@
                     form.addEventListener('submit', function(event) {
                         // Check if at least one brand is selected
                         const selectedBrands = document.querySelectorAll('.brand-checkbox:checked');
-                        const brandValidation = document.querySelector('[data-valmsg-for="BrandIds"]');
                         
                         if (selectedBrands.length === 0) {
                             event.preventDefault();
                             event.stopPropagation();
                             
-
                             // Show brand validation error
                             if (!document.querySelector('.brand-validation-error')) {
                                 const errorDiv = document.createElement('div');
@@ -304,6 +333,29 @@
             }, false);
         })();
 
+        // Status toggle functionality
+        document.getElementById('isActiveSwitch').addEventListener('change', function() {
+            const isActive = this.checked;
+            document.getElementById('isActiveHidden').value = isActive;
+            document.getElementById('statusText').textContent = isActive ? 'Aktif' : 'Pasif';
+            updateStatusPreview();
+            formChanged = true;
+        });
+
+        function updateStatusPreview() {
+            const isActive = document.getElementById('isActiveSwitch').checked;
+            const statusElement = document.getElementById('previewStatus');
+            const iconElement = document.getElementById('previewStatusIcon');
+            
+            if (isActive) {
+                statusElement.textContent = 'Aktif';
+                iconElement.className = 'ri-toggle-line me-2 fs-16 text-success';
+            } else {
+                statusElement.textContent = 'Pasif';
+                iconElement.className = 'ri-toggle-line me-2 fs-16 text-danger';
+            }
+        }
+
         // Brand selection functions
         function selectAllBrands() {
             document.querySelectorAll('.brand-checkbox').forEach(function(checkbox) {
@@ -311,6 +363,7 @@
             });
             updateBrandPreview();
             updateBrandCount();
+            formChanged = true;
         }
 
         function clearAllBrands() {
@@ -319,6 +372,7 @@
             });
             updateBrandPreview();
             updateBrandCount();
+            formChanged = true;
         }
 
         function updateBrandCount() {
@@ -371,21 +425,37 @@
             }
         }
 
-        // Reset form
+        // Reset form to original values
         function resetForm() {
-            if (confirm('Formu temizlemek istediðinizden emin misiniz? Girilen tüm bilgiler silinecektir.')) {
-                document.querySelector('form').reset();
-                document.querySelector('form').classList.remove('was-validated');
+            if (confirm('Tüm deðiþiklikleri geri almak istediðinizden emin misiniz? Bu iþlem kaydedilmemiþ tüm deðiþiklikleri siler.')) {
+                // Reset form fields to original values
+                document.getElementById('Name').value = originalValues.name;
+                document.getElementById('Address').value = originalValues.address.replace(/\\n/g, '\n');
+                document.getElementById('Description').value = originalValues.description.replace(/\\n/g, '\n');
+                document.getElementById('isActiveSwitch').checked = originalValues.isActive;
+                document.getElementById('isActiveHidden').value = originalValues.isActive;
+                document.getElementById('statusText').textContent = originalValues.isActive ? 'Aktif' : 'Pasif';
                 
-                // Remove any validation errors
+                // Reset brand selections
+                document.querySelectorAll('.brand-checkbox').forEach(function(checkbox) {
+                    checkbox.checked = originalValues.brandIds.includes(parseInt(checkbox.value));
+                });
+                
+                // Remove validation classes and errors
+                document.querySelector('form').classList.remove('was-validated');
                 const existingError = document.querySelector('.brand-validation-error');
                 if (existingError) {
                     existingError.remove();
                 }
                 
+                // Update previews
                 updatePreview();
                 updateBrandPreview();
                 updateBrandCount();
+                updateStatusPreview();
+                
+                // Reset form change tracking
+                formChanged = false;
             }
         }
 
@@ -395,15 +465,28 @@
             const addressInput = document.getElementById('Address');
             const descriptionInput = document.getElementById('Description');
 
-            nameInput.addEventListener('input', updatePreview);
-            addressInput.addEventListener('input', updatePreview);
-            descriptionInput.addEventListener('input', updatePreview);
+            // Input event listeners with form change tracking
+            nameInput.addEventListener('input', function() {
+                updatePreview();
+                formChanged = true;
+            });
+            
+            addressInput.addEventListener('input', function() {
+                updatePreview();
+                formChanged = true;
+            });
+            
+            descriptionInput.addEventListener('input', function() {
+                updatePreview();
+                formChanged = true;
+            });
 
             // Brand checkbox event listeners
             document.querySelectorAll('.brand-checkbox').forEach(function(checkbox) {
                 checkbox.addEventListener('change', function() {
                     updateBrandPreview();
                     updateBrandCount();
+                    formChanged = true;
                     
                     // Remove validation error when user selects a brand
                     const existingError = document.querySelector('.brand-validation-error');
@@ -434,26 +517,28 @@
                 }
                 updateCounter();
                 updatePreview();
+                formChanged = true;
             });
 
             updateCounter();
             updatePreview();
             updateBrandPreview();
             updateBrandCount();
+            updateStatusPreview();
         });
 
-        // Auto-capitalize first letters
-        function capitalizeInput(input) {
-            input.addEventListener('blur', function() {
-                this.value = this.value.replace(/\b\w/g, function(char) {
-                    return char.toUpperCase();
-                });
-                updatePreview();
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            capitalizeInput(document.getElementById('Name'));
+        // Form submit handler
+        document.querySelector('form').addEventListener('submit', function() {
+            formChanged = false; // Don't warn when form is being submitted
         });
+
+        // // Warn user about unsaved changes when leaving the page
+        // window.addEventListener('beforeunload', function(e) {
+        //     if (formChanged) {
+        //         e.preventDefault();
+        //         e.returnValue = '';
+        //         return '';
+        //     }
+        // });
     </script>
 }

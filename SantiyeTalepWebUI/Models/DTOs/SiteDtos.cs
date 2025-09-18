@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SantiyeTalepApi.DTOs
+namespace SantiyeTalepWebUI.Models.DTOs
 {
     public class SiteDto
     {
@@ -47,6 +47,13 @@ namespace SantiyeTalepApi.DTOs
         [Required(ErrorMessage = "En az bir marka seçilmelidir")]
         public List<int> BrandIds { get; set; } = new List<int>();
         
+        public bool IsActive { get; set; } = true;
+    }
+
+    public class BrandDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
         public bool IsActive { get; set; }
     }
 }

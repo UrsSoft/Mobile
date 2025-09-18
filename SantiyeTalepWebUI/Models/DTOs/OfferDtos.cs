@@ -22,12 +22,13 @@ namespace SantiyeTalepWebUI.Models.DTOs
         public string RequestTitle { get; set; } = string.Empty;
         public int SupplierId { get; set; }
         public string SupplierName { get; set; } = string.Empty;
+        public string SupplierEmail { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public string Description { get; set; } = string.Empty;
-        public DateTime DeliveryDate { get; set; }
+        public int DeliveryDays { get; set; }
         public OfferStatus Status { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTime OfferDate { get; set; }
     }
 
     public class OfferListViewModel

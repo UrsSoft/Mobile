@@ -16,9 +16,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    // JSON property naming policy'yi PascalCase olarak ayarla
-    options.JsonSerializerOptions.PropertyNamingPolicy = null; // PascalCase için null
-    options.JsonSerializerOptions.DictionaryKeyPolicy = null;
+    // JSON property naming policy'yi camelCase olarak ayarla
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     options.JsonSerializerOptions.WriteIndented = true;
 });
@@ -152,33 +152,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Database migration
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    try
-    {
-        context.Database.EnsureCreated();
-        
-        // Admin şifresini sıfırla
-        var adminUser = context.Users.FirstOrDefault(u => u.Email == "admin@santiye.com");
-        if (adminUser != null)
-        {
-            adminUser.Password = BCrypt.Net.BCrypt.HashPassword("admin123");
-            context.SaveChanges();
-            Console.WriteLine("Admin şifresi başarıyla sıfırlandıldı!");
-        }
-        else
-        {
-            Console.WriteLine("Admin kullanıcısı bulunamadı!");
-        }
-    }
-    catch (Exception ex)
-    {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Veritabanı oluşturulurken bir hata oluştu");
-    }
-}
 
 app.Run();
