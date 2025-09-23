@@ -337,7 +337,29 @@ namespace SantiyeTalepApi.Controllers
 
             try
             {
-                var products = await GetProductsFromApi(model.SearchTerm);
+                // Get employee's site and associated brands
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = int.Parse(userIdClaim?.Value ?? "0");
+
+                var employee = await _context.Employees
+                    .Include(e => e.Site)
+                        .ThenInclude(s => s.SiteBrands)
+                            .ThenInclude(sb => sb.Brand)
+                    .FirstOrDefaultAsync(e => e.UserId == userId);
+
+                if (employee == null)
+                {
+                    return BadRequest(new { message = "Çalışan bilgisi bulunamadı" });
+                }
+
+                // Extract brand IDs and names from employee's site
+                var siteBrandIds = employee.Site.SiteBrands.Select(sb => sb.BrandId).ToList();
+                var siteBrandNames = employee.Site.SiteBrands.Select(sb => sb.Brand.Name).ToList();
+
+                _logger.LogInformation("Employee {UserId} searching products for site {SiteId} with brands: {BrandNames}", 
+                    userId, employee.SiteId, string.Join(", ", siteBrandNames));
+
+                var products = await GetProductsFromApiWithBrandFilter(model.SearchTerm, siteBrandIds, siteBrandNames);
                 return Ok(products);
             }
             catch (Exception ex)
@@ -348,12 +370,12 @@ namespace SantiyeTalepApi.Controllers
         }
 
         [HttpGet("/api/searchapi")]
-        [AllowAnonymous]
-        public async Task<IActionResult> SearchApi([FromQuery] string query)
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> SearchApi([FromQuery] string query, [FromQuery] string brandIds = "")
         {
             _logger.LogInformation("=== SEARCH API CALLED ===");
             _logger.LogInformation("Query parameter: '{Query}'", query);
-            _logger.LogInformation("Query length: {Length}", query?.Length ?? 0);
+            _logger.LogInformation("BrandIds parameter: '{BrandIds}'", brandIds);
             
             if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
             {
@@ -366,11 +388,61 @@ namespace SantiyeTalepApi.Controllers
                 _logger.LogInformation("=== STARTING PRODUCT SEARCH ===");
                 _logger.LogInformation("Search query: '{Query}'", query);
                 
-                var products = await GetProductsFromApi(query);
+                // Get employee's site and associated brands automatically
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = int.Parse(userIdClaim?.Value ?? "0");
+
+                var employee = await _context.Employees
+                    .Include(e => e.Site)
+                        .ThenInclude(s => s.SiteBrands)
+                            .ThenInclude(sb => sb.Brand)
+                    .FirstOrDefaultAsync(e => e.UserId == userId);
+
+                List<int> brandIdList = new List<int>();
+                List<string> brandNameList = new List<string>();
+
+                if (employee?.Site?.SiteBrands?.Any() == true)
+                {
+                    // Use employee's site brands automatically
+                    brandIdList = employee.Site.SiteBrands.Select(sb => sb.BrandId).ToList();
+                    brandNameList = employee.Site.SiteBrands.Select(sb => sb.Brand.Name).ToList();
+                    
+                    _logger.LogInformation("Employee {UserId} from site {SiteId} ({SiteName}) - using site brands: {BrandNames}", 
+                        userId, employee.SiteId, employee.Site.Name, string.Join(", ", brandNameList));
+                }
+                else if (!string.IsNullOrEmpty(brandIds))
+                {
+                    // Fallback to provided brandIds if no site brands found
+                    var brandIdArray = brandIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var id in brandIdArray)
+                    {
+                        if (int.TryParse(id.Trim(), out var brandId))
+                        {
+                            brandIdList.Add(brandId);
+                        }
+                    }
+                    
+                    // Get brand names for filtering
+                    if (brandIdList.Any())
+                    {
+                        var brands = await _context.Set<Brand>()
+                            .Where(b => brandIdList.Contains(b.Id))
+                            .Select(b => b.Name)
+                            .ToListAsync();
+                        brandNameList.AddRange(brands);
+                    }
+                    
+                    _logger.LogInformation("Using provided brandIds as fallback: {BrandIds}", brandIds);
+                }
+                else
+                {
+                    _logger.LogWarning("No site brands found for employee {UserId} and no brandIds provided", userId);
+                }
+                
+                var products = await GetProductsFromApiWithBrandFilter(query, brandIdList, brandNameList);
                 
                 _logger.LogInformation("=== SEARCH COMPLETED ===");
-                _logger.LogInformation("Found {Count} products for query: '{Query}'", products.Count, query);
-                _logger.LogInformation("Products data: {Products}", System.Text.Json.JsonSerializer.Serialize(products));
+                _logger.LogInformation("Found {Count} products for query: '{Query}' with brand filter", products.Count, query);
                 
                 return Ok(products);
             }
@@ -384,8 +456,15 @@ namespace SantiyeTalepApi.Controllers
 
         private async Task<List<ProductDto>> GetProductsFromApi(string searchTerm)
         {
-            _logger.LogInformation("=== GET PRODUCTS FROM API STARTED ===");
+            return await GetProductsFromApiWithBrandFilter(searchTerm, new List<int>(), new List<string>());
+        }
+
+        private async Task<List<ProductDto>> GetProductsFromApiWithBrandFilter(string searchTerm, List<int> brandIds, List<string> brandNames)
+        {
+            _logger.LogInformation("=== GET PRODUCTS FROM API WITH BRAND FILTER STARTED ===");
             _logger.LogInformation("Search term: '{SearchTerm}'", searchTerm);
+            _logger.LogInformation("Brand IDs: [{BrandIds}]", string.Join(", ", brandIds));
+            _logger.LogInformation("Brand Names: [{BrandNames}]", string.Join(", ", brandNames));
             
             try
             {
@@ -396,36 +475,7 @@ namespace SantiyeTalepApi.Controllers
                 if (string.IsNullOrEmpty(productApiUrl))
                 {
                     _logger.LogWarning("=== PRODUCT API URL NOT CONFIGURED ===");
-                    _logger.LogWarning("Using fallback mock data instead");
-                    
-                    // Return mock data for testing
-                    var mockProducts = new List<ProductDto>
-                    {
-                        new ProductDto 
-                        { 
-                            Id = 1, 
-                            Name = "Test Çimento", 
-                            Description = "Test çimento açıklaması", 
-                            Brand = "Test Marka",
-                            Category = "Test Kategori",
-                            Units = new List<string> { "Adet", "Çuval" }
-                        },
-                        new ProductDto 
-                        { 
-                            Id = 2, 
-                            Name = "Test Demir", 
-                            Description = "Test demir açıklaması", 
-                            Brand = "Test Marka 2",
-                            Category = "Test Kategori 2",
-                            Units = new List<string> { "Ton", "Metre" }
-                        }
-                    };
-                    
-                    _logger.LogInformation("=== RETURNING MOCK DATA ===");
-                    _logger.LogInformation("Mock products count: {Count}", mockProducts.Count);
-                    _logger.LogInformation("Mock products: {Products}", System.Text.Json.JsonSerializer.Serialize(mockProducts));
-                    
-                    return mockProducts;
+                    _logger.LogWarning("Using fallback mock data instead");                    
                 }
 
                 var timeout = _configuration.GetValue<int>("ExternalApis:ProductApiTimeout", 30);
@@ -441,7 +491,15 @@ namespace SantiyeTalepApi.Controllers
                     _logger.LogInformation("API key configured and added to headers");
                 }
 
+                // Build query parameters with brand filtering
                 var queryParams = $"?query={Uri.EscapeDataString(searchTerm)}&limit=20";
+                
+                // Add brand IDs to the query if provided
+                if (brandIds.Any())
+                {
+                    queryParams += $"&brandIds={string.Join(",", brandIds)}";
+                }
+
                 var requestUrl = $"{productApiUrl}{queryParams}";
 
                 _logger.LogInformation("=== CALLING EXTERNAL API ===");
@@ -553,38 +611,60 @@ namespace SantiyeTalepApi.Controllers
                     }
                 }
 
+                // Apply brand filtering if brand names are provided
+                if (brandNames.Any() && mappedProducts.Any())
+                {
+                    var originalCount = mappedProducts.Count;
+                    
+                    // Filter products by brand names (case-insensitive)
+                    mappedProducts = mappedProducts.Where(p => 
+                        brandNames.Any(brandName => 
+                            !string.IsNullOrEmpty(p.Brand) && 
+                            p.Brand.Contains(brandName, StringComparison.OrdinalIgnoreCase)
+                        )
+                    ).ToList();
+                    
+                    _logger.LogInformation("=== BRAND FILTERING APPLIED ===");
+                    _logger.LogInformation("Original product count: {OriginalCount}", originalCount);
+                    _logger.LogInformation("Filtered product count: {FilteredCount}", mappedProducts.Count);
+                    _logger.LogInformation("Filter brands: [{BrandNames}]", string.Join(", ", brandNames));
+                }
+
                 // If still no products found, add a debug entry to see what we're getting
                 if (mappedProducts.Count == 0)
                 {
-                    _logger.LogWarning("=== NO PRODUCTS COULD BE PARSED ===");
+                    _logger.LogWarning("=== NO PRODUCTS COULD BE PARSED OR MATCHED BRAND FILTER ===");
                     _logger.LogWarning("Raw JSON: {Json}", jsonContent);
                     
                     // Fallback: create a mock product for testing
                     if (!string.IsNullOrEmpty(searchTerm))
                     {
+                        var fallbackBrand = brandNames.FirstOrDefault() ?? "Test Brand";
                         mappedProducts.Add(new ProductDto
                         {
                             Id = 999,
                             Name = $"Fallback Mock {searchTerm}",
-                            Description = "Fallback test product - API parsing failed",
-                            Brand = "Fallback Test Brand",
+                            Description = brandNames.Any() ? 
+                                $"Bu şantiyede kayıtlı markalar: {string.Join(", ", brandNames)}" : 
+                                "Fallback test product - API parsing failed",
+                            Brand = fallbackBrand,
                             Category = "Fallback Test Category",
                             Units = new List<string> { "Adet" }
                         });
                         
-                        _logger.LogInformation("Added fallback mock product");
+                        _logger.LogInformation("Added fallback mock product with brand filter");
                     }
                 }
 
                 _logger.LogInformation("=== FINAL RESULT ===");
-                _logger.LogInformation("Successfully mapped {Count} products from external API", mappedProducts.Count);
+                _logger.LogInformation("Successfully mapped {Count} products from external API with brand filtering", mappedProducts.Count);
                 _logger.LogInformation("Final products: {Products}", System.Text.Json.JsonSerializer.Serialize(mappedProducts));
                 
                 return mappedProducts;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "=== EXCEPTION IN GET PRODUCTS FROM API ===");
+                _logger.LogError(ex, "=== EXCEPTION IN GET PRODUCTS FROM API WITH BRAND FILTER ===");
                 _logger.LogError("Error occurred while calling external product API");
                 return new List<ProductDto>();
             }
@@ -610,6 +690,8 @@ namespace SantiyeTalepApi.Controllers
 
                 var employee = await _context.Employees
                     .Include(e => e.Site)
+                        .ThenInclude(s => s.SiteBrands)
+                            .ThenInclude(sb => sb.Brand)
                     .FirstOrDefaultAsync(e => e.UserId == userId);
 
                 if (employee == null)
@@ -626,7 +708,8 @@ namespace SantiyeTalepApi.Controllers
 
                 var siteDto = _mapper.Map<SiteDto>(employee.Site);
                 _logger.LogInformation("=== GET MY SITE COMPLETED SUCCESSFULLY ===");
-                _logger.LogInformation("Site: {SiteName} (ID: {SiteId})", siteDto.Name, siteDto.Id);
+                _logger.LogInformation("Site: {SiteName} (ID: {SiteId}) with {BrandCount} brands", 
+                    siteDto.Name, siteDto.Id, siteDto.Brands.Count);
 
                 return Ok(siteDto);
             }

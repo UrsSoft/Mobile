@@ -34,6 +34,19 @@ namespace SantiyeTalepApi.DTOs
         public string Position { get; set; } = string.Empty;
     }
 
+    public class UpdateEmployeeDto
+    {
+        [EmailAddress]
+        public string? Email { get; set; }
+
+        public string? FullName { get; set; }
+
+        public int SiteId { get; set; }
+
+        public string? Phone { get; set; }
+        public string? Position { get; set; }
+    }
+
     // Flattened EmployeeDto for frontend compatibility
     public class EmployeeDto
     {

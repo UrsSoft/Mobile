@@ -117,6 +117,83 @@ namespace SantiyeTalepWebUI.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetMySiteInfo()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var mySite = await _apiService.GetAsync<SiteDto>("api/Request/my-site", token);
+                if (mySite == null)
+                {
+                    return Json(new { success = false, message = "Şantiye bilgisi bulunamadı" });
+                }
+
+                var brands = new List<object>();
+                if (mySite.Brands != null)
+                {
+                    brands = mySite.Brands.Select(b => new {
+                        id = b.Id,
+                        name = b.Name
+                    }).Cast<object>().ToList();
+                }
+
+                return Json(new { 
+                    success = true, 
+                    site = new {
+                        id = mySite.Id,
+                        name = mySite.Name,
+                        brands = brands
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting site info");
+                return Json(new { success = false, message = "Şantiye bilgisi alınırken hata oluştu" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchProducts(string query, string brandIds = "")
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+            {
+                return Json(new { success = false, message = "Arama terimi en az 2 karakter olmalıdır" });
+            }
+
+            try
+            {
+                // Build search URL with brand filtering
+                var searchUrl = $"api/searchapi?query={Uri.EscapeDataString(query)}";
+                
+                // Add brand IDs if provided
+                if (!string.IsNullOrEmpty(brandIds))
+                {
+                    searchUrl += $"&brandIds={brandIds}";
+                }
+
+                var products = await _apiService.GetAsync<List<ProductDto>>(searchUrl, token) ?? new List<ProductDto>();
+                
+                return Json(new { 
+                    success = true, 
+                    data = products
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching products");
+                return Json(new { success = false, message = "Ürün arama sırasında hata oluştu" });
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> SearchProducts([FromBody] ProductSearchDto model)
         {

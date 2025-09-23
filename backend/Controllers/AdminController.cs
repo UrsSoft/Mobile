@@ -306,6 +306,69 @@ namespace SantiyeTalepApi.Controllers
             }
         }
 
+        [HttpPut("employees/{id}")]
+        public async Task<IActionResult> UpdateEmployee(int id, [FromBody] UpdateEmployeeDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var employee = await _context.Employees
+                    .Include(e => e.User)
+                    .Include(e => e.Site)
+                    .FirstOrDefaultAsync(e => e.Id == id);
+
+                if (employee == null)
+                    return NotFound(new { message = "Çalışan bulunamadı" });
+
+                // Check if email is being changed and if it already exists
+                if (!string.IsNullOrEmpty(model.Email) && model.Email != employee.User.Email)
+                {
+                    var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email && u.Id != employee.User.Id);
+                    if (existingUser != null)
+                        return BadRequest(new { message = "Bu email adresi zaten kullanılıyor" });
+                    
+                    employee.User.Email = model.Email;
+                }
+
+                // Update user fields
+                if (!string.IsNullOrEmpty(model.FullName))
+                    employee.User.FullName = model.FullName;
+                
+                if (!string.IsNullOrEmpty(model.Phone))
+                    employee.User.Phone = model.Phone;
+
+                // Update employee fields
+                if (!string.IsNullOrEmpty(model.Position))
+                    employee.Position = model.Position;
+
+                if (model.SiteId > 0 && model.SiteId != employee.SiteId)
+                {
+                    var site = await _context.Sites.FindAsync(model.SiteId);
+                    if (site == null)
+                        return BadRequest(new { message = "Geçersiz şantiye seçimi" });
+                    
+                    employee.SiteId = model.SiteId;
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Return updated employee
+                var updatedEmployee = await _context.Employees
+                    .Include(e => e.User)
+                    .Include(e => e.Site)
+                    .FirstAsync(e => e.Id == id);
+
+                var employeeDto = _mapper.Map<EmployeeDto>(updatedEmployee);
+                return Ok(employeeDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Çalışan güncellenirken hata oluştu", error = ex.Message });
+            }
+        }
+
         [HttpPut("employees/{id}/status")]
         public async Task<IActionResult> ToggleEmployeeStatus(int id, [FromBody] ToggleEmployeeStatusDto model)
         {

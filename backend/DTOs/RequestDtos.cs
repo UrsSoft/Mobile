@@ -1,5 +1,7 @@
 using SantiyeTalepApi.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SantiyeTalepApi.DTOs
 {
@@ -123,14 +125,65 @@ namespace SantiyeTalepApi.DTOs
         public string ProductName { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string Brand { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string BrandName { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string Manufacturer { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string Category { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(FlexibleStringConverter))]
         public string Type { get; set; } = string.Empty;
+
         public List<string> Units { get; set; } = new List<string>();
         public string Unit { get; set; } = string.Empty;
         public decimal? Price { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
+    }
+
+    public class FlexibleStringConverter : JsonConverter<string>
+    {
+        public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.String:
+                    return reader.GetString() ?? string.Empty;
+                case JsonTokenType.StartObject:
+                    // Object ise, name property'sini ara veya toString yap
+                    using (var doc = JsonDocument.ParseValue(ref reader))
+                    {
+                        var root = doc.RootElement;
+
+                        // Önce yaygın property isimlerini dene
+                        if (root.TryGetProperty("name", out var nameProperty))
+                            return nameProperty.GetString() ?? string.Empty;
+
+                        if (root.TryGetProperty("title", out var titleProperty))
+                            return titleProperty.GetString() ?? string.Empty;
+
+                        if (root.TryGetProperty("value", out var valueProperty))
+                            return valueProperty.GetString() ?? string.Empty;
+
+                        // Eğer hiçbiri yoksa boş string döndür
+                        return string.Empty;
+                    }
+                case JsonTokenType.Null:
+                    return string.Empty;
+                default:
+                    return reader.GetString() ?? string.Empty;
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value);
+        }
     }
 }
