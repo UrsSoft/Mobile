@@ -25,7 +25,7 @@ namespace SantiyeTalepApi.Models
         
         public DateTime? ApprovedDate { get; set; }
         
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
         
         // Navigation Properties
         [ForeignKey("UserId")]

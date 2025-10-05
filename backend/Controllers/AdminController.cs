@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SantiyeTalepApi.Data;
 using SantiyeTalepApi.DTOs;
 using SantiyeTalepApi.Models;
+using SantiyeTalepApi.Services;
 
 namespace SantiyeTalepApi.Controllers
 {
@@ -15,11 +16,17 @@ namespace SantiyeTalepApi.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<AdminController> _logger;
+        private readonly INotificationService _notificationService;
+        private readonly IServiceProvider _serviceProvider;
 
-        public AdminController(ApplicationDbContext context, IMapper mapper)
+        public AdminController(ApplicationDbContext context, IMapper mapper, ILogger<AdminController> logger, INotificationService notificationService, IServiceProvider serviceProvider)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
+            _notificationService = notificationService;
+            _serviceProvider = serviceProvider;
         }
 
         [HttpGet("stats")]
@@ -44,7 +51,7 @@ namespace SantiyeTalepApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Ä°statistikler yÃ¼klenirken hata oluÅŸtu", error = ex.Message });
+                return StatusCode(500, new { message = "Ýstatistikler yüklenirken hata oluþtu", error = ex.Message });
             }
         }
 
@@ -58,6 +65,9 @@ namespace SantiyeTalepApi.Controllers
                         .ThenInclude(e => e.User)
                     .Include(r => r.Employee)
                         .ThenInclude(e => e.Site)
+                    .Include(r => r.Offers)
+                        .ThenInclude(o => o.Supplier)
+                            .ThenInclude(s => s.User)
                     .OrderByDescending(r => r.RequestDate)
                     .ToListAsync();
 
@@ -66,7 +76,61 @@ namespace SantiyeTalepApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Talepler yÃ¼klenirken hata oluÅŸtu", error = ex.Message });
+                return StatusCode(500, new { message = "Talepler yüklenirken hata oluþtu", error = ex.Message });
+            }
+        }
+
+        [HttpGet("suppliers/approved")]
+        public async Task<IActionResult> GetApprovedSuppliers()
+        {
+            var suppliers = await _context.Suppliers
+                .Include(s => s.User)
+                .Where(s => s.Status == SupplierStatus.Approved)
+                .OrderBy(s => s.CompanyName)
+                .ToListAsync();
+
+            var supplierDtos = _mapper.Map<List<SupplierDto>>(suppliers);
+            return Ok(supplierDtos);
+        }
+
+        [HttpGet("suppliers/pending")]
+        public async Task<IActionResult> GetPendingSuppliers()
+        {
+            try
+            {
+                var suppliers = await _context.Suppliers
+                    .Include(s => s.User)
+                    .Where(s => s.Status == SupplierStatus.Pending)
+                    .OrderByDescending(s => s.Id)
+                    .ToListAsync();
+
+                var supplierDtos = _mapper.Map<List<SupplierDto>>(suppliers);
+                return Ok(supplierDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting pending suppliers");
+                return StatusCode(500, new { message = "Bekleyen tedarikçiler yüklenirken hata oluþtu", error = ex.Message });
+            }
+        }
+
+        [HttpGet("suppliers")]
+        public async Task<IActionResult> GetAllSuppliers()
+        {
+            try
+            {
+                var suppliers = await _context.Suppliers
+                    .Include(s => s.User)
+                    .OrderByDescending(s => s.Id)
+                    .ToListAsync();
+
+                var supplierDtos = _mapper.Map<List<SupplierDto>>(suppliers);
+                return Ok(supplierDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all suppliers");
+                return StatusCode(500, new { message = "Tedarikçiler yüklenirken hata oluþtu", error = ex.Message });
             }
         }
 
@@ -80,6 +144,9 @@ namespace SantiyeTalepApi.Controllers
                         .ThenInclude(e => e.User)
                     .Include(r => r.Employee)
                         .ThenInclude(e => e.Site)
+                    .Include(r => r.Offers)
+                        .ThenInclude(o => o.Supplier)
+                            .ThenInclude(s => s.User)
                     .Where(r => r.Status == RequestStatus.Open)
                     .OrderByDescending(r => r.RequestDate)
                     .ToListAsync();
@@ -89,7 +156,8 @@ namespace SantiyeTalepApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Bekleyen talepler yÃ¼klenirken hata oluÅŸtu", error = ex.Message });
+                _logger.LogError(ex, "Error getting pending requests");
+                return StatusCode(500, new { message = "Bekleyen talepler yüklenirken hata oluþtu", error = ex.Message });
             }
         }
 
@@ -103,6 +171,9 @@ namespace SantiyeTalepApi.Controllers
                         .ThenInclude(e => e.User)
                     .Include(r => r.Employee)
                         .ThenInclude(e => e.Site)
+                    .Include(r => r.Offers)
+                        .ThenInclude(o => o.Supplier)
+                            .ThenInclude(s => s.User)
                     .Where(r => r.Status == RequestStatus.Completed)
                     .OrderByDescending(r => r.RequestDate)
                     .ToListAsync();
@@ -112,98 +183,237 @@ namespace SantiyeTalepApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Tamamlanan talepler yÃ¼klenirken hata oluÅŸtu", error = ex.Message });
+                _logger.LogError(ex, "Error getting completed requests");
+                return StatusCode(500, new { message = "Tamamlanan talepler yüklenirken hata oluþtu", error = ex.Message });
             }
         }
 
-        [HttpGet("offers")]
-        public async Task<IActionResult> GetAllOffers()
+        [HttpPost("requests/send-to-suppliers")]
+        public async Task<IActionResult> SendRequestsToSuppliers([FromBody] SendRequestsToSuppliersDto model)
         {
             try
             {
-                var offers = await _context.Offers
-                    .Include(o => o.Request)
-                        .ThenInclude(r => r.Employee)
-                            .ThenInclude(e => e.User)
-                    .Include(o => o.Request)
-                        .ThenInclude(r => r.Employee)
-                            .ThenInclude(e => e.Site)
-                    .Include(o => o.Supplier)
-                        .ThenInclude(s => s.User)
-                    .OrderByDescending(o => o.Id)
+                _logger.LogInformation($"SendRequestsToSuppliers called with {model?.RequestIds?.Count ?? 0} requests and {model?.SupplierIds?.Count ?? 0} suppliers");
+
+                if (model.RequestIds == null || !model.RequestIds.Any())
+                    return BadRequest(new { message = "En az bir talep seçilmelidir" });
+
+                if (model.SupplierIds == null || !model.SupplierIds.Any())
+                    return BadRequest(new { message = "En az bir tedarikçi seçilmelidir" });
+
+                _logger.LogInformation($"Validating requests: {string.Join(",", model.RequestIds)}");
+
+                // Validate requests exist and are in appropriate status
+                var requests = await _context.Requests
+                    .Include(r => r.Employee)
+                        .ThenInclude(e => e.User)
+                    .Include(r => r.Site)
+                    .Where(r => model.RequestIds.Contains(r.Id))
                     .ToListAsync();
 
-                var offerDtos = _mapper.Map<List<OfferDto>>(offers);
-                return Ok(offerDtos);
+                _logger.LogInformation($"Found {requests.Count} requests in database");
+
+                if (requests.Count != model.RequestIds.Count)
+                    return BadRequest(new { message = "Seçilen taleplerin bir kýsmý bulunamadý" });
+
+                var invalidRequests = requests.Where(r => r.Status != RequestStatus.Open).ToList();
+                if (invalidRequests.Any())
+                {
+                    var invalidRequestIds = string.Join(", ", invalidRequests.Select(r => r.Id));
+                    return BadRequest(new { message = $"Sadece açýk durumundaki talepler tedarikçilere gönderilebilir. Geçersiz talepler: {invalidRequestIds}" });
+                }
+
+                _logger.LogInformation($"Validating suppliers: {string.Join(",", model.SupplierIds)}");
+
+                // Validate suppliers exist and are approved
+                var suppliers = await _context.Suppliers
+                    .Include(s => s.User)
+                    .Where(s => model.SupplierIds.Contains(s.Id) && s.Status == SupplierStatus.Approved)
+                    .ToListAsync();
+
+                _logger.LogInformation($"Found {suppliers.Count} approved suppliers in database");
+
+                if (suppliers.Count != model.SupplierIds.Count)
+                    return BadRequest(new { message = "Seçilen tedarikçilerin bir kýsmý bulunamadý veya onaylanmamýþ" });
+
+                _logger.LogInformation("Updating request statuses to InProgress");
+
+                // Update request status to InProgress
+                foreach (var request in requests)
+                {
+                    request.Status = RequestStatus.InProgress;
+                }
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Request statuses updated successfully");
+
+                _logger.LogInformation("Starting to send notifications");
+
+                // For better performance, we can use parallel execution with separate scopes
+                // But for simplicity and reliability, we're using sequential execution
+                // Send notifications to selected suppliers for each request sequentially to avoid DbContext threading issues
+                foreach (var request in requests)
+                {
+                    foreach (var supplier in suppliers)
+                    {
+                        _logger.LogInformation($"Creating notification for supplier {supplier.Id} for request {request.Id}");
+                        try
+                        {
+                            await _notificationService.CreateNotificationAsync(
+                                "Yeni Teklif Talebi",
+                                $"Yeni bir teklif talebi aldýnýz: {request.ProductDescription} (Miktar: {request.Quantity}). " +
+                                $"Þantiye: {request.Site.Name}. Lütfen teklifinizi verin.",
+                                NotificationType.RequestSentToSupplier,
+                                supplier.UserId,
+                                request.Id,
+                                null,
+                                supplier.Id
+                            );
+                            _logger.LogInformation($"Notification sent successfully to supplier {supplier.Id} for request {request.Id}");
+                        }
+                        catch (Exception notificationEx)
+                        {
+                            _logger.LogError(notificationEx, $"Failed to send notification to supplier {supplier.Id} for request {request.Id}");
+                            // Continue with other notifications even if one fails
+                        }
+                    }
+                }
+
+                _logger.LogInformation("All notifications processed successfully");
+
+                var result = new 
+                { 
+                    message = $"{requests.Count} talep {suppliers.Count} tedarikçiye baþarýyla gönderildi",
+                    requestCount = requests.Count,
+                    supplierCount = suppliers.Count,
+                    affectedRequests = requests.Select(r => new { r.Id, r.ProductDescription }).ToList(),
+                    notifiedSuppliers = suppliers.Select(s => new { s.Id, s.CompanyName }).ToList()
+                };
+
+                _logger.LogInformation($"Operation completed successfully: {result.message}");
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Teklifler yÃ¼klenirken hata oluÅŸtu", error = ex.Message });
+                _logger.LogError(ex, "Error sending requests to suppliers: {Message}", ex.Message);
+                _logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
+                return StatusCode(500, new { message = "Talepler tedarikçilere gönderilirken bir hata oluþtu", error = ex.Message, details = ex.StackTrace });
             }
         }
 
-        [HttpGet("offers/pending")]
-        public async Task<IActionResult> GetPendingOffers()
+        [HttpPost("requests/bulk")]
+        public async Task<IActionResult> BulkRequestAction([FromBody] BulkRequestActionDto model)
         {
             try
             {
-                var offers = await _context.Offers
-                    .Include(o => o.Request)
-                        .ThenInclude(r => r.Employee)
-                            .ThenInclude(e => e.User)
-                    .Include(o => o.Request)
-                        .ThenInclude(r => r.Employee)
-                            .ThenInclude(e => e.Site)
-                    .Include(o => o.Supplier)
-                        .ThenInclude(s => s.User)
-                    .Where(o => o.Status == OfferStatus.Pending)
-                    .OrderByDescending(o => o.Id)
+                if (model.RequestIds == null || !model.RequestIds.Any())
+                    return BadRequest(new { message = "Talep seçimi yapýlmamýþ" });
+
+                var requests = await _context.Requests
+                    .Where(r => model.RequestIds.Contains(r.Id))
                     .ToListAsync();
 
-                var offerDtos = _mapper.Map<List<OfferDto>>(offers);
-                return Ok(offerDtos);
+                if (!requests.Any())
+                    return NotFound(new { message = "Seçilen talepler bulunamadý" });
+
+                switch (model.Action?.ToLower())
+                {
+                    case "approve":
+                        requests.ForEach(r => r.Status = RequestStatus.Completed);
+                        break;
+                    case "inprogress":
+                        requests.ForEach(r => r.Status = RequestStatus.InProgress);
+                        break;
+                    case "delete":
+                        _context.Requests.RemoveRange(requests);
+                        break;
+                    default:
+                        return BadRequest(new { message = "Geçersiz iþlem" });
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Toplu iþlem baþarýyla tamamlandý" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Bekleyen teklifler yÃ¼klenirken hata oluÅŸtu", error = ex.Message });
+                _logger.LogError(ex, "Error in bulk request action");
+                return StatusCode(500, new { message = "Toplu iþlem sýrasýnda hata oluþtu", error = ex.Message });
             }
         }
 
-        [HttpGet("offers/approved")]
-        public async Task<IActionResult> GetApprovedOffers()
+        [HttpPut("requests/{id}/status")]
+        public async Task<IActionResult> ChangeRequestStatus(int id, [FromBody] ChangeRequestStatusDto model)
         {
             try
             {
-                var offers = await _context.Offers
-                    .Include(o => o.Request)
-                        .ThenInclude(r => r.Employee)
-                            .ThenInclude(e => e.User)
-                    .Include(o => o.Request)
-                        .ThenInclude(r => r.Employee)
-                            .ThenInclude(e => e.Site)
-                    .Include(o => o.Supplier)
-                        .ThenInclude(s => s.User)
-                    .Where(o => o.Status == OfferStatus.Approved)
-                    .OrderByDescending(o => o.Id)
-                    .ToListAsync();
+                var request = await _context.Requests.FindAsync(id);
+                if (request == null)
+                    return NotFound(new { message = "Talep bulunamadý" });
 
-                var offerDtos = _mapper.Map<List<OfferDto>>(offers);
-                return Ok(offerDtos);
+                request.Status = (RequestStatus)model.Status;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Talep durumu güncellendi" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "OnaylÄ± teklifler yÃ¼klenirken hata oluÅŸtu", error = ex.Message });
+                _logger.LogError(ex, "Error changing request status");
+                return StatusCode(500, new { message = "Durum güncellenirken hata oluþtu", error = ex.Message });
             }
         }
 
-        [HttpGet("sites/{id}/employees")]
-        public async Task<IActionResult> GetSiteEmployees(int id)
+        [HttpDelete("requests/{id}")]
+        public async Task<IActionResult> DeleteRequest(int id)
+        {
+            try
+            {
+                var request = await _context.Requests.FindAsync(id);
+                if (request == null)
+                    return NotFound(new { message = "Talep bulunamadý" });
+
+                _context.Requests.Remove(request);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Talep baþarýyla silindi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting request");
+                return StatusCode(500, new { message = "Talep silinirken hata oluþtu", error = ex.Message });
+            }
+        }
+
+        [HttpGet("sites")]
+        public async Task<IActionResult> GetAllSites()
+        {
+            try
+            {
+                var sites = await _context.Sites
+                    .Include(s => s.SiteBrands)
+                        .ThenInclude(sb => sb.Brand)
+                    .Include(s => s.Employees)
+                    .OrderBy(s => s.Name)
+                    .ToListAsync();
+
+                var siteDtos = _mapper.Map<List<SiteDto>>(sites);
+                return Ok(siteDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all sites");
+                return StatusCode(500, new { message = "Þantiyeler yüklenirken hata oluþtu", error = ex.Message });
+            }
+        }
+
+        [HttpGet("employees")]
+        public async Task<IActionResult> GetAllEmployees()
         {
             try
             {
                 var employees = await _context.Employees
                     .Include(e => e.User)
-                    .Where(e => e.SiteId == id)
+                    .Include(e => e.Site)
+                    .OrderByDescending(e => e.Id)
                     .ToListAsync();
 
                 var employeeDtos = _mapper.Map<List<EmployeeDto>>(employees);
@@ -211,319 +421,13 @@ namespace SantiyeTalepApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Åžantiye Ã§alÄ±ÅŸanlarÄ± yÃ¼klenirken hata oluÅŸtu", error = ex.Message });
+                _logger.LogError(ex, "Error getting all employees");
+                return StatusCode(500, new { message = "Çalýþanlar yüklenirken hata oluþtu", error = ex.Message });
             }
-        }
-
-        [HttpDelete("sites/{id}")]
-        public async Task<IActionResult> DeleteSite(int id)
-        {
-            try
-            {
-                var site = await _context.Sites
-                    .Include(s => s.SiteBrands)
-                    .FirstOrDefaultAsync(s => s.Id == id);
-                    
-                if (site == null)
-                    return NotFound(new { message = "Åžantiye bulunamadÄ±" });
-
-                // Check if site has employees
-                var hasEmployees = await _context.Employees.AnyAsync(e => e.SiteId == id);
-                if (hasEmployees)
-                    return BadRequest(new { message = "Bu ÅŸantiyede Ã§alÄ±ÅŸan bulunduÄŸu iÃ§in silinemez" });
-
-                using var transaction = await _context.Database.BeginTransactionAsync();
-                try
-                {
-                    // Remove site-brand relationships first
-                    if (site.SiteBrands?.Any() == true)
-                    {
-                        _context.SiteBrands.RemoveRange(site.SiteBrands);
-                    }
-
-                    // Remove the site
-                    _context.Sites.Remove(site);
-                    
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    return Ok(new { message = "Åžantiye ve atanmÄ±ÅŸ markalar baÅŸarÄ±yla silindi" });
-                }
-                catch (Exception)
-                {
-                    await transaction.RollbackAsync();
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Åžantiye silinirken hata oluÅŸtu", error = ex.Message });
-            }
-        }
-
-        [HttpPost("sites/bulk")]
-        public async Task<IActionResult> BulkSiteAction([FromBody] BulkSiteActionDto model)
-        {
-            try
-            {
-                if (model.SiteIds == null || !model.SiteIds.Any())
-                    return BadRequest(new { message = "Åžantiye seÃ§imi yapÄ±lmamÄ±ÅŸ" });
-
-                var sites = await _context.Sites
-                    .Where(s => model.SiteIds.Contains(s.Id))
-                    .ToListAsync();
-
-                if (!sites.Any())
-                    return NotFound(new { message = "SeÃ§ilen ÅŸantiyeler bulunamadÄ±" });
-
-                switch (model.Action?.ToLower())
-                {
-                    case "activate":
-                        sites.ForEach(s => s.IsActive = true);
-                        break;
-                    case "deactivate":
-                        sites.ForEach(s => s.IsActive = false);
-                        break;
-                    case "delete":
-                        // Check if any site has employees
-                        var siteIds = sites.Select(s => s.Id).ToList();
-                        var hasEmployees = await _context.Employees.AnyAsync(e => siteIds.Contains(e.SiteId));
-                        if (hasEmployees)
-                            return BadRequest(new { message = "Ã‡alÄ±ÅŸan bulunan ÅŸantiyeler silinemez" });
-                        
-                        _context.Sites.RemoveRange(sites);
-                        break;
-                    default:
-                        return BadRequest(new { message = "GeÃ§ersiz iÅŸlem" });
-                }
-
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Toplu iÅŸlem baÅŸarÄ±yla tamamlandÄ±" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Toplu iÅŸlem sÄ±rasÄ±nda hata oluÅŸtu", error = ex.Message });
-            }
-        }
-
-        [HttpPut("employees/{id}")]
-        public async Task<IActionResult> UpdateEmployee(int id, [FromBody] UpdateEmployeeDto model)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            try
-            {
-                var employee = await _context.Employees
-                    .Include(e => e.User)
-                    .Include(e => e.Site)
-                    .FirstOrDefaultAsync(e => e.Id == id);
-
-                if (employee == null)
-                    return NotFound(new { message = "Ã‡alÄ±ÅŸan bulunamadÄ±" });
-
-                // Check if email is being changed and if it already exists
-                if (!string.IsNullOrEmpty(model.Email) && model.Email != employee.User.Email)
-                {
-                    var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email && u.Id != employee.User.Id);
-                    if (existingUser != null)
-                        return BadRequest(new { message = "Bu email adresi zaten kullanÄ±lÄ±yor" });
-                    
-                    employee.User.Email = model.Email;
-                }
-
-                // Update user fields
-                if (!string.IsNullOrEmpty(model.FullName))
-                    employee.User.FullName = model.FullName;
-                
-                if (!string.IsNullOrEmpty(model.Phone))
-                    employee.User.Phone = model.Phone;
-
-                // Update employee fields
-                if (!string.IsNullOrEmpty(model.Position))
-                    employee.Position = model.Position;
-
-                if (model.SiteId > 0 && model.SiteId != employee.SiteId)
-                {
-                    var site = await _context.Sites.FindAsync(model.SiteId);
-                    if (site == null)
-                        return BadRequest(new { message = "GeÃ§ersiz ÅŸantiye seÃ§imi" });
-                    
-                    employee.SiteId = model.SiteId;
-                }
-
-                await _context.SaveChangesAsync();
-
-                // Return updated employee
-                var updatedEmployee = await _context.Employees
-                    .Include(e => e.User)
-                    .Include(e => e.Site)
-                    .FirstAsync(e => e.Id == id);
-
-                var employeeDto = _mapper.Map<EmployeeDto>(updatedEmployee);
-                return Ok(employeeDto);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Ã‡alÄ±ÅŸan gÃ¼ncellenirken hata oluÅŸtu", error = ex.Message });
-            }
-        }
-
-        [HttpPut("employees/{id}/status")]
-        public async Task<IActionResult> ToggleEmployeeStatus(int id, [FromBody] ToggleEmployeeStatusDto model)
-        {
-            try
-            {
-                var employee = await _context.Employees
-                    .Include(e => e.User)
-                    .FirstOrDefaultAsync(e => e.Id == id);
-
-                if (employee == null)
-                    return NotFound(new { message = "Ã‡alÄ±ÅŸan bulunamadÄ±" });
-
-                employee.User.IsActive = model.IsActive;
-                await _context.SaveChangesAsync();
-
-                return Ok(new { message = "Ã‡alÄ±ÅŸan durumu baÅŸarÄ±yla gÃ¼ncellendi" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Durum gÃ¼ncellenirken hata oluÅŸtu", error = ex.Message });
-            }
-        }
-
-        [HttpDelete("employees/{id}")]
-        public async Task<IActionResult> DeleteEmployee(int id)
-        {
-            try
-            {
-                var employee = await _context.Employees
-                    .Include(e => e.User)
-                    .FirstOrDefaultAsync(e => e.Id == id);
-
-                if (employee == null)
-                    return NotFound(new { message = "Ã‡alÄ±ÅŸan bulunamadÄ±" });
-
-                // Check if employee has active requests
-                var hasActiveRequests = await _context.Requests
-                    .AnyAsync(r => r.EmployeeId == id && r.Status == RequestStatus.Open);
-
-                if (hasActiveRequests)
-                    return BadRequest(new { message = "Bu Ã§alÄ±ÅŸanÄ±n aktif talepleri bulunduÄŸu iÃ§in silinemez" });
-
-                using var transaction = await _context.Database.BeginTransactionAsync();
-                try
-                {
-                    _context.Employees.Remove(employee);
-                    _context.Users.Remove(employee.User);
-                    
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    return Ok(new { message = "Ã‡alÄ±ÅŸan baÅŸarÄ±yla silindi" });
-                }
-                catch (Exception)
-                {
-                    await transaction.RollbackAsync();
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Ã‡alÄ±ÅŸan silinirken hata oluÅŸtu", error = ex.Message });
-            }
-        }
-
-        [HttpPost("employees")]
-        public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeDto model)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Email kontrolÃ¼
-            if (await _context.Users.AnyAsync(u => u.Email == model.Email))
-                return BadRequest(new { message = "Bu email adresi zaten kullanÄ±lÄ±yor" });
-
-            // Site kontrolÃ¼
-            var site = await _context.Sites.FindAsync(model.SiteId);
-            if (site == null || !site.IsActive)
-                return BadRequest(new { message = "GeÃ§ersiz ÅŸantiye" });
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                // User oluÅŸtur
-                var user = new User
-                {
-                    Email = model.Email,
-                    Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
-                    FullName = model.FullName,
-                    Phone = model.Phone,
-                    Role = UserRole.Employee,
-                    IsActive = true
-                };
-
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-
-                // Employee oluÅŸtur
-                var employee = new Employee
-                {
-                    UserId = user.Id,
-                    SiteId = model.SiteId,
-                    Position = model.Position
-                };
-
-                _context.Employees.Add(employee);
-                await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-
-                // Employee'yi geri dÃ¶ndÃ¼r
-                var createdEmployee = await _context.Employees
-                    .Include(e => e.User)
-                    .Include(e => e.Site)
-                    .FirstAsync(e => e.Id == employee.Id);
-
-                var employeeDto = _mapper.Map<EmployeeDto>(createdEmployee);
-                return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, employeeDto);
-            }
-            catch (Exception)
-            {
-                await transaction.RollbackAsync();
-                return StatusCode(500, new { message = "Ã‡alÄ±ÅŸan oluÅŸturulurken bir hata oluÅŸtu" });
-            }
-        }
-
-        [HttpGet("employees/{id}")]
-        public async Task<IActionResult> GetEmployee(int id)
-        {
-            var employee = await _context.Employees
-                .Include(e => e.User)
-                .Include(e => e.Site)
-                .FirstOrDefaultAsync(e => e.Id == id);
-
-            if (employee == null)
-                return NotFound();
-
-            var employeeDto = _mapper.Map<EmployeeDto>(employee);
-            return Ok(employeeDto);
-        }
-
-        [HttpGet("employees")]
-        public async Task<IActionResult> GetEmployees()
-        {
-            var employees = await _context.Employees
-                .Include(e => e.User)
-                .Include(e => e.Site)
-                .ToListAsync();
-
-            var employeeDtos = _mapper.Map<List<EmployeeDto>>(employees);
-            return Ok(employeeDtos);
         }
 
         [HttpGet("brands")]
-        public async Task<IActionResult> GetBrands()
+        public async Task<IActionResult> GetAllBrands()
         {
             try
             {
@@ -537,288 +441,80 @@ namespace SantiyeTalepApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Markalar yÃ¼klenirken hata oluÅŸtu", error = ex.Message });
+                _logger.LogError(ex, "Error getting all brands");
+                return StatusCode(500, new { message = "Markalar yüklenirken hata oluþtu", error = ex.Message });
             }
-        }
-
-        [HttpPost("sites")]
-        public async Task<IActionResult> CreateSite([FromBody] CreateSiteDto model)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                // Validate brands exist and are active
-                if (model.BrandIds?.Any() == true)
-                {
-                    var validBrandIds = await _context.Brands
-                        .Where(b => b.IsActive && model.BrandIds.Contains(b.Id))
-                        .Select(b => b.Id)
-                        .ToListAsync();
-
-                    if (validBrandIds.Count != model.BrandIds.Count)
-                    {
-                        return BadRequest(new { message = "SeÃ§ilen markalarÄ±n bir kÄ±smÄ± geÃ§ersiz" });
-                    }
-                }
-                else
-                {
-                    return BadRequest(new { message = "En az bir marka seÃ§ilmelidir" });
-                }
-
-                // Create site
-                var site = new Site
-                {
-                    Name = model.Name,
-                    Address = model.Address,
-                    Description = model.Description,
-                    IsActive = true,
-                    CreatedDate = DateTime.UtcNow
-                };
-
-                _context.Sites.Add(site);
-                await _context.SaveChangesAsync();
-
-                // Add site-brand relationships
-                var siteBrands = model.BrandIds.Select(brandId => new SiteBrand
-                {
-                    SiteId = site.Id,
-                    BrandId = brandId
-                }).ToList();
-
-                _context.SiteBrands.AddRange(siteBrands);
-                await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-
-                // Return the created site with brands
-                var createdSite = await _context.Sites
-                    .Include(s => s.SiteBrands)
-                        .ThenInclude(sb => sb.Brand)
-                    .FirstAsync(s => s.Id == site.Id);
-
-                var siteDto = _mapper.Map<SiteDto>(createdSite);
-                return CreatedAtAction(nameof(GetSite), new { id = site.Id }, siteDto);
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return StatusCode(500, new { message = "Åžantiye oluÅŸturularken bir hata oluÅŸtu", error = ex.Message });
-            }
-        }
-
-        [HttpGet("sites/{id}")]
-        public async Task<IActionResult> GetSite(int id)
-        {
-            var site = await _context.Sites
-                .Include(s => s.SiteBrands)
-                    .ThenInclude(sb => sb.Brand)
-                .Include(s=> s.Employees)
-                .FirstOrDefaultAsync(s => s.Id == id);
-                
-            if (site == null)
-                return NotFound();
-
-            var siteDto = _mapper.Map<SiteDto>(site);
-            return Ok(siteDto);
-        }
-
-        [HttpGet("sites")]
-        public async Task<IActionResult> GetSites()
-        {
-            var sites = await _context.Sites
-                .Include(s => s.SiteBrands)
-                    .ThenInclude(sb => sb.Brand)
-                .Include(s=> s.Employees)
-                .ToListAsync();
-                
-            var siteDtos = _mapper.Map<List<SiteDto>>(sites);
-            return Ok(siteDtos);
-        }
-
-        [HttpPut("sites/{id}")]
-        public async Task<IActionResult> UpdateSite(int id, [FromBody] UpdateSiteDto model)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            if (id != model.Id)
-                return BadRequest(new { message = "ID uyumsuzluÄŸu" });
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                var site = await _context.Sites
-                    .Include(s => s.SiteBrands)
-                    .FirstOrDefaultAsync(s => s.Id == id);
-
-                if (site == null)
-                    return NotFound(new { message = "Åžantiye bulunamadÄ±" });
-
-                // Validate brands exist and are active if provided
-                if (model.BrandIds?.Any() == true)
-                {
-                    var validBrandIds = await _context.Brands
-                        .Where(b => b.IsActive && model.BrandIds.Contains(b.Id))
-                        .Select(b => b.Id)
-                        .ToListAsync();
-
-                    if (validBrandIds.Count != model.BrandIds.Count)
-                    {
-                        return BadRequest(new { message = "SeÃ§ilen markalarÄ±n bir kÄ±smÄ± geÃ§ersiz" });
-                    }
-                }
-
-                // Update site properties
-                site.Name = model.Name;
-                site.Address = model.Address;
-                site.Description = model.Description;
-                site.IsActive = model.IsActive;
-
-                // Update brand relationships
-                if (model.BrandIds?.Any() == true)
-                {
-                    // Remove existing brand relationships
-                    _context.SiteBrands.RemoveRange(site.SiteBrands);
-
-                    // Add new brand relationships
-                    var newSiteBrands = model.BrandIds.Select(brandId => new SiteBrand
-                    {
-                        SiteId = site.Id,
-                        BrandId = brandId
-                    }).ToList();
-
-                    _context.SiteBrands.AddRange(newSiteBrands);
-                }
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                // Return updated site
-                var updatedSite = await _context.Sites
-                    .Include(s => s.SiteBrands)
-                        .ThenInclude(sb => sb.Brand)
-                    .FirstAsync(s => s.Id == id);
-
-                var siteDto = _mapper.Map<SiteDto>(updatedSite);
-                return Ok(siteDto);
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                return StatusCode(500, new { message = "Åžantiye gÃ¼ncellenirken bir hata oluÅŸtu", error = ex.Message });
-            }
-        }
-
-        [HttpPut("suppliers/{id}/approve")]
-        public async Task<IActionResult> ApproveSupplier(int id)
-        {
-            var supplier = await _context.Suppliers
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (supplier == null)
-                return NotFound(new { message = "TedarikÃ§i bulunamadÄ±" });
-
-            supplier.Status = SupplierStatus.Approved;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "TedarikÃ§i onaylandÄ±" });
-        }
-
-        [HttpPut("suppliers/{id}/reject")]
-        public async Task<IActionResult> RejectSupplier(int id)
-        {
-            var supplier = await _context.Suppliers
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (supplier == null)
-                return NotFound(new { message = "TedarikÃ§i bulunamadÄ±" });
-
-            supplier.Status = SupplierStatus.Rejected;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "TedarikÃ§i reddedildi" });
-        }
-
-        [HttpGet("suppliers/pending")]
-        public async Task<IActionResult> GetPendingSuppliers()
-        {
-            var suppliers = await _context.Suppliers
-                .Include(s => s.User)
-                .Where(s => s.Status == SupplierStatus.Pending)
-                .ToListAsync();
-
-            var supplierDtos = _mapper.Map<List<SupplierDto>>(suppliers);
-            return Ok(supplierDtos);
-        }
-
-        [HttpGet("suppliers")]
-        public async Task<IActionResult> GetAllSuppliers()
-        {
-            var suppliers = await _context.Suppliers
-                .Include(s => s.User)
-                .OrderByDescending(s => s.Id)
-                .ToListAsync();
-
-            var supplierDtos = _mapper.Map<List<SupplierDto>>(suppliers);
-            return Ok(supplierDtos);
-        }
-
-        [HttpGet("suppliers/approved")]
-        public async Task<IActionResult> GetApprovedSuppliers()
-        {
-            var suppliers = await _context.Suppliers
-                .Include(s => s.User)
-                .Where(s => s.Status == SupplierStatus.Approved)
-                .OrderByDescending(s => s.Id)
-                .ToListAsync();
-
-            var supplierDtos = _mapper.Map<List<SupplierDto>>(suppliers);
-            return Ok(supplierDtos);
         }
 
         [HttpPut("offers/{id}/approve")]
         public async Task<IActionResult> ApproveOffer(int id)
         {
-            var offer = await _context.Offers
-                .Include(o => o.Request)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
-            if (offer == null)
-                return NotFound(new { message = "Teklif bulunamadÄ±" });
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                var offer = await _context.Offers
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Employee)
+                            .ThenInclude(e => e.User)
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Site)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
+                if (offer == null)
+                    return NotFound(new { message = "Teklif bulunamadý" });
+
+                if (offer.Status != OfferStatus.Pending)
+                    return BadRequest(new { message = "Sadece bekleyen teklifler onaylanabilir" });
+
                 // Teklifi onayla
                 offer.Status = OfferStatus.Approved;
                 
-                // DiÄŸer teklifleri reddet
+                // Request'i tamamla
+                offer.Request.Status = RequestStatus.Completed;
+
+                // Ayný request için diðer pending teklifleri reddet
                 var otherOffers = await _context.Offers
-                    .Where(o => o.RequestId == offer.RequestId && o.Id != offer.Id)
+                    .Where(o => o.RequestId == offer.RequestId && o.Id != offer.Id && o.Status == OfferStatus.Pending)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
                     .ToListAsync();
 
                 foreach (var otherOffer in otherOffers)
                 {
                     otherOffer.Status = OfferStatus.Rejected;
+                    
+                    // Reddedilen tedarikçilere bildirim gönder
+                    await _notificationService.CreateNotificationAsync(
+                        "Teklif Reddedildi",
+                        $"{offer.Request.ProductDescription} talebi için verdiðiniz teklif reddedildi. Baþka bir teklif seçilmiþtir.",
+                        NotificationType.OfferRejected,
+                        otherOffer.Supplier.UserId,
+                        offer.RequestId,
+                        otherOffer.Id,
+                        otherOffer.SupplierId
+                    );
                 }
 
-                // Talebi tamamlandÄ± olarak iÅŸaretle
-                offer.Request.Status = RequestStatus.Completed;
-
                 await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
 
-                return Ok(new { message = "Teklif onaylandÄ± ve talep tamamlandÄ±" });
+                // Onaylanan tedarikçiye bildirim gönder
+                await _notificationService.CreateNotificationAsync(
+                    "Teklif Onaylandý",
+                    $"Tebrikler! {offer.Request.ProductDescription} talebi için verdiðiniz {offer.FinalPrice:C} tutarýndaki teklif onaylandý.",
+                    NotificationType.OfferApproved,
+                    offer.Supplier.UserId,
+                    offer.RequestId,
+                    offer.Id,
+                    offer.SupplierId
+                );
+
+                return Ok(new { message = "Teklif onaylandý ve diðer teklifler reddedildi" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return StatusCode(500, new { message = "Teklif onaylanÄ±rken bir hata oluÅŸtu" });
+                _logger.LogError(ex, "Error approving offer");
+                return StatusCode(500, new { message = "Teklif onaylanýrken hata oluþtu", error = ex.Message });
             }
         }
 
@@ -827,41 +523,186 @@ namespace SantiyeTalepApi.Controllers
         {
             try
             {
-                var offer = await _context.Offers.FindAsync(id);
+                var offer = await _context.Offers
+                    .Include(o => o.Request)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
                 if (offer == null)
-                    return NotFound(new { message = "Teklif bulunamadÄ±" });
+                    return NotFound(new { message = "Teklif bulunamadý" });
+
+                if (offer.Status != OfferStatus.Pending)
+                    return BadRequest(new { message = "Sadece bekleyen teklifler reddedilebilir" });
 
                 offer.Status = OfferStatus.Rejected;
                 await _context.SaveChangesAsync();
+
+                // Tedarikçiye red bildirimi gönder
+                await _notificationService.CreateNotificationAsync(
+                    "Teklif Reddedildi",
+                    $"{offer.Request.ProductDescription} talebi için verdiðiniz teklif reddedildi.",
+                    NotificationType.OfferRejected,
+                    offer.Supplier.UserId,
+                    offer.RequestId,
+                    offer.Id,
+                    offer.SupplierId
+                );
 
                 return Ok(new { message = "Teklif reddedildi" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Teklif reddedilirken hata oluÅŸtu", error = ex.Message });
+                _logger.LogError(ex, "Error rejecting offer");
+                return StatusCode(500, new { message = "Teklif reddedilirken hata oluþtu", error = ex.Message });
+            }
+        }
+
+        [HttpGet("offers")]
+        public async Task<IActionResult> GetAllOffers()
+        {
+            try
+            {
+                var offers = await _context.Offers
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Employee)
+                            .ThenInclude(e => e.User)
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Site)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .OrderByDescending(o => o.OfferDate)
+                    .ToListAsync();
+
+                var offerDtos = _mapper.Map<List<OfferDto>>(offers);
+                return Ok(offerDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all offers");
+                return StatusCode(500, new { message = "Teklifler yüklenirken hata oluþtu", error = ex.Message });
+            }
+        }
+
+        [HttpGet("offers/pending")]
+        public async Task<IActionResult> GetPendingOffers()
+        {
+            try
+            {
+                var offers = await _context.Offers
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Employee)
+                            .ThenInclude(e => e.User)
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Site)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .Where(o => o.Status == OfferStatus.Pending)
+                    .OrderByDescending(o => o.OfferDate)
+                    .ToListAsync();
+
+                var offerDtos = _mapper.Map<List<OfferDto>>(offers);
+                return Ok(offerDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting pending offers");
+                return StatusCode(500, new { message = "Bekleyen teklifler yüklenirken hata oluþtu", error = ex.Message });
+            }
+        }
+
+        [HttpPut("suppliers/{id}/approve")]
+        public async Task<IActionResult> ApproveSupplier(int id)
+        {
+            try
+            {
+                var supplier = await _context.Suppliers
+                    .Include(s => s.User)
+                    .FirstOrDefaultAsync(s => s.Id == id);
+
+                if (supplier == null)
+                    return NotFound(new { message = "Tedarikçi bulunamadý" });
+
+                if (supplier.Status != SupplierStatus.Pending)
+                    return BadRequest(new { message = "Sadece bekleyen tedarikçiler onaylanabilir" });
+
+                supplier.Status = SupplierStatus.Approved;
+                await _context.SaveChangesAsync();
+
+                // Tedarikçiye onay bildirimi gönder
+                await _notificationService.CreateNotificationAsync(
+                    "Tedarikçi Baþvurunuz Onaylandý",
+                    "Tebrikler! Tedarikçi baþvurunuz onaylandý. Artýk taleplere teklif verebilirsiniz.",
+                    NotificationType.SupplierApproved,
+                    supplier.UserId,
+                    null,
+                    null,
+                    supplier.Id
+                );
+
+                return Ok(new { message = "Tedarikçi onaylandý" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error approving supplier");
+                return StatusCode(500, new { message = "Tedarikçi onaylanýrken hata oluþtu", error = ex.Message });
+            }
+        }
+
+        [HttpPut("suppliers/{id}/reject")]
+        public async Task<IActionResult> RejectSupplier(int id)
+        {
+            try
+            {
+                var supplier = await _context.Suppliers
+                    .Include(s => s.User)
+                    .FirstOrDefaultAsync(s => s.Id == id);
+
+                if (supplier == null)
+                    return NotFound(new { message = "Tedarikçi bulunamadý" });
+
+                if (supplier.Status != SupplierStatus.Pending)
+                    return BadRequest(new { message = "Sadece bekleyen tedarikçiler reddedilebilir" });
+
+                supplier.Status = SupplierStatus.Rejected;
+                await _context.SaveChangesAsync();
+
+                // Tedarikçiye red bildirimi gönder
+                await _notificationService.CreateNotificationAsync(
+                    "Tedarikçi Baþvurunuz Reddedildi",
+                    "Maalesef tedarikçi baþvurunuz reddedildi. Daha fazla bilgi için admin ile iletiþime geçebilirsiniz.",
+                    NotificationType.SupplierRejected,
+                    supplier.UserId,
+                    null,
+                    null,
+                    supplier.Id
+                );
+
+                return Ok(new { message = "Tedarikçi reddedildi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error rejecting supplier");
+                return StatusCode(500, new { message = "Tedarikçi reddedilirken hata oluþtu", error = ex.Message });
             }
         }
     }
 
-    // DTO classes for new endpoints
-    public class BulkSiteActionDto
+    // DTO classes for request operations
+    public class SendRequestsToSuppliersDto
     {
-        public List<int> SiteIds { get; set; } = new();
+        public List<int> RequestIds { get; set; } = new();
+        public List<int> SupplierIds { get; set; } = new();
+    }
+
+    public class BulkRequestActionDto
+    {
+        public List<int> RequestIds { get; set; } = new();
         public string Action { get; set; } = string.Empty;
     }
 
-    public class ToggleEmployeeStatusDto
+    public class ChangeRequestStatusDto
     {
-        public bool IsActive { get; set; }
-    }
-
-    public class UpdateSiteDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Address { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public List<int> BrandIds { get; set; } = new();
+        public int Status { get; set; }
     }
 }

@@ -16,35 +16,41 @@ namespace SantiyeTalepApi.DTOs
 
     public class CreateEmployeeDto
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "E-posta adresi gereklidir")]
+        [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz")]
         public string Email { get; set; } = string.Empty;
 
-        [Required]
-        [MinLength(6)]
+        [Required(ErrorMessage = "Þifre gereklidir")]
+        [MinLength(6, ErrorMessage = "Þifre en az 6 karakter olmalýdýr")]
         public string Password { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Ad Soyad gereklidir")]
         public string FullName { get; set; } = string.Empty;
 
-        [Required]
-        public int SiteId { get; set; }
-
+        [Required(ErrorMessage = "Telefon numarasý gereklidir")]
+        [Phone(ErrorMessage = "Geçerli bir telefon numarasý giriniz")]
         public string Phone { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Pozisyon gereklidir")]
         public string Position { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Þantiye seçimi gereklidir")]
+        public int SiteId { get; set; }
     }
 
     public class UpdateEmployeeDto
     {
-        [EmailAddress]
+        [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz")]
         public string? Email { get; set; }
 
         public string? FullName { get; set; }
 
-        public int SiteId { get; set; }
-
+        [Phone(ErrorMessage = "Geçerli bir telefon numarasý giriniz")]
         public string? Phone { get; set; }
+
         public string? Position { get; set; }
+
+        public int SiteId { get; set; }
     }
 
     // Flattened EmployeeDto for frontend compatibility

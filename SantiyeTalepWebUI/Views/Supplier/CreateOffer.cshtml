@@ -1,0 +1,562 @@
+@model SantiyeTalepWebUI.Models.DTOs.CreateOfferDto
+@{
+    ViewData["Title"] = "Teklif Ver";
+    Layout = "~/Views/Shared/_SupplierLayout.cshtml";
+    var request = ViewBag.Request as SantiyeTalepWebUI.Models.DTOs.RequestDto;
+}
+
+@section Styles {
+    <style>
+        .offer-summary-card {
+            position: sticky;
+            top: 20px;
+        }
+        .calculation-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .brand-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .brand-suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .brand-suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+        .price-info {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+    </style>
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            
+            <!-- Page Title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">
+                            <i class="ri-price-tag-3-line me-2"></i>Teklif Ver
+                        </h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard")">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="@Url.Action("AvailableRequests")">Açýk Talepler</a></li>
+                                <li class="breadcrumb-item active">Teklif Ver</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Request Information -->
+                @if (request != null)
+                {
+                    <div class="col-xl-4">
+                        <div class="card offer-summary-card">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="card-title mb-0 text-white">
+                                    <i class="ri-file-info-line me-2"></i>Talep Bilgileri
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-borderless mb-0">
+                                        <tbody>
+                                            <tr>
+                                                <td class="ps-0">
+                                                    <span class="text-muted fw-medium">Talep No:</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="fw-semibold">#@request.Id</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ps-0">
+                                                    <span class="text-muted fw-medium">Ürün:</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="fw-semibold">@request.ProductDescription</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ps-0">
+                                                    <span class="text-muted fw-medium">Ýstenen Miktar:</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="badge bg-primary">@request.Quantity</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ps-0">
+                                                    <span class="text-muted fw-medium">Þantiye:</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="badge bg-info">@request.SiteName</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ps-0">
+                                                    <span class="text-muted fw-medium">Talep Tarihi:</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="fw-semibold">@request.RequestDate.ToString("dd.MM.yyyy HH:mm")</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ps-0">
+                                                    <span class="text-muted fw-medium">Ýstenen Teslimat:</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="badge bg-warning">
+                                                        @switch (request.DeliveryType)
+                                                        {
+                                                            case DeliveryType.TodayPickup:
+                                                                <text>Bugün araç gönderip aldýracaðým</text>
+                                                                break;
+                                                            case DeliveryType.SameDayDelivery:
+                                                                <text>Gün içi siz sevk edin</text>
+                                                                break;
+                                                            case DeliveryType.NextDayDelivery:
+                                                                <text>Yarýn siz sevk edin</text>
+                                                                break;
+                                                            case DeliveryType.BusinessDays1to2:
+                                                                <text>1-2 iþ günü</text>
+                                                                break;
+                                                        }
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="ps-0">
+                                                    <span class="text-muted fw-medium">Çalýþan:</span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="fw-semibold">@request.EmployeeName</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                @if (!string.IsNullOrEmpty(request.Description))
+                                {
+                                    <div class="mt-3">
+                                        <h6 class="text-muted fw-medium">Açýklama:</h6>
+                                        <p class="text-muted bg-light p-3 rounded">@request.Description</p>
+                                    </div>
+                                }
+
+                                <!-- Real-time Calculation Display -->
+                                <div class="mt-4">
+                                    <div class="card calculation-card">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-white mb-3">
+                                                <i class="ri-calculator-line me-2"></i>Teklif Hesaplamasý
+                                            </h6>
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <h6 class="mb-1 text-white-50">Ara Toplam</h6>
+                                                        <h5 class="mb-0 text-white" id="calcSubtotal">?0.00</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <h6 class="mb-1 text-white-50">Ýskonto</h6>
+                                                        <h5 class="mb-0 text-white" id="calcDiscount">?0.00</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <hr style="border-color: rgba(255,255,255,0.2);">
+                                                    <h6 class="mb-1 text-white-50">Toplam Teklif Tutarý</h6>
+                                                    <h4 class="mb-0 text-white" id="calcTotal">?0.00</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Offer Form -->
+                <div class="col-xl-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title mb-0">
+                                <i class="ri-edit-line me-2"></i>Teklif Detaylarý
+                            </h4>
+                            <p class="text-muted mb-0">Lütfen teklif bilgilerinizi eksiksiz ve doðru olarak doldurun. Verdiðiniz teklif admin onayýna gidecektir.</p>
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="CreateOffer" method="post" class="needs-validation" novalidate>
+                                <input type="hidden" asp-for="RequestId" />
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3 position-relative">
+                                            <label asp-for="Brand" class="form-label">
+                                                <i class="ri-price-tag-line me-1"></i>Marka <span class="text-danger">*</span>
+                                            </label>
+                                            <input asp-for="Brand" class="form-control" placeholder="Örn: Bosch, Siemens, ABB..." required autocomplete="off" />
+                                            <div class="brand-suggestions" id="brandSuggestions"></div>
+                                            <span asp-validation-for="Brand" class="text-danger"></span>
+                                            <div class="form-text">Ürünün marka/üretici bilgisini girin</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="Quantity" class="form-label">
+                                                <i class="ri-hashtag me-1"></i>Teklif Miktarý <span class="text-danger">*</span>
+                                            </label>
+                                            <input asp-for="Quantity" type="number" class="form-control" min="1" placeholder="Teklif ettiðiniz miktar" required />
+                                            <span asp-validation-for="Quantity" class="text-danger"></span>
+                                            <div class="form-text">Ýstenen miktar: <strong>@(request?.Quantity ?? 0)</strong> (Bu miktarda veya daha fazla teklif verebilirsiniz)</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Description" class="form-label">
+                                        <i class="ri-file-text-line me-1"></i>Ürün Açýklamasý <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="Ürün özelliklerini, kalitesini, teknik detaylarý ve diðer önemli bilgileri detaylý bir þekilde açýklayýn..." required></textarea>
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                    <div class="form-text">
+                                        <i class="ri-information-line me-1"></i>
+                                        Ne kadar detaylý açýklama yaparsanýz teklifinizin deðerlendirilme þansý o kadar artar
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-money-line me-1"></i>Para Birimi <span class="text-danger">*</span>
+                                            </label>
+                                            <select asp-for="Currency" class="form-select" required id="currency">
+                                                <option value="@((int)Currency.TRY)" selected>? - Türk Lirasý</option>
+                                                <option value="@((int)Currency.USD)">$ - Amerikan Dolarý</option>
+                                                <option value="@((int)Currency.EUR)">€ - Euro</option>
+                                                <option value="@((int)Currency.GBP)">£ - Ýngiliz Sterlini</option>
+                                            </select>
+                                            <span asp-validation-for="Currency" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label asp-for="Price" class="form-label">
+                                                <i class="ri-money-dollar-circle-line me-1"></i>Birim Fiyat <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text" id="currencySymbol">?</span>
+                                                <input asp-for="Price" type="number" step="0.01" class="form-control" placeholder="0.00" min="0.01" id="price" required />
+                                            </div>
+                                            <span asp-validation-for="Price" class="text-danger"></span>
+                                            <div class="price-info">KDV dahil birim fiyat</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label asp-for="Discount" class="form-label">
+                                                <i class="ri-percent-line me-1"></i>Ýskonto (%)
+                                            </label>
+                                            <div class="input-group">
+                                                <input asp-for="Discount" type="number" step="0.01" class="form-control" placeholder="0.00" min="0" max="100" id="discount" />
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                            <span asp-validation-for="Discount" class="text-danger"></span>
+                                            <div class="price-info">Opsiyonel - Verilecek iskonto oraný</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                <i class="ri-calculator-line me-1"></i>Net Birim Fiyat
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text" id="netCurrencySymbol">?</span>
+                                                <input type="text" class="form-control" id="netPrice" readonly />
+                                            </div>
+                                            <div class="price-info">Ýskonto sonrasý birim fiyat</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="DeliveryType" class="form-label">
+                                                <i class="ri-truck-line me-1"></i>Teslimat Þekli <span class="text-danger">*</span>
+                                            </label>
+                                            <select asp-for="DeliveryType" class="form-select" required>
+                                                <option value="">Teslimat þeklini seçin</option>
+                                                <option value="@((int)DeliveryType.TodayPickup)">Bugün araç gönderip aldýracaðým</option>
+                                                <option value="@((int)DeliveryType.SameDayDelivery)">Gün içi siz sevk edin</option>
+                                                <option value="@((int)DeliveryType.NextDayDelivery)">Yarýn siz sevk edin</option>
+                                                <option value="@((int)DeliveryType.BusinessDays1to2)">1-2 iþ günü içinde</option>
+                                            </select>
+                                            <span asp-validation-for="DeliveryType" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="DeliveryDate" class="form-label">
+                                                <i class="ri-calendar-line me-1"></i>Tahmini Teslimat Tarihi
+                                            </label>
+                                            <input asp-for="DeliveryDate" type="date" class="form-control" min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                                            <span asp-validation-for="DeliveryDate" class="text-danger"></span>
+                                            <div class="form-text">Teslimat þekline göre otomatik ayarlanýr</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Confirmation Section -->
+                                <div class="card border-success">
+                                    <div class="card-header bg-success-subtle">
+                                        <h6 class="card-title mb-0 text-success">
+                                            <i class="ri-shield-check-line me-2"></i>Teklif Onayý
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="confirmOffer" required>
+                                            <label class="form-check-label" for="confirmOffer">
+                                                <strong>Teklif bilgilerimin doðru olduðunu ve bu fiyatlarla satýþ yapabileceðimi onaylýyorum.</strong>
+                                            </label>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="ri-information-line me-1"></i>
+                                                Verdiðiniz teklif admin onayýna gidecek. Onaylandýðý takdirde belirlenen koþullarda teslimat yapmanýz beklenmektedir.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-end mt-4">
+                                    <a href="@Url.Action("AvailableRequests")" class="btn btn-secondary me-2">
+                                        <i class="ri-arrow-left-line align-middle"></i> Geri Dön
+                                    </a>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <i class="ri-send-plane-line align-middle"></i> Teklifi Admin'e Gönder
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const priceInput = document.getElementById('price');
+            const discountInput = document.getElementById('discount');
+            const quantityInput = document.querySelector('input[name="Quantity"]');
+            const netPriceInput = document.getElementById('netPrice');
+            const currencySelect = document.getElementById('currency');
+            const currencySymbol = document.getElementById('currencySymbol');
+            const netCurrencySymbol = document.getElementById('netCurrencySymbol');
+            
+            // Calculator elements
+            const calcSubtotal = document.getElementById('calcSubtotal');
+            const calcDiscount = document.getElementById('calcDiscount');
+            const calcTotal = document.getElementById('calcTotal');
+
+            // Brand suggestions
+            const brandInput = document.querySelector('input[name="Brand"]');
+            const brandSuggestions = document.getElementById('brandSuggestions');
+            
+            const commonBrands = [
+                'Bosch', 'Siemens', 'ABB', 'Schneider Electric', 'Legrand', 'Viko', 
+                'Eaton', 'Philips', 'Osram', 'General Electric', 'Honeywell', 'Allen Bradley',
+                'Mitsubishi', 'Omron', 'Sick', 'Pepperl+Fuchs', 'Turck', 'Balluff',
+                'Phoenix Contact', 'Weidmüller', 'WAGO', 'Rittal', 'Finder', 'Carlo Gavazzi'
+            ];
+
+            // Currency change handler
+            currencySelect.addEventListener('change', function() {
+                updateCurrencySymbols();
+                updateCalculations();
+            });
+
+            function updateCurrencySymbols() {
+                const currency = parseInt(currencySelect.value);
+                let symbol = '?';
+                
+                switch (currency) {
+                    case 1: // TRY
+                        symbol = '?';
+                        break;
+                    case 2: // USD
+                        symbol = '$';
+                        break;
+                    case 3: // EUR
+                        symbol = '€';
+                        break;
+                    case 4: // GBP
+                        symbol = '£';
+                        break;
+                }
+                
+                currencySymbol.textContent = symbol;
+                netCurrencySymbol.textContent = symbol;
+            }
+
+            brandInput.addEventListener('input', function() {
+                const value = this.value.toLowerCase();
+                if (value.length < 2) {
+                    brandSuggestions.style.display = 'none';
+                    return;
+                }
+
+                const matches = commonBrands.filter(brand => 
+                    brand.toLowerCase().includes(value)
+                ).slice(0, 8);
+
+                if (matches.length > 0) {
+                    brandSuggestions.innerHTML = matches.map(brand => 
+                        `<div class="brand-suggestion-item" onclick="selectBrand('${brand}')">${brand}</div>`
+                    ).join('');
+                    brandSuggestions.style.display = 'block';
+                } else {
+                    brandSuggestions.style.display = 'none';
+                }
+            });
+
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.position-relative')) {
+                    brandSuggestions.style.display = 'none';
+                }
+            });
+
+            function updateCalculations() {
+                const price = parseFloat(priceInput.value) || 0;
+                const discount = parseFloat(discountInput.value) || 0;
+                const quantity = parseInt(quantityInput.value) || 0;
+                const currency = parseInt(currencySelect.value);
+                
+                let symbol = '?';
+                switch (currency) {
+                    case 1: symbol = '?'; break;
+                    case 2: symbol = '$'; break;
+                    case 3: symbol = '€'; break;
+                    case 4: symbol = '£'; break;
+                }
+                
+                const subtotal = price * quantity;
+                const discountAmount = (subtotal * discount) / 100;
+                const total = subtotal - discountAmount;
+                const netUnitPrice = price - (price * discount / 100);
+                
+                // Update main calculations
+                netPriceInput.value = netUnitPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                
+                // Update calculator display
+                calcSubtotal.textContent = symbol + subtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                calcDiscount.textContent = symbol + discountAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                calcTotal.textContent = symbol + total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                // Update submit button
+                const submitBtn = document.getElementById('submitBtn');
+                if (total > 0) {
+                    submitBtn.innerHTML = `<i class="ri-send-plane-line align-middle"></i> ${symbol}${total.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Tutarýnda Teklifi Gönder`;
+                } else {
+                    submitBtn.innerHTML = '<i class="ri-send-plane-line align-middle"></i> Teklifi Admin\'e Gönder';
+                }
+            }
+
+            // Event listeners
+            priceInput.addEventListener('input', updateCalculations);
+            discountInput.addEventListener('input', updateCalculations);
+            quantityInput.addEventListener('input', updateCalculations);
+            
+            // Initial update
+            updateCurrencySymbols();
+            updateCalculations();
+
+            // Form validation
+            const form = document.querySelector('.needs-validation');
+            form.addEventListener('submit', function(event) {
+                const confirmCheckbox = document.getElementById('confirmOffer');
+                
+                if (!form.checkValidity() || !confirmCheckbox.checked) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    if (!confirmCheckbox.checked) {
+                        alert('Lütfen teklif onay kutusunu iþaretleyin.');
+                        confirmCheckbox.focus();
+                    }
+                }
+                form.classList.add('was-validated');
+            });
+
+            // Set delivery date based on delivery type
+            const deliveryTypeSelect = document.querySelector('select[name="DeliveryType"]');
+            const deliveryDateInput = document.querySelector('input[name="DeliveryDate"]');
+
+            deliveryTypeSelect.addEventListener('change', function() {
+                const today = new Date();
+                let deliveryDate = new Date(today);
+
+                switch(this.value) {
+                    case '@((int)DeliveryType.TodayPickup)':
+                        deliveryDate = today;
+                        break;
+                    case '@((int)DeliveryType.SameDayDelivery)':
+                        deliveryDate = today;
+                        break;
+                    case '@((int)DeliveryType.NextDayDelivery)':
+                        deliveryDate.setDate(today.getDate() + 1);
+                        break;
+                    case '@((int)DeliveryType.BusinessDays1to2)':
+                        deliveryDate.setDate(today.getDate() + 2);
+                        break;
+                    default:
+                        deliveryDate.setDate(today.getDate() + 14);
+                        break;
+                }
+
+                deliveryDateInput.value = deliveryDate.toISOString().split('T')[0];
+            });
+        });
+
+        // Global function for brand selection
+        function selectBrand(brand) {
+            document.querySelector('input[name="Brand"]').value = brand;
+            document.getElementById('brandSuggestions').style.display = 'none';
+        }
+    </script>
+}

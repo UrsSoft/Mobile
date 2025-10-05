@@ -17,12 +17,14 @@ namespace SantiyeTalepApi.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IJwtService _jwtService;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
-        public AuthController(ApplicationDbContext context, IJwtService jwtService, IMapper mapper)
+        public AuthController(ApplicationDbContext context, IJwtService jwtService, IMapper mapper, INotificationService notificationService)
         {
             _context = context;
             _jwtService = jwtService;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         [HttpGet("health")]
@@ -34,27 +36,20 @@ namespace SantiyeTalepApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == request.Phone);
             
             if (user == null)
-            {
-                Console.WriteLine($"Kullanıcı bulunamadı: {request.Email}");
+            {                
                 return BadRequest(new { message = "Kullanıcı bulunamadı" });
-            }
-
-            Console.WriteLine($"Giriş denemesi - Email: {request.Email}");
-            Console.WriteLine($"Girilen şifre: {request.Password}");
-            Console.WriteLine($"Veritabanındaki hash: {user.Password}");
+            }           
 
             // Şifre doğrulama - debug için log ekleyelim
-            bool isValidPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
-            Console.WriteLine($"BCrypt verify sonucu: {isValidPassword}");
+            bool isValidPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);           
             
             if (!isValidPassword)
             {
                 // Test için doğru hash'i oluşturalım
-                string correctHash = BCrypt.Net.BCrypt.HashPassword("admin123");
-                Console.WriteLine($"admin123 için yeni hash: {correctHash}");
+                string correctHash = BCrypt.Net.BCrypt.HashPassword("admin123");                
                 
                 return BadRequest(new { message = "Geçersiz şifre" });
             }
@@ -92,6 +87,10 @@ namespace SantiyeTalepApi.Controllers
             if (await _context.Users.AnyAsync(u => u.Email == model.Email))
                 return BadRequest(new { message = "Bu email adresi zaten kullanılıyor" });
 
+            // Telefon kontrolü
+            if (await _context.Users.AnyAsync(u => u.Phone == model.Phone))
+                return BadRequest(new { message = "Bu telefon numarası zaten kullanılıyor" });
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -122,6 +121,17 @@ namespace SantiyeTalepApi.Controllers
                 _context.Suppliers.Add(supplier);
                 await _context.SaveChangesAsync();
 
+                // Admin'lere bildirim gönder
+                await _notificationService.CreateNotificationAsync(
+                    "Yeni Tedarikçi Kaydı",
+                    $"{model.CompanyName} ({model.FullName}) adlı tedarikçi kayıt oldu ve onay bekliyor.",
+                    NotificationType.SupplierRegistration,
+                    null, // admin notification, userId null
+                    null,
+                    null,
+                    supplier.Id
+                );
+
                 await transaction.CommitAsync();
 
                 return Ok(new { message = "Tedarikçi kaydı başarılı. Onay bekliyor." });
@@ -141,10 +151,14 @@ namespace SantiyeTalepApi.Controllers
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@santiye.com");
                 if (user != null)
                 {
-                    // admin123 için yeni hash oluştur
+                    // admin123 için yeni hash oluştur ve telefon numarası ekle
                     user.Password = BCrypt.Net.BCrypt.HashPassword("admin123");
+                    if (string.IsNullOrEmpty(user.Phone))
+                    {
+                        user.Phone = "+905551234567"; // Default admin phone number
+                    }
                     await _context.SaveChangesAsync();
-                    return Ok(new { message = "Admin şifresi sıfırlandı" });
+                    return Ok(new { message = "Admin şifresi sıfırlandı ve telefon numarası eklendi", phone = user.Phone });
                 }
                 return NotFound(new { message = "Admin kullanıcısı bulunamadı" });
             }
@@ -222,6 +236,39 @@ namespace SantiyeTalepApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Şifre değiştirilirken bir hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpPost("create-test-users")]
+        public async Task<IActionResult> CreateTestUsers()
+        {
+            try
+            {
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                
+                // Create Admin user if not exists
+                if (!await _context.Users.AnyAsync(u => u.Phone == "+905551234567"))
+                {
+                    var adminUser = new User
+                    {
+                        Email = "admin@santiye.com",
+                        Phone = "+905551234567",
+                        Password = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                        FullName = "Admin Kullanıcı",
+                        Role = UserRole.Admin,
+                        IsActive = true
+                    };
+                    _context.Users.Add(adminUser);
+                }              
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Test kullanıcıları oluşturulurken hata oluştu", error = ex.Message });
             }
         }
     }

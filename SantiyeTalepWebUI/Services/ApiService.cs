@@ -211,12 +211,21 @@ namespace SantiyeTalepWebUI.Services
                     }
 
                     var result = JsonConvert.DeserializeObject<T>(content);
-                    _logger.LogInformation($"{method} request to {endpoint} succeeded");
+                    _logger.LogInformation($"{method} request to {endpoint} succeeded with status {response.StatusCode}");
                     return result;
                 }
                 catch (JsonException jsonEx)
                 {
                     _logger.LogError(jsonEx, $"Failed to deserialize response from {endpoint}. Content: {content}");
+                    
+                    // For successful responses, if we can't deserialize but response was successful,
+                    // try to return a default success indicator for certain types
+                    if (typeof(T) == typeof(object))
+                    {
+                        _logger.LogInformation($"Returning success indicator for {method} {endpoint} despite deserialization failure");
+                        return (T)(object)new { Success = true };
+                    }
+                    
                     return default;
                 }
             }

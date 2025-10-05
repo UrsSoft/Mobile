@@ -5,28 +5,36 @@
 namespace SantiyeTalepApi.Migrations
 {
     /// <inheritdoc />
-    public partial class AddProductDescriptionUnitDeliveryType : Migration
+    public partial class UpdateOfferModelForEnhancedQuotes : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "DeliveryType",
-                table: "Requests",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
-
             migrationBuilder.AddColumn<string>(
-                name: "ProductDescription",
-                table: "Requests",
-                type: "nvarchar(max)",
+                name: "Brand",
+                table: "Offers",
+                type: "nvarchar(100)",
+                maxLength: 100,
                 nullable: false,
                 defaultValue: "");
 
             migrationBuilder.AddColumn<int>(
-                name: "Unit",
-                table: "Requests",
+                name: "DeliveryType",
+                table: "Offers",
+                type: "int",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<decimal>(
+                name: "Discount",
+                table: "Offers",
+                type: "decimal(5,2)",
+                nullable: false,
+                defaultValue: 0m);
+
+            migrationBuilder.AddColumn<int>(
+                name: "Quantity",
+                table: "Offers",
                 type: "int",
                 nullable: false,
                 defaultValue: 0);
@@ -36,16 +44,20 @@ namespace SantiyeTalepApi.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
+                name: "Brand",
+                table: "Offers");
+
+            migrationBuilder.DropColumn(
                 name: "DeliveryType",
-                table: "Requests");
+                table: "Offers");
 
             migrationBuilder.DropColumn(
-                name: "ProductDescription",
-                table: "Requests");
+                name: "Discount",
+                table: "Offers");
 
             migrationBuilder.DropColumn(
-                name: "Unit",
-                table: "Requests");
+                name: "Quantity",
+                table: "Offers");
         }
     }
 }

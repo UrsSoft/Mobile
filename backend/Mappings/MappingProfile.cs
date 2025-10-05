@@ -47,13 +47,15 @@ namespace SantiyeTalepApi.Mappings
                 .ForMember(dest => dest.Offers, opt => opt.MapFrom(src => src.Offers))
                 .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.RequestDate));
             
-            // Offer to OfferDto mapping with flattened properties
+            // Offer to OfferDto mapping with flattened properties (updated for new structure)
             CreateMap<Offer, OfferDto>()
-                .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Supplier.CompanyName))
-                .ForMember(dest => dest.SupplierContact, opt => opt.MapFrom(src => src.Supplier.User.FullName))
                 .ForMember(dest => dest.RequestTitle, opt => opt.MapFrom(src => src.Request.ProductDescription))
-                .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.OfferDate))
-                .ForMember(dest => dest.DeliveryDate, opt => opt.MapFrom(src => src.OfferDate.AddDays(src.DeliveryDays)));
+                .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Supplier.User.FullName))
+                .ForMember(dest => dest.SupplierEmail, opt => opt.MapFrom(src => src.Supplier.User.Email))
+                .ForMember(dest => dest.CompanyName, opt => opt.MapFrom(src => src.Supplier.CompanyName));
+            
+            // CreateOfferDto to Offer mapping
+            CreateMap<CreateOfferDto, Offer>();
             
             // Supplier to SupplierDto mapping with flattened properties
             CreateMap<Supplier, SupplierDto>()
@@ -68,6 +70,10 @@ namespace SantiyeTalepApi.Mappings
                 .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.User.Phone))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.User.IsActive))
                 .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.User.CreatedDate));
+
+            // Notification mappings
+            CreateMap<Notification, NotificationDto>();
+            CreateMap<CreateNotificationDto, Notification>();
         }
     }
 }

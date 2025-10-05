@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="tr" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg" data-sidebar-image="none" data-preloader="disable">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Tedarikçi Portal | Þantiye Talep Yönetim Sistemi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="Tedarikçi Portal - Þantiye Talep Yönetim Sistemi" name="description" />
+    <meta content="Element Elektrik" name="author" />
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="~/assets/images/favicon.ico">
+
+    <!-- Layout config Js -->
+    <script src="~/assets/js/layout.js"></script>
+    <!-- Bootstrap Css -->
+    <link href="~/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!-- Icons Css -->
+    <link href="~/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+    <!-- App Css-->
+    <link href="~/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+    <!-- custom Css-->
+    <link href="~/assets/css/custom.min.css" rel="stylesheet" type="text/css" />
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- Notification Checker CSS -->
+    <link href="~/css/notification-checker.css" rel="stylesheet" type="text/css" />
+    
+    @RenderSection("Styles", false)
+</head>
+
+<body class="supplier-page">
+
+    <!-- Begin page -->
+    <div id="layout-wrapper">
+
+        <header id="page-topbar">
+            <div class="layout-width">
+                <div class="navbar-header">
+                    <div class="d-flex">
+                        <!-- LOGO -->
+                        <div class="navbar-brand-box horizontal-logo">
+                            <a href="@Url.Action("Dashboard", "Supplier")" class="logo logo-dark">
+                                <span class="logo-sm">
+                                    <img src="~/assets/images/logo-sm.png" alt="" height="22">
+                                </span>
+                                <span class="logo-lg">
+                                    <img src="~/assets/images/logo-dark.png" alt="" height="17">
+                                </span>
+                            </a>
+
+                            <a href="@Url.Action("Dashboard", "Supplier")" class="logo logo-light">
+                                <span class="logo-sm">
+                                    <img src="~/assets/images/logo-sm.png" alt="" height="22">
+                                </span>
+                                <span class="logo-lg">
+                                    <img src="~/assets/images/logo-light.png" alt="" height="17">
+                                </span>
+                            </a>
+                        </div>
+
+                        <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger" id="topnav-hamburger-icon">
+                            <span class="hamburger-icon">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </button>
+
+                        <!-- Page Title -->
+                        <div class="d-flex align-items-center ms-3">
+                            <h5 class="mb-0 text-primary">
+                                <i class="ri-store-2-line me-2"></i>Tedarikçi Portal
+                            </h5>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <!-- Notifications -->
+                        <div class="dropdown ms-1 topbar-head-dropdown header-item">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" id="page-header-notifications-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="toggleNotifications()">
+                                <i class='bx bx-bell fs-22'></i>
+                                <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger" id="notification-badge" style="display: none;">
+                                    <span id="notification-count">0</span>
+                                    <span class="visually-hidden">okunmamýþ mesaj</span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0" id="notification-dropdown" aria-labelledby="page-header-notifications-dropdown">
+                                <div class="dropdown-head bg-primary bg-pattern rounded-top">
+                                    <div class="p-3">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="m-0 fs-16 fw-semibold text-white">Bildirimler</h6>
+                                            </div>
+                                            <div class="col-auto dropdown-tabs">
+                                                <button class="btn btn-sm btn-light" onclick="markAllAsRead()" id="mark-all-read-btn" title="Tümünü Okundu Ýþaretle">
+                                                    <i class="ri-check-double-line"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-content position-relative" id="notificationItemsTabContent">
+                                    <div class="tab-pane fade show active py-2 ps-2" id="all-noti-tab" role="tabpanel">
+                                        <div data-simplebar style="max-height: 300px;" class="pe-2" id="notifications-container">
+                                            <div class="text-center py-4">
+                                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                    <span class="visually-hidden">Yükleniyor...</span>
+                                                </div>
+                                                <p class="mt-2 mb-0 text-muted">Bildirimler yükleniyor...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ms-1 header-item d-none d-sm-flex">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" data-toggle="fullscreen">
+                                <i class='bx bx-fullscreen fs-22'></i>
+                            </button>
+                        </div>
+
+                        <div class="ms-1 header-item d-none d-sm-flex">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle light-dark-mode">
+                                <i class='bx bx-moon fs-22'></i>
+                            </button>
+                        </div>
+                                               
+                        <div class="dropdown ms-sm-3 header-item topbar-user">
+                            <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="d-flex align-items-center">
+                                    <img class="rounded-circle header-profile-user" src="~/assets/images/users/avatar-1.jpg" alt="Header Avatar">
+                                    <span class="text-start ms-xl-2">
+                                        <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">@User.Identity.Name</span>
+                                        <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text text-success">Tedarikçi</span>
+                                    </span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <h6 class="dropdown-header">Hoþgeldiniz!</h6>
+                                <a class="dropdown-item" href="#"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profil</span></a>
+                                <a class="dropdown-item" href="#"><i class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Ayarlar</span></a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="@Url.Action("Logout", "Account")"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Çýkýþ Yap</span></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========== App Menu ========== -->
+        <div class="app-menu navbar-menu">
+            <!-- LOGO -->
+            <div class="navbar-brand-box">
+                <!-- Dark Logo-->
+                <a href="@Url.Action("Dashboard", "Supplier")" class="logo logo-dark">
+                    <span class="logo-sm">
+                        <img src="~/assets/images/logo-sm.png" alt="" height="22">
+                    </span>
+                    <span class="logo-lg">
+                        <img src="~/assets/images/logo-dark.png" alt="" height="17">
+                    </span>
+                </a>
+                <!-- Light Logo-->
+                <a href="@Url.Action("Dashboard", "Supplier")" class="logo logo-light">
+                    <span class="logo-sm">
+                        <img src="~/assets/images/logo-sm.png" alt="" height="22">
+                    </span>
+                    <span class="logo-lg">
+                        <img src="~/assets/images/logo-light.png" alt="" height="17">
+                    </span>
+                </a>
+                <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
+                    <i class="ri-record-circle-line"></i>
+                </button>
+            </div>
+
+            <div id="scrollbar">
+                <div class="container-fluid">
+                    <div id="two-column-menu"></div>
+                    <ul class="navbar-nav" id="navbar-nav">
+                        <li class="menu-title"><span data-key="t-menu">Tedarikçi Menüsü</span></li>
+                        
+                        <!-- Dashboard -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="@Url.Action("Dashboard", "Supplier")">
+                                <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboard">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Talepler -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarRequests" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRequests">
+                                <i class="ri-file-list-3-line"></i> <span data-key="t-requests">Talepler</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarRequests">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("AvailableRequests", "Supplier")" class="nav-link" data-key="t-available-requests">Açýk Talepler</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Tekliflerim -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarOffers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarOffers">
+                                <i class="ri-price-tag-3-line"></i> <span data-key="t-offers">Tekliflerim</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarOffers">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Offers", "Supplier")" class="nav-link" data-key="t-all-offers">Tüm Teklifler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Offers", "Supplier", new { status = "pending" })" class="nav-link" data-key="t-pending-offers">Bekleyen Teklifler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Offers", "Supplier", new { status = "approved" })" class="nav-link" data-key="t-approved-offers">Onaylanan Teklifler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Offers", "Supplier", new { status = "rejected" })" class="nav-link" data-key="t-rejected-offers">Reddedilen Teklifler</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Hesap ve Ayarlar</span></li>
+
+                        <!-- Profil -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarProfile" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarProfile">
+                                <i class="ri-account-circle-line"></i> <span data-key="t-profile">Profil</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarProfile">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-view-profile">Profili Görüntüle</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-edit-profile">Profili Düzenle</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-company-info">Þirket Bilgileri</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Raporlar -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarReports" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarReports">
+                                <i class="ri-bar-chart-2-line"></i> <span data-key="t-reports">Raporlar</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarReports">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-offer-reports">Teklif Raporlarý</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-monthly-reports">Aylýk Raporlar</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-yearly-reports">Yýllýk Raporlar</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Ayarlar -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarSettings" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSettings">
+                                <i class="ri-settings-3-line"></i> <span data-key="t-settings">Ayarlar</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSettings">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-account-settings">Hesap Ayarlarý</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-notification-settings">Bildirim Ayarlarý</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-password-change">Þifre Deðiþtir</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Yardým -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarHelp" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarHelp">
+                                <i class="ri-question-line"></i> <span data-key="t-help">Yardým</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarHelp">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-user-guide">Kullaným Kýlavuzu</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-faq">Sýk Sorulan Sorular</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link" data-key="t-contact">Ýletiþim</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                    </ul>
+                </div>
+                <!-- Sidebar -->
+            </div>
+
+            <div class="sidebar-background"></div>
+        </div>
+        <!-- Left Sidebar End -->
+        <!-- Vertical Overlay-->
+        <div class="vertical-overlay"></div>
+
+        <!-- ============================================================== -->
+        <!-- Start right Content here -->
+        <!-- ============================================================== -->
+       @RenderBody()
+        <!-- end main content-->
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <script>document.write(new Date().getFullYear())</script> © Þantiye Talep Yönetim Sistemi - Tedarikçi Portal
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-sm-end d-none d-sm-block">
+                            <a href="http://elementelk.com/" target="_blank">
+                                Element Elektrik Proje Taah. Tic. Ltd. Sti.
+                            </a> tarafýndan geliþtirildi.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <!-- END layout-wrapper -->
+    
+    <!--start back-to-top-->
+    <button onclick="topFunction()" class="btn btn-primary btn-icon" id="back-to-top">
+        <i class="ri-arrow-up-line"></i>
+    </button>
+    <!--end back-to-top-->
+    
+    <!--preloader-->
+    <div id="preloader">
+        <div id="status">
+            <div class="spinner-border text-primary avatar-sm" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/libs/simplebar/simplebar.min.js"></script>
+    <script src="~/assets/libs/node-waves/waves.min.js"></script>
+    <script src="~/assets/libs/feather-icons/feather.min.js"></script>
+    <script src="~/assets/js/pages/plugins/lord-icon-2.1.0.js"></script>
+    <script src="~/assets/js/plugins.js"></script>
+    <script src="~/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+    
+    <!-- apexcharts -->
+    <script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
+
+    <!-- Dashboard init -->
+    <script src="~/assets/js/pages/dashboard-crm.init.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    
+    <!-- Toastr Notifications -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Include notification checker first (global) -->
+    <script src="~/js/notification-checker.js"></script>
+    
+    <!-- Supplier Notifications Script -->
+    <script>
+        // Global variables for notification management
+        let notifications = [];
+        let notificationSummary = null;
+        let notificationCheckInterval = null;
+
+        // Initialize notifications when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotificationSummary();
+            loadNotifications();
+            
+            // Start periodic check for new notifications every 60 seconds
+            startNotificationCheck();
+        });
+
+        // Start periodic notification check
+        function startNotificationCheck() {
+            // Clear existing interval if any
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+            }
+            
+            // Check for new notifications every 60 seconds
+            notificationCheckInterval = setInterval(() => {
+                loadNotificationSummary();
+                loadNotifications();
+            }, 60000); // 60 seconds
+        }
+
+        // Load notification summary
+        async function loadNotificationSummary() {
+            try {
+                const response = await fetch('/Supplier/GetNotificationSummary');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    notificationSummary = result.data;
+                    updateNotificationBadge();
+                }
+            } catch (error) {
+                console.error('Error loading notification summary:', error);
+            }
+        }
+
+        // Load notifications
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/Supplier/GetNotifications');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    notifications = result.data;
+                    displayNotifications();
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                showNotificationsError();
+            }
+        }
+
+        // Update notification badge
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notification-badge');
+            const count = document.getElementById('notification-count');
+            
+            if (notificationSummary && notificationSummary.unreadCount > 0) {
+                badge.style.display = 'block';
+                count.textContent = notificationSummary.unreadCount;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Display notifications
+        function displayNotifications() {
+            const container = document.getElementById('notifications-container');
+            
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="ri-notification-line display-4 text-muted mb-3"></i>
+                        <h6 class="text-muted">Henüz bildirim yok</h6>
+                        <p class="text-muted mb-0">Yeni talepler geldiðinde burada bildirim alacaksýnýz.</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            notifications.forEach(notification => {
+                const isRead = notification.isRead;
+                const typeIcon = getNotificationIcon(notification.type);
+                const typeColor = getNotificationColor(notification.type);
+                const timeAgo = getTimeAgo(notification.createdDate);
+                
+                html += `
+                    <div class="text-reset notification-item d-block dropdown-item position-relative ${isRead ? '' : 'unread-notification'}" 
+                         onclick="markAsReadAndNavigate(${notification.id}, ${notification.type}, ${notification.requestId || 'null'}, ${notification.offerId || 'null'}, ${notification.supplierId || 'null'})">
+                        <div class="d-flex">
+                            <div class="avatar-xs me-3">
+                                <span class="avatar-title bg-${typeColor}-subtle text-${typeColor} rounded-circle fs-16">
+                                    <i class="${typeIcon}"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mt-0 mb-1 fs-13 fw-semibold ${isRead ? 'text-muted' : ''}">${notification.title}</h6>
+                                <div class="fs-13 text-muted">
+                                    <p class="mb-1">${notification.message}</p>
+                                </div>
+                                <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                    <span><i class="mdi mdi-clock-outline"></i> ${timeAgo}</span>
+                                    ${!isRead ? '<span class="badge bg-primary ms-2">Yeni</span>' : ''}
+                                </p>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Get notification icon based on type
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 10: // RequestSentToSupplier
+                    return 'ri-send-plane-line';
+                case 3: // NewOffer
+                    return 'ri-price-tag-3-line';
+                case 6: // OfferApproved
+                    return 'ri-check-line';
+                case 7: // OfferRejected
+                    return 'ri-close-line';
+                default:
+                    return 'ri-notification-line';
+            }
+        }
+
+        // Get notification color based on type
+        function getNotificationColor(type) {
+            switch(type) {
+                case 10: // RequestSentToSupplier
+                    return 'info';
+                case 3: // NewOffer
+                    return 'warning';
+                case 6: // OfferApproved
+                    return 'success';
+                case 7: // OfferRejected
+                    return 'danger';
+                default:
+                    return 'primary';
+            }
+        }
+
+        // Get time ago string
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            
+            if (diffMins < 1) return 'Az önce';
+            if (diffMins < 60) return `${diffMins} dakika önce`;
+            if (diffHours < 24) return `${diffHours} saat önce`;
+            if (diffDays < 7) return `${diffDays} gün önce`;
+            
+            return date.toLocaleDateString('tr-TR');
+        }
+
+        // Show error message in notifications
+        function showNotificationsError() {
+            const container = document.getElementById('notifications-container');
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="ri-error-warning-line display-4 text-danger mb-3"></i>
+                    <h6 class="text-danger">Hata</h6>
+                    <p class="text-muted mb-2">Bildirimler yüklenirken bir hata oluþtu.</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadNotifications()">
+                        <i class="ri-refresh-line me-1"></i>Yeniden Dene
+                    </button>
+                </div>`;
+        }
+
+        // Toggle notifications dropdown
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notification-dropdown');
+            const isVisible = dropdown.classList.contains('show');
+            
+            if (!isVisible) {
+                // Load fresh notifications when opening
+                loadNotifications();
+                loadNotificationSummary();
+            }
+        }
+
+        // Mark notification as read and navigate
+        async function markAsReadAndNavigate(notificationId, type, requestId, offerId, supplierId) {
+            try {
+                // Mark as read
+                const notification = notifications.find(n => n.id === notificationId);
+                if (notification && !notification.isRead) {
+                    await fetch('/Supplier/MarkNotificationAsRead', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(notificationId)
+                    });
+                    
+                    // Update local state
+                    notification.isRead = true;
+                    displayNotifications();
+                    loadNotificationSummary();
+                }
+                
+                // Navigate based on notification type
+                let targetUrl = '/Supplier/Dashboard';
+                
+                switch(type) {
+                    case 10: // RequestSentToSupplier
+                        targetUrl = '/Supplier/AvailableRequests';
+                        break;
+                    case 3: // NewOffer (this shouldn't happen for suppliers but just in case)
+                        targetUrl = '/Supplier/Offers';
+                        break;
+                    case 6: // OfferApproved
+                    case 7: // OfferRejected
+                        targetUrl = '/Supplier/Offers';
+                        break;
+                }
+                
+                // Navigate to the target page
+                window.location.href = targetUrl;
+                
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+                // Still navigate even if marking as read fails
+                window.location.href = '/Supplier/Dashboard';
+            }
+        }
+
+        // Mark all notifications as read
+        async function markAllAsRead() {
+            const unreadNotifications = notifications.filter(n => !n.isRead);
+            
+            if (unreadNotifications.length === 0) {
+                toastr.info('Zaten tüm bildirimler okunmuþ durumda');
+                return;
+            }
+
+            try {
+                const response = await fetch('/Supplier/MarkAllNotificationsAsRead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update local notifications
+                    notifications.forEach(n => n.isRead = true);
+                    
+                    // Update display
+                    displayNotifications();
+                    loadNotificationSummary();
+                    
+                    toastr.success(`${unreadNotifications.length} bildirim okundu olarak iþaretlendi`);
+                } else {
+                    toastr.error('Bildirimler güncellenirken hata oluþtu');
+                }
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+                toastr.error('Bildirimler güncellenirken hata oluþtu');
+            }
+        }
+
+        // Add CSS for unread notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            .unread-notification {
+                background-color: #f8f9fa !important;
+                border-left: 3px solid #0ab39c !important;
+            }
+            .unread-notification:hover {
+                background-color: #e9ecef !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Clean up interval on page unload
+        window.addEventListener('beforeunload', function() {
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+            }
+        });
+    </script>
+    
+    <!-- App js -->
+   @*  <script src="~/assets/js/app.js"></script> *@
+
+    @RenderSection("Scripts",false)
+</body>
+
+</html>

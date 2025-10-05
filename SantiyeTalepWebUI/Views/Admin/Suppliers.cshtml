@@ -150,6 +150,12 @@
                                                     </td>
                                                 </tr>
                                             }
+                                            @for (int i = Model.Count; i < 3; i++)
+                                            {
+                                                <tr class="empty-row" style="height: 80px;">
+                                                    <td colspan="8">&nbsp;</td>
+                                                </tr>
+                                            }
                                         }
                                         else
                                         {

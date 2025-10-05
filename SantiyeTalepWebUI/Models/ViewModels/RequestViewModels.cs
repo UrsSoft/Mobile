@@ -18,10 +18,9 @@ namespace SantiyeTalepWebUI.Models.ViewModels
         [Required(ErrorMessage = "Teslim tipi seçimi gereklidir")]
         [Display(Name = "Teslim Tipi")]
         public DeliveryType DeliveryType { get; set; }
-
-        [Required(ErrorMessage = "Açıklama gereklidir")]
+                
         [Display(Name = "Açıklama")]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
     }
 
     public class RequestDetailsViewModel
@@ -40,6 +39,28 @@ namespace SantiyeTalepWebUI.Models.ViewModels
         public string SearchTerm { get; set; } = string.Empty;
         
         public List<ProductDto> SearchResults { get; set; } = new();
+    }
+
+    public class ProductDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Brand { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    public class ProductSearchDto
+    {
+        [Required]
+        [MinLength(2, ErrorMessage = "Arama terimi en az 2 karakter olmalıdır")]
+        public string SearchTerm { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Brand { get; set; } = string.Empty;
+        public decimal? MinPrice { get; set; }
+        public decimal? MaxPrice { get; set; }
     }
 
     public static class EnumDisplayHelper

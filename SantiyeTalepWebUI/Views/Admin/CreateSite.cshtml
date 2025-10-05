@@ -245,20 +245,6 @@
     </div>
     <!-- End Page-content -->
 
-    <footer class="footer">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-sm-6">
-                    <script>document.write(new Date().getFullYear())</script> © Þantiye Talep Yönetim Sistemi.
-                </div>
-                <div class="col-sm-6">
-                    <div class="text-sm-end d-none d-sm-block">
-                        Velzon Template ile geliþtirilmiþtir.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
 </div>
 
 @section Scripts {
@@ -326,11 +312,14 @@
             const countElement = document.getElementById('selectedBrandCount');
             const infoElement = document.getElementById('brandSelectionInfo');
             
-            if (selectedCount > 0) {
-                countElement.textContent = selectedCount;
-                infoElement.classList.remove('d-none');
-            } else {
-                infoElement.classList.add('d-none');
+            // Check if elements exist before accessing their properties
+            if (countElement && infoElement) {
+                if (selectedCount > 0) {
+                    countElement.textContent = selectedCount;
+                    infoElement.classList.remove('d-none');
+                } else {
+                    infoElement.classList.add('d-none');
+                }
             }
         }
 

@@ -12,7 +12,7 @@ using System.Text;
 namespace SantiyeTalepWebUI.Controllers
 {
     [AuthorizeRole(UserRole.Admin)]
-    public class AdminController : Controller
+    public partial class AdminController : Controller
     {
         private readonly IApiService _apiService;
         private readonly IAuthService _authService;
@@ -48,7 +48,7 @@ namespace SantiyeTalepWebUI.Controllers
                 {
                     var statsJson = System.Text.Json.JsonSerializer.Serialize(stats);
                     var statsDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(statsJson);
-                    
+
                     if (statsDict != null)
                     {
                         dashboardStats.TotalRequests = GetIntValue(statsDict, "totalRequests");
@@ -116,7 +116,7 @@ namespace SantiyeTalepWebUI.Controllers
                 // Get brands for selection
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
-                
+
                 return View(new Models.DTOs.CreateSiteDto());
             }
             catch (Exception ex)
@@ -162,7 +162,7 @@ namespace SantiyeTalepWebUI.Controllers
                 }
 
                 TempData["ErrorMessage"] = "Şantiye oluşturulurken bir hata oluştu";
-                
+
                 // Reload brands for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
@@ -172,7 +172,7 @@ namespace SantiyeTalepWebUI.Controllers
             {
                 _logger.LogError(ex, "Error creating site");
                 TempData["ErrorMessage"] = "Şantiye oluşturulurken bir hata oluştu";
-                
+
                 // Reload brands for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
@@ -197,7 +197,7 @@ namespace SantiyeTalepWebUI.Controllers
                 var brandsHtml = "";
                 if (site.Brands?.Any() == true)
                 {
-                    brandsHtml = string.Join("", site.Brands.Select(b => 
+                    brandsHtml = string.Join("", site.Brands.Select(b =>
                         $"<span class='badge bg-primary me-1 mb-1'>{b.Name}</span>"));
                 }
                 else
@@ -237,8 +237,8 @@ namespace SantiyeTalepWebUI.Controllers
                                         <div class='col-6'>
                                             <label class='form-label fw-semibold text-muted'>Durum</label>
                                             <div>
-                                                {(site.IsActive ? 
-                                                    "<span class='badge bg-success'><i class='ri-checkbox-circle-line me-1'></i>Aktif</span>" : 
+                                                {(site.IsActive ?
+                                                    "<span class='badge bg-success'><i class='ri-checkbox-circle-line me-1'></i>Aktif</span>" :
                                                     "<span class='badge bg-danger'><i class='ri-close-circle-line me-1'></i>Pasif</span>")}
                                             </div>
                                         </div>
@@ -306,15 +306,15 @@ namespace SantiyeTalepWebUI.Controllers
             try
             {
                 var employees = await _apiService.GetAsync<List<EmployeeDto>>($"api/Admin/sites/{id}/employees", token) ?? new List<EmployeeDto>();
-                
+
                 var html = new StringBuilder();
-                
+
                 if (employees.Any())
                 {
                     // Add summary cards
                     var activeCount = employees.Count(e => e.IsActive);
                     var inactiveCount = employees.Count - activeCount;
-                    
+
                     html.Append($@"
                         <div class='row g-3 mb-4'>
                             <div class='col-md-4'>
@@ -345,7 +345,6 @@ namespace SantiyeTalepWebUI.Controllers
                                 </div>
                             </div>
                         </div>");
-
                     html.Append("<div class='table-responsive'>");
                     html.Append("<table class='table table-hover table-striped'>");
                     html.Append(@"
@@ -362,12 +361,12 @@ namespace SantiyeTalepWebUI.Controllers
                     html.Append("<tbody>");
                     foreach (var emp in employees.OrderBy(e => e.FullName))
                     {
-                        var statusBadge = emp.IsActive ? 
-                            "<span class='badge bg-success'><i class='ri-checkbox-circle-line me-1'></i>Aktif</span>" : 
+                        var statusBadge = emp.IsActive ?
+                            "<span class='badge bg-success'><i class='ri-checkbox-circle-line me-1'></i>Aktif</span>" :
                             "<span class='badge bg-danger'><i class='ri-close-circle-line me-1'></i>Pasif</span>";
-                        
+
                         var rowClass = emp.IsActive ? "" : "table-secondary";
-                        
+
                         html.Append($@"
                             <tr class='{rowClass}'>
                                 <td>
@@ -391,8 +390,8 @@ namespace SantiyeTalepWebUI.Controllers
                                     </a>
                                 </td>
                                 <td>
-                                    {(string.IsNullOrEmpty(emp.Phone) ? 
-                                        "<span class='text-muted'>-</span>" : 
+                                    {(string.IsNullOrEmpty(emp.Phone) ?
+                                        "<span class='text-muted'>-</span>" :
                                         $"<a href='tel:{emp.Phone}' class='text-decoration-none'><i class='ri-phone-line me-1'></i>{emp.Phone}</a>")}
                                 </td>
                                 <td>
@@ -444,16 +443,17 @@ namespace SantiyeTalepWebUI.Controllers
             catch (HttpRequestException httpEx)
             {
                 _logger.LogError(httpEx, "HTTP error deleting site");
-                
+
                 // API'den gelen hata mesajını parse et
                 if (httpEx.Message.Contains("400") || httpEx.Message.Contains("Bad Request"))
                 {
-                    return Json(new { 
-                        success = false, 
-                        message = "Bu şantiyede çalışan bulunduğu için silinemez. Önce çalışanları başka şantiyelere transfer edin veya hesaplarını silin." 
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Bu şantiyede çalışan bulunduğu için silinemez. Önce çalışanları başka şantiyelere transfer edin veya hesaplarını silin."
                     });
                 }
-                
+
                 return Json(new { success = false, message = "Şantiye silinirken hata oluştu" });
             }
             catch (Exception ex)
@@ -479,19 +479,20 @@ namespace SantiyeTalepWebUI.Controllers
             catch (HttpRequestException httpEx)
             {
                 _logger.LogError(httpEx, "HTTP error in bulk site action");
-                
+
                 // API'den gelen hata mesajını parse et
                 if (httpEx.Message.Contains("400") || httpEx.Message.Contains("Bad Request"))
                 {
                     if (action == "delete")
                     {
-                        return Json(new { 
-                            success = false, 
-                            message = "Seçilen şantiyelerden bazılarında çalışan bulunduğu için silme işlemi tamamlanamadı. Önce tüm çalışanları transfer edin veya silin." 
+                        return Json(new
+                        {
+                            success = false,
+                            message = "Seçilen şantiyelerden bazılarında çalışan bulunduğu için silme işlemi tamamlanamadı. Önce tüm çalışanları transfer edin veya silin."
                         });
                     }
                 }
-                
+
                 return Json(new { success = false, message = "Toplu işlem sırasında hata oluştu" });
             }
             catch (Exception ex)
@@ -575,7 +576,7 @@ namespace SantiyeTalepWebUI.Controllers
                 }
 
                 TempData["ErrorMessage"] = "Şantiye güncellenirken bir hata oluştu";
-                
+
                 // Reload brands for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
@@ -585,7 +586,7 @@ namespace SantiyeTalepWebUI.Controllers
             {
                 _logger.LogError(ex, "Error updating site");
                 TempData["ErrorMessage"] = "Şantiye güncellenirken bir hata oluştu";
-                
+
                 // Reload brands for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
@@ -633,6 +634,12 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
+                // Clean phone number - remove spaces and format to clean number for database storage
+                if (!string.IsNullOrEmpty(model.Phone))
+                {
+                    model.Phone = model.Phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+                }
+
                 var result = await _apiService.PostAsync<object>("api/Admin/employees", model, token);
                 if (result != null)
                 {
@@ -820,6 +827,25 @@ namespace SantiyeTalepWebUI.Controllers
             return RedirectToAction("Suppliers");
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetApprovedSuppliers()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi doldu" });
+
+            try
+            {
+                var suppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers/approved", token) ?? new List<SupplierDto>();
+                return Json(suppliers);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting approved suppliers");
+                return Json(new { success = false, message = "Tedarikçiler yüklenirken hata oluştu" });
+            }
+        }
+
         // Requests Management
         public async Task<IActionResult> Requests()
         {
@@ -828,7 +854,7 @@ namespace SantiyeTalepWebUI.Controllers
                 return RedirectToAction("Login", "Account");
 
             var requests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
-            var model = new RequestListViewModel
+            var model = new SantiyeTalepWebUI.Models.DTOs.RequestListViewModel
             {
                 Requests = requests
             };
@@ -843,7 +869,7 @@ namespace SantiyeTalepWebUI.Controllers
                 return RedirectToAction("Login", "Account");
 
             var requests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests/pending", token) ?? new List<RequestDto>();
-            var model = new RequestListViewModel
+            var model = new SantiyeTalepWebUI.Models.DTOs.RequestListViewModel
             {
                 Requests = requests
             };
@@ -858,7 +884,7 @@ namespace SantiyeTalepWebUI.Controllers
                 return RedirectToAction("Login", "Account");
 
             var requests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests/completed", token) ?? new List<RequestDto>();
-            var model = new RequestListViewModel
+            var model = new SantiyeTalepWebUI.Models.DTOs.RequestListViewModel
             {
                 Requests = requests
             };
@@ -874,7 +900,7 @@ namespace SantiyeTalepWebUI.Controllers
                 return RedirectToAction("Login", "Account");
 
             var offers = await _apiService.GetAsync<List<OfferDto>>("api/Admin/offers", token) ?? new List<OfferDto>();
-            var model = new OfferListViewModel
+            var model = new SantiyeTalepWebUI.Models.DTOs.OfferListViewModel
             {
                 Offers = offers
             };
@@ -889,7 +915,7 @@ namespace SantiyeTalepWebUI.Controllers
                 return RedirectToAction("Login", "Account");
 
             var offers = await _apiService.GetAsync<List<OfferDto>>("api/Admin/offers/pending", token) ?? new List<OfferDto>();
-            var model = new OfferListViewModel
+            var model = new SantiyeTalepWebUI.Models.DTOs.OfferListViewModel
             {
                 Offers = offers
             };
@@ -904,7 +930,7 @@ namespace SantiyeTalepWebUI.Controllers
                 return RedirectToAction("Login", "Account");
 
             var offers = await _apiService.GetAsync<List<OfferDto>>("api/Admin/offers/approved", token) ?? new List<OfferDto>();
-            var model = new OfferListViewModel
+            var model = new SantiyeTalepWebUI.Models.DTOs.OfferListViewModel
             {
                 Offers = offers
             };
@@ -1044,5 +1070,356 @@ namespace SantiyeTalepWebUI.Controllers
             // TODO: Implement backup restore
             return View();
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRequestDetails(int id)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var request = await _apiService.GetAsync<RequestDto>($"api/Request/{id}", token);
+                if (request == null)
+                    return Json(new { success = false, message = "Talep bulunamadı" });
+
+                // Build HTML response with enhanced styling
+                var html = $@"
+                    <div class='row'>
+                        <div class='col-md-8'>
+                            <div class='card h-100'>
+                                <div class='card-header'>
+                                    <h6 class='card-title mb-0'>
+                                        <i class='ri-file-list-3-line text-primary me-2'></i>
+                                        Talep Bilgileri
+                                    </h6>
+                                </div>
+                                <div class='card-body'>
+                                    <div class='row g-3'>
+                                        <div class='col-12'>
+                                            <label class='form-label fw-semibold text-muted'>Talep ID</label>
+                                            <p class='mb-0'>#{request.Id}</p>
+                                        </div>
+                                        <div class='col-12'>
+                                            <label class='form-label fw-semibold text-muted'>Ürün Açıklaması</label>
+                                            <p class='mb-0'>{request.ProductDescription}</p>
+                                        </div>
+                                        <div class='col-6'>
+                                            <label class='form-label fw-semibold text-muted'>Miktar</label>
+                                            <p class='mb-0>
+                                                <span class='badge bg-primary'>{request.Quantity}</span>
+                                            </p>
+                                        </div>
+                                        <div class='col-6'>
+                                            <label class='form-label fw-semibold text-muted'>Durum</label>
+                                            <div>
+                                                {GetStatusBadge(request.Status)}
+                                            </div>
+                                        </div>
+                                        <div class='col-6'>
+                                            <label class='form-label fw-semibold text-muted'>Teslim Tipi</label>
+                                            <p class='mb-0'>{GetDeliveryTypeText(request.DeliveryType)}</p>
+                                        </div>
+                                        <div class='col-6'>
+                                            <label class='form-label fw-semibold text-muted'>Talep Tarihi</label>
+                                            <div>
+                                                <i class='ri-calendar-line text-info me-2'></i>
+                                                {request.RequestDate:dd.MM.yyyy HH:mm}
+                                            </div>
+                                        </div>
+                                        {(!string.IsNullOrEmpty(request.Description) ? $@"
+                                        <div class='col-12'>
+                                            <label class='form-label fw-semibold text-muted'>Açıklama</label>
+                                            <p class='mb-0'>{request.Description}</p>
+                                        </div>" : "")}
+                                        <div class='col-6'>
+                                            <label class='form-label fw-semibold text-muted'>Çalışan</label>
+                                            <div class='d-flex align-items-center'>
+                                                <div class='avatar-xs me-2'>
+                                                    <div class='avatar-title bg-primary-subtle text-primary rounded-circle'>
+                                                        {(request.EmployeeName?.Substring(0, 1).ToUpper() ?? "?")}
+                                                    </div>
+                                                </div>
+                                                <span>{request.EmployeeName}</span>
+                                            </div>
+                                        </div>
+                                        <div class='col-6'>
+                                            <label class='form-label fw-semibold text-muted'>Şantiye</label>
+                                            <div>
+                                                <span class='badge bg-info'>{request.SiteName}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='col-md-4'>
+                            <div class='card h-100'>
+                                <div class='card-header'>
+                                    <h6 class='card-title mb-0'>
+                                        <i class='ri-price-tag-3-line text-success me-2'></i>
+                                        Teklif Özeti
+                                    </h6>
+                                </div>
+                                <div class='card-body'>
+                                    <div class='text-center mb-3'>
+                                        <div class='avatar-lg mx-auto mb-2'>
+                                            <div class='avatar-title bg-success-subtle text-success rounded-circle'>
+                                                <i class='ri-price-tag-line display-6'></i>
+                                            </div>
+                                        </div>
+                                        <h4 class='mb-1'>{request.Offers?.Count ?? 0}</h4>
+                                        <p class='text-muted mb-0'>Toplam Teklif</p>
+                                    </div>
+                                    {(request.Offers?.Any() == true ? $@"
+                                    <div class='mt-3'>
+                                        <div class='list-group list-group-flush'>
+                                            {string.Join("", request.Offers.Take(3).Select(offer => $@"
+                                            <div class='list-group-item px-0'>
+                                                <div class='d-flex justify-content-between align-items-center'>
+                                                    <div>
+                                                        <h6 class='mb-1'>{offer.SupplierName}</h6>
+                                                        <small class='text-muted'>{offer.CompanyName}</small>
+                                                    </div>
+                                                    <div class='text-end'>
+                                                        <span class='fw-bold'>{offer.Price:C}</span>
+                                                        <div><small class='text-muted'>{offer.DeliveryDays} gün</small></div>
+                                                    </div>
+                                                </div>
+                                            </div>"))}
+                                        </div>
+                                        {(request.Offers.Count > 3 ? $@"
+                                        <div class='text-center mt-2'>
+                                            <small class='text-muted'>ve {request.Offers.Count - 3} teklif daha...</small>
+                                        </div>" : "")}
+                                    </div>" : @"
+                                    <div class='text-center py-3'>
+                                        <i class='ri-price-tag-line display-6 text-muted mb-2'></i>
+                                        <p class='text-muted mb-0'>Henüz teklif yok</p>
+                                    </div>")}
+                                </div>
+                            </div>
+                        </div>
+                    </div>";
+
+                return Json(new { success = true, html = html });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting request details");
+                return Json(new { success = false, message = "Detaylar yüklenirken hata oluştu" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangeRequestStatus([FromBody] ChangeRequestStatusDto model)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var payload = new { status = model.NewStatus };
+                var result = await _apiService.PutAsync<object>($"api/Admin/requests/{model.RequestId}/status", payload, token);
+                return Json(new { success = true, message = "Talep durumu güncellendi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error changing request status");
+                return Json(new { success = false, message = "Durum güncellenirken hata oluştu" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteRequest(int id)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var result = await _apiService.DeleteAsync($"api/Admin/requests/{id}", token);
+                return Json(new { success = true, message = "Talep başarıyla silindi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting request");
+                return Json(new { success = false, message = "Talep silinirken hata oluştu" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BulkRequestAction([FromBody] BulkRequestActionDto model)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var payload = new { requestIds = model.RequestIds, action = model.Action };
+                var result = await _apiService.PostAsync<object>("api/Admin/requests/bulk", payload, token);
+                return Json(new { success = true, message = "Toplu işlem başarıyla tamamlandı" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in bulk request action");
+                return Json(new { success = false, message = "Toplu işlem sırasında hata oluştu" });
+            }
+        }
+
+        public async Task<IActionResult> ExportRequestsToExcel()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Account");
+
+            try
+            {
+                var requests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
+
+                // TODO: Implement Excel export functionality
+                TempData["InfoMessage"] = "Excel export özelliği yakında eklenecek";
+                return RedirectToAction("Requests");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting requests to Excel");
+                TempData["ErrorMessage"] = "Excel export sırasında hata oluştu";
+                return RedirectToAction("Requests");
+            }
+        }
+
+        public async Task<IActionResult> ExportRequestsToPDF()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Account");
+
+            try
+            {
+                var requests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
+
+                // TODO: Implement PDF export functionality
+                TempData["InfoMessage"] = "PDF export özelliği yakında eklenecek";
+                return RedirectToAction("Requests");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting requests to PDF");
+                TempData["ErrorMessage"] = "PDF export sırasında hata oluştu";
+                return RedirectToAction("Requests");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendRequestsToSuppliers([FromBody] SendRequestsToSuppliersModel model)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var apiModel = new
+                {
+                    RequestIds = model.RequestIds,
+                    SupplierIds = model.SupplierIds
+                };
+
+                var result = await _apiService.PostAsync<object>("api/Admin/requests/send-to-suppliers", apiModel, token);
+                
+                if (result != null)
+                {
+                    return Json(new { success = true, message = "Talepler başarıyla tedarikçilere gönderildi" });
+                }
+
+                return Json(new { success = false, message = "Talepler gönderilirken bir hata oluştu" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending requests to suppliers");
+                return Json(new { success = false, message = "Talepler gönderilirken bir hata oluştu: " + ex.Message });
+            }
+        }
+
+        private string GetStatusBadge(RequestStatus status)
+        {
+            return status switch
+            {
+                RequestStatus.Open => "<span class='badge bg-warning'>Açık</span>",
+                RequestStatus.InProgress => "<span class='badge bg-info'>İşlemde</span>",
+                RequestStatus.Completed => "<span class='badge bg-success'>Tamamlandı</span>",
+                RequestStatus.Cancelled => "<span class='badge bg-danger'>İptal</span>",
+                _ => "<span class='badge bg-secondary'>Bilinmeyen</span>"
+            };
+        }
+
+        private string GetDeliveryTypeText(DeliveryType deliveryType)
+        {
+            return deliveryType switch
+            {
+                DeliveryType.TodayPickup => "Bugün araç gönderip aldıracağım",
+                DeliveryType.SameDayDelivery => "Gün içi siz sevk edin",
+                DeliveryType.NextDayDelivery => "Yarın siz sevk edin",
+                DeliveryType.BusinessDays1to2 => "1-2 iş günü",
+                _ => deliveryType.ToString()
+            };
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckNewRequests()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi doldu" });
+
+            try
+            {
+                var recentRequests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
+                var pendingSuppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers/pending", token) ?? new List<SupplierDto>();
+                var pendingOffers = await _apiService.GetAsync<List<OfferDto>>("api/Admin/offers/pending", token) ?? new List<OfferDto>();
+                
+                // Count new requests from today
+                var today = DateTime.Today;
+                var newRequestsToday = recentRequests.Count(r => r.RequestDate.Date == today);
+                
+                return Json(new { 
+                    success = true, 
+                    data = new {
+                        newRequestsToday = newRequestsToday,
+                        pendingSuppliersCount = pendingSuppliers.Count,
+                        pendingOffersCount = pendingOffers.Count,
+                        hasNewContent = newRequestsToday > 0 || pendingSuppliers.Any() || pendingOffers.Any()
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking new requests for admin");
+                return Json(new { success = false, message = "Yeni talepler kontrol edilirken hata oluştu" });
+            }
+        }
+    }
+
+    public class BulkRequestActionDto
+    {
+        public List<int> RequestIds { get; set; } = new();
+        public string Action { get; set; } = string.Empty;
+    }
+
+    public class SendRequestsToSuppliersModel
+    {
+        public List<int> RequestIds { get; set; } = new();
+        public List<int> SupplierIds { get; set; } = new();
+    }
+
+    public class ChangeRequestStatusDto
+    {
+        public int RequestId { get; set; }
+        public int NewStatus { get; set; }
     }
 }

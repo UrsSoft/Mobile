@@ -1,0 +1,324 @@
+@model SantiyeTalepWebUI.Models.DTOs.OfferDto
+@{
+    ViewData["Title"] = "Teklif Detaylarý";
+    Layout = "~/Views/Shared/_SupplierLayout.cshtml";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- Page Title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Teklif Detaylarý</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard")">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="@Url.Action("Offers")">Tekliflerim</a></li>
+                                <li class="breadcrumb-item active">Teklif Detaylarý</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xxl-9">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center">
+                                <h5 class="card-title flex-grow-1 mb-0">
+                                    <i class="ri-file-list-line align-middle me-1 text-muted"></i>
+                                    Teklif #@Model.Id
+                                </h5>
+                                <div class="flex-shrink-0">
+                                    @switch (Model.Status)
+                                    {
+                                        case OfferStatus.Pending:
+                                            <span class="badge badge-soft-warning fs-11">
+                                                <i class="ri-time-line align-bottom me-1"></i> Bekliyor
+                                            </span>
+                                            break;
+                                        case OfferStatus.Approved:
+                                            <span class="badge badge-soft-success fs-11">
+                                                <i class="ri-check-double-line align-bottom me-1"></i> Onaylandý
+                                            </span>
+                                            break;
+                                        case OfferStatus.Rejected:
+                                            <span class="badge badge-soft-danger fs-11">
+                                                <i class="ri-close-line align-bottom me-1"></i> Reddedildi
+                                            </span>
+                                            break;
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- Teklif Bilgileri -->
+                                <div class="col-lg-6">
+                                    <div class="table-responsive">
+                                        <table class="table table-borderless table-nowrap align-middle mb-0">
+                                            <tbody>
+                                                <tr>
+                                                    <td>
+                                                        <span class="fw-semibold">Talep:</span>
+                                                    </td>
+                                                    <td>
+                                                        @Model.RequestTitle
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="fw-semibold">Marka:</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-primary-subtle text-primary">@Model.Brand</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="fw-semibold">Miktar:</span>
+                                                    </td>
+                                                    <td>
+                                                        @Model.Quantity adet
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="fw-semibold">Birim Fiyat:</span>
+                                                    </td>
+                                                    <td>
+                                                        @Model.Price.ToString("C")
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="fw-semibold">Ýskonto:</span>
+                                                    </td>
+                                                    <td>
+                                                        @Model.Discount%
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="fw-semibold">Teslimat Þekli:</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-info-subtle text-info">
+                                                            @Model.DeliveryTypeText
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="fw-semibold">Teklif Tarihi:</span>
+                                                    </td>
+                                                    <td>
+                                                        @Model.OfferDate.ToString("dd.MM.yyyy HH:mm")
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Fiyat Özeti -->
+                                <div class="col-lg-6">
+                                    <div class="card border-0 shadow-none">
+                                        <div class="card-header bg-primary-subtle">
+                                            <h6 class="card-title mb-0 text-primary">Fiyat Özeti</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-borderless table-nowrap align-middle mb-0">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Ara Toplam:</td>
+                                                            <td class="text-end">@Model.TotalPrice.ToString("C")</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Ýskonto (@Model.Discount%):</td>
+                                                            <td class="text-end text-success">-@Model.DiscountAmount.ToString("C")</td>
+                                                        </tr>
+                                                        <tr class="border-top border-top-dashed fs-15">
+                                                            <th>Genel Toplam:</th>
+                                                            <th class="text-end text-primary">@Model.FinalPrice.ToString("C")</th>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Açýklama -->
+                            @if (!string.IsNullOrEmpty(Model.Description))
+                            {
+                                <div class="mt-4">
+                                    <h6 class="text-muted mb-3">Ürün Açýklamasý:</h6>
+                                    <div class="border rounded p-3 bg-light">
+                                        <p class="text-muted mb-0">@Model.Description</p>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Ýþlem Butonlarý -->
+                            <div class="mt-4 hstack gap-2">
+                                <a href="@Url.Action("Offers")" class="btn btn-secondary">
+                                    <i class="ri-arrow-left-line align-bottom me-1"></i> Tekliflerime Dön
+                                </a>
+                                
+                                @if (Model.Status == OfferStatus.Pending)
+                                {
+                                    <button type="button" class="btn btn-danger" onclick="withdrawOffer(@Model.Id)">
+                                        <i class="ri-close-line align-bottom me-1"></i> Teklifi Geri Çek
+                                    </button>
+                                }
+                                
+                                <a href="@Url.Action("RequestDetails", new { id = Model.RequestId })" class="btn btn-primary">
+                                    <i class="ri-eye-line align-bottom me-1"></i> Talep Detaylarý
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline (Status History) -->
+                <div class="col-xxl-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex">
+                                <h5 class="card-title flex-grow-1 mb-0">Durum Takibi</h5>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="acitivity-timeline">
+                                <div class="acitivity-item d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="avatar-xs acitivity-avatar">
+                                            <div class="avatar-title bg-success-subtle text-success rounded-circle">
+                                                <i class="ri-calendar-check-line"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-0 lh-base">Teklif Gönderildi</h6>
+                                        <p class="text-muted mb-0">@Model.OfferDate.ToString("dd.MM.yyyy HH:mm")</p>
+                                    </div>
+                                </div>
+
+                                @if (Model.Status == OfferStatus.Approved)
+                                {
+                                    <div class="acitivity-item py-3 d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-xs acitivity-avatar">
+                                                <div class="avatar-title bg-success-subtle text-success rounded-circle">
+                                                    <i class="ri-check-double-line"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0 lh-base">Teklif Onaylandý</h6>
+                                            <p class="text-muted mb-0">Admin tarafýndan onaylandý</p>
+                                        </div>
+                                    </div>
+                                }
+                                else if (Model.Status == OfferStatus.Rejected)
+                                {
+                                    <div class="acitivity-item py-3 d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-xs acitivity-avatar">
+                                                <div class="avatar-title bg-danger-subtle text-danger rounded-circle">
+                                                    <i class="ri-close-line"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0 lh-base">Teklif Reddedildi</h6>
+                                            <p class="text-muted mb-0">Admin tarafýndan reddedildi</p>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="acitivity-item py-3 d-flex">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-xs acitivity-avatar">
+                                                <div class="avatar-title bg-warning-subtle text-warning rounded-circle">
+                                                    <i class="ri-time-line"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0 lh-base">Deðerlendiriliyor</h6>
+                                            <p class="text-muted mb-0">Admin onayý bekleniyor</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function withdrawOffer(offerId) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu teklifi geri çekmek istediðinizden emin misiniz?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Evet, geri çek!',
+                cancelButtonText: 'Ýptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // AJAX call to withdraw offer
+                    fetch(`/Supplier/WithdrawOffer/${offerId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire(
+                                'Baþarýlý!',
+                                'Teklifiniz baþarýyla geri çekildi.',
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Hata!',
+                                data.message || 'Teklif geri çekilirken bir hata oluþtu.',
+                                'error'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire(
+                            'Hata!',
+                            'Bir hata oluþtu.',
+                            'error'
+                        );
+                    });
+                }
+            });
+        }
+    </script>
+}

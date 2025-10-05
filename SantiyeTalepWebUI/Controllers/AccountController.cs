@@ -20,6 +20,9 @@ namespace SantiyeTalepWebUI.Controllers
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
+            // Initialize from cookies if user was remembered
+            _authService.InitializeFromCookies();
+            
             var currentUser = _authService.GetCurrentUser();
             if (currentUser != null)
             {
@@ -45,7 +48,7 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
-                var result = await _authService.LoginAsync(model.LoginDto);
+                var result = await _authService.LoginAsync(model.LoginDto, model.RememberMe);
                 
                 if (result != null)
                 {
@@ -57,7 +60,7 @@ namespace SantiyeTalepWebUI.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                model.ErrorMessage = "Geçersiz e-posta veya şifre";
+                model.ErrorMessage = "Geçersiz telefon numarası veya şifre";
                 return View(model);
             }
             catch (Exception ex)
@@ -85,6 +88,12 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
+                // Clean phone number - remove spaces and format to clean number for database storage
+                if (!string.IsNullOrEmpty(model.RegisterDto.Phone))
+                {
+                    model.RegisterDto.Phone = model.RegisterDto.Phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+                }
+                
                 var result = await _authService.RegisterSupplierAsync(model.RegisterDto);
                 
                 if (result)
@@ -143,6 +152,9 @@ namespace SantiyeTalepWebUI.Controllers
         [HttpGet]
         public IActionResult Profile()
         {
+            // Initialize from cookies if user was remembered
+            _authService.InitializeFromCookies();
+            
             var currentUser = _authService.GetCurrentUser();
             if (currentUser == null)
             {

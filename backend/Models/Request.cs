@@ -23,7 +23,7 @@ namespace SantiyeTalepApi.Models
         [Required]
         public DeliveryType DeliveryType { get; set; } // Teslim Tipi
         
-        public string Description { get; set; } = string.Empty; // Açıklama
+        public string? Description { get; set; } = string.Empty; // Açıklama
         
         public RequestStatus Status { get; set; } = RequestStatus.Open;
         

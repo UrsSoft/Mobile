@@ -44,8 +44,9 @@ builder.Services.AddHttpClient();
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// JWT Service
+// Services
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

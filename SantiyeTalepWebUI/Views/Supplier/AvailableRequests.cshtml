@@ -1,0 +1,865 @@
+﻿@model SantiyeTalepWebUI.Models.DTOs.RequestListViewModel
+@{
+    ViewData["Title"] = "Açık Talepler";
+    Layout = "~/Views/Shared/_SupplierLayout.cshtml";
+}
+
+<style>
+    .offer-inputs {
+        background-color: #f8f9fc;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e3e6f0;
+    }
+    .offer-inputs .form-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #5a5c69;
+        margin-bottom: 4px;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .net-price, .total-price {
+        background-color: #f1f3f4;
+        font-weight: 600;
+    }
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    @@keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .row-select:checked + td {
+        background-color: #f8f9fc;
+    }
+    .loading-brands {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+</style>
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- Page Title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Açık Talepler</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard")">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Açık Talepler</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h4 class="card-title mb-0">Teklif Verebileceğiniz Talepler</h4>
+                                    <p class="text-muted mb-0">Açık durumdaki taleplere topluca teklif verebilirsiniz</p>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-success" onclick="submitBulkOffers()" id="bulkOfferBtn" disabled>
+                                            <i class="ri-send-plane-line align-middle"></i> Toplu Teklif Ver
+                                        </button>
+                                        <button class="btn btn-soft-success" onclick="refreshRequests()">
+                                            <i class="ri-refresh-line align-middle"></i> Yenile
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Search and Filter -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <div class="search-box">
+                                        <input type="text" class="form-control search" placeholder="Ürün ara..." id="searchInput">
+                                        <i class="ri-search-line search-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="deliveryFilter">
+                                        <option value="">Tüm Teslimat Tipleri</option>
+                                        <option value="@((int)DeliveryType.TodayPickup)">Bugün Alınacak</option>
+                                        <option value="@((int)DeliveryType.SameDayDelivery)">Gün İçi</option>
+                                        <option value="@((int)DeliveryType.NextDayDelivery)">Yarın</option>
+                                        <option value="@((int)DeliveryType.BusinessDays1to2)">1-2 İş Günü</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="siteFilter">
+                                        <option value="">Tüm Şantiyeler</option>
+                                        @foreach (var site in Model.Requests.GroupBy(r => r.SiteName).Select(g => g.Key).OrderBy(s => s))
+                                        {
+                                            <option value="@site">@site</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Requests Form -->
+                            @if (Model.Requests.Any())
+                            {
+                                <form id="bulkOffersForm">
+                                    @Html.AntiForgeryToken()
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle table-nowrap mb-0" id="requestsTable">
+                                            <thead class="table-light">
+                                                <tr class="text-center">
+                                                    <th style="width: 5%">
+                                                        <input type="checkbox" class="form-check-input" id="selectAll">
+                                                    </th>
+                                                    <th style="width: 20%">Ürün Bilgisi</th>
+                                                    <th style="width: 7%">Miktar</th>
+                                                    <th style="width: 5%">Talep Tarihi</th>
+                                                    <th style="width: 7%">Teslimat</th>
+                                                    <th style="width: 60%">Teklif Bilgileri</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var request in Model.Requests)
+                                                {
+                                                    <tr class="text-center" data-search="@request.ProductDescription.ToLower() @request.Description.ToLower() @request.SiteName.ToLower()" 
+                                                        data-delivery="@((int)request.DeliveryType)" 
+                                                        data-site="@request.SiteName"
+                                                        data-request-id="@request.Id"
+                                                        data-request-description="@request.Description">
+                                                        <td>
+                                                            <div class="d-flex flex-column align-items-center">
+                                                                <input type="checkbox" class="form-check-input row-select" value="@request.Id">
+                                                                
+                                                                @if (request.Offers != null && request.Offers.Any())
+                                                                {
+                                                                    var myOffer = request.Offers.FirstOrDefault();
+                                                                    if (myOffer != null)
+                                                                    {
+                                                                        <small class="mt-1">
+                                                                            @switch (myOffer.Status)
+                                                                            {
+                                                                                case OfferStatus.Pending:
+                                                                                    <span class="badge bg-warning-subtle text-warning" style="font-size: 0.7rem;">
+                                                                                        <i class="ri-time-line"></i> Bekliyor
+                                                                                    </span>
+                                                                                    break;
+                                                                                case OfferStatus.Approved:
+                                                                                    <span class="badge bg-success-subtle text-success" style="font-size: 0.7rem;">
+                                                                                        <i class="ri-check-line"></i> Onaylandı
+                                                                                    </span>
+                                                                                    break;
+                                                                                case OfferStatus.Rejected:
+                                                                                    <span class="badge bg-danger-subtle text-danger" style="font-size: 0.7rem;">
+                                                                                        <i class="ri-close-line"></i> Reddedildi
+                                                                                    </span>
+                                                                                    break;
+                                                                            }
+                                                                        </small>
+                                                                    }
+                                                                }
+                                                                else
+                                                                {
+                                                                    <small class="text-muted mt-1" style="font-size: 0.7rem;">
+                                                                        <i class="ri-price-tag-line"></i> Teklif verilebilir
+                                                                    </small>
+                                                                }
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="d-flex align-items-start">                                                               
+                                                                <div class="flex-grow-1">
+                                                                    <div class="d-flex align-items-center mb-2">
+                                                                        <h6 class="mb-0 me-2">@request.ProductDescription</h6>
+                                                                        @if (request.Offers != null && request.Offers.Any())
+                                                                        {
+                                                                            var myOffer = request.Offers.FirstOrDefault();
+                                                                            if (myOffer != null)
+                                                                            {
+                                                                                @switch (myOffer.Status)
+                                                                                {
+                                                                                    case OfferStatus.Pending:
+                                                                                        <span class="badge bg-warning-subtle text-warning">
+                                                                                            <i class="ri-time-line me-1"></i>Teklif Verildi - Bekliyor
+                                                                                        </span>
+                                                                                        break;
+                                                                                    case OfferStatus.Approved:
+                                                                                        <span class="badge bg-success-subtle text-success">
+                                                                                            <i class="ri-check-double-line me-1"></i>Teklif Onaylandı
+                                                                                        </span>
+                                                                                        break;
+                                                                                    case OfferStatus.Rejected:
+                                                                                        <span class="badge bg-danger-subtle text-danger">
+                                                                                            <i class="ri-close-circle-line me-1"></i>Teklif Reddedildi
+                                                                                        </span>
+                                                                                        break;
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="badge bg-info-subtle text-info">
+                                                                                <i class="ri-add-circle-line me-1"></i>Teklif Verilebilir
+                                                                            </span>
+                                                                        }
+                                                                    </div>
+                                                                    @if (!string.IsNullOrEmpty(request.Description))
+                                                                    {
+                                                                        <p class="text-muted mb-0 text-truncate" style="max-width: 200px;">
+                                                                            @request.Description
+                                                                        </p>
+                                                                    }
+                                                                    
+                                                                    @* Eğer teklif verilmişse, teklif detaylarını göster *@
+                                                                    @if (request.Offers != null && request.Offers.Any())
+                                                                    {
+                                                                        var myOffer = request.Offers.FirstOrDefault();
+                                                                        if (myOffer != null)
+                                                                        {
+                                                                            <div class="mt-2 p-2 bg-light rounded">
+                                                                                <small class="text-muted d-block">
+                                                                                    <strong>Verilen Teklif:</strong> @myOffer.CurrencySymbol@myOffer.FinalPrice.ToString("N2") 
+                                                                                    (@myOffer.Quantity adet - @myOffer.Brand)
+                                                                                </small>
+                                                                                <small class="text-muted">
+                                                                                    <i class="ri-calendar-line me-1"></i>@myOffer.OfferDate.ToString("dd.MM.yyyy HH:mm")
+                                                                                </small>
+                                                                            </div>
+                                                                        }
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-info-subtle text-info fs-12">
+                                                                @request.Quantity adet
+                                                            </span>
+                                                        </td>
+                                                      
+                                                        <td>
+                                                            <span class="fw-medium">@request.RequestDate.ToString("dd.MM.yyyy")</span>
+                                                            <br><small class="text-muted">@request.RequestDate.ToString("HH:mm")</small>
+                                                        </td>
+                                                        <td>
+                                                            @switch (request.DeliveryType)
+                                                            {
+                                                                case DeliveryType.TodayPickup:
+                                                                    <span class="badge bg-danger-subtle text-danger">Bugün Alınacak</span>
+                                                                    break;
+                                                                case DeliveryType.SameDayDelivery:
+                                                                    <span class="badge bg-warning-subtle text-warning">Gün İçi</span>
+                                                                    break;
+                                                                case DeliveryType.NextDayDelivery:
+                                                                    <span class="badge bg-info-subtle text-info">Yarın</span>
+                                                                    break;
+                                                                case DeliveryType.BusinessDays1to2:
+                                                                    <span class="badge bg-success-subtle text-success">1-2 İş Günü</span>
+                                                                    break;
+                                                            }
+                                                        </td>
+                                                        <td>
+                                                            <div class="offer-inputs" style="display: none;">
+                                                                <div class="row g-2">
+                                                                    <div class="col-md-3">
+                                                                        <label class="form-label">Marka</label>
+                                                                        <select class="form-select form-select-sm offer-brand" required data-request-id="@request.Id">
+                                                                            <option value="">Marka seçin...</option>
+                                                                        </select>
+                                                                        <div class="text-muted mt-1" style="font-size: 0.7rem;">
+                                                                            <i class="ri-loader-line spin d-none brand-loading"></i>
+                                                                            <span class="brand-status">Markalar yükleniyor...</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <label class="form-label">Açıklama</label>
+                                                                        <input type="text" class="form-control form-control-sm offer-description" value="@request.ProductDescription" required>
+                                                                    </div>
+                                                                                                                                  
+                                                                    <div class="col-md-2">
+                                                                        <label class="form-label">Liste Fiyatı</label>
+                                                                        <input type="number" class="form-control form-control-sm offer-price" placeholder="0.00" step="0.01" min="0.01" required>
+                                                                    </div>
+                                                                    <div class="col-md-1">
+                                                                        <label class="form-label">Para Birimi</label>
+                                                                        <select class="form-select form-select-sm offer-currency" required>
+                                                                            <option value="@((int)Currency.TRY)" selected>₺</option>
+                                                                            <option value="@((int)Currency.USD)">$</option>
+                                                                            <option value="@((int)Currency.EUR)">€</option>
+                                                                            <option value="@((int)Currency.GBP)">£</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row g-2 mt-1">
+                                                                    <div class="col-md-1">
+                                                                        <label class="form-label">Miktar</label>
+                                                                        <input type="number" class="form-control form-control-sm offer-quantity" value="@request.Quantity" min="1" required>
+                                                                    </div>
+                                                                    <div class="col-md-1">
+                                                                        <label class="form-label">İskonto (%)</label>
+                                                                        <input type="number" class="form-control form-control-sm offer-discount" placeholder="0" min="0" max="100" value="0">
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                        <label class="form-label">Teslimat Tipi</label>
+                                                                        <select class="form-select form-select-sm offer-delivery-type" required>
+                                                                            <option value="@((int)DeliveryType.TodayPickup)">Bugün araç gönderip aldıracağım</option>
+                                                                            <option value="@((int)DeliveryType.SameDayDelivery)">Gün içi siz sevk edin</option>
+                                                                            <option value="@((int)DeliveryType.NextDayDelivery)">Yarın siz sevk edin</option>
+                                                                            <option value="@((int)DeliveryType.BusinessDays1to2)" selected>1-2 iş günü</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <label class="form-label">Birim Net Fiyat</label>
+                                                                        <div class="input-group input-group-sm">
+                                                                            <span class="input-group-text currency-symbol">₺</span>
+                                                                            <input type="text" class="form-control net-price" readonly>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <label class="form-label">Toplam Tutar</label>
+                                                                        <div class="input-group input-group-sm">
+                                                                            <span class="input-group-text currency-symbol">₺</span>
+                                                                            <input type="text" class="form-control total-price" readonly>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="no-offer-message text-center py-3">
+                                                                @if (request.Offers != null && request.Offers.Any())
+                                                                {
+                                                                    var myOffer = request.Offers.FirstOrDefault();
+                                                                    if (myOffer != null)
+                                                                    {
+                                                                        <small class="text-muted">
+                                                                            <i class="ri-check-circle-line me-1"></i>
+                                                                            Bu talep için teklif zaten verilmiş
+                                                                            <br>
+                                                                            <a href="@Url.Action("Offers")" class="text-primary">
+                                                                                Tekliflerim sayfasından görüntüle
+                                                                            </a>
+                                                                        </small>
+                                                                    }
+                                                                }
+                                                                else
+                                                                {
+                                                                    <small class="text-muted">
+                                                                        <i class="ri-checkbox-blank-circle-line"></i>
+                                                                        Teklif vermek için satırı seçin
+                                                                    </small>
+                                                                }
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </form>
+
+                                <div class="row align-items-center mt-4" id="pagination-info">
+                                    <div class="col-sm-6">
+                                        <div class="text-muted">
+                                            Toplam <span class="fw-semibold" id="total-count">@Model.Requests.Count</span> talep gösteriliyor
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="text-end">
+                                            <span class="badge bg-primary" id="selected-count">0 seçili</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+            {
+                <div class="text-center py-5">
+                    <div class="avatar-lg mx-auto mb-4">
+                        <div class="avatar-title bg-light rounded-circle display-4 text-muted">
+                            <i class="ri-inbox-line"></i>
+                        </div>
+                    </div>
+                    <h5>Henüz açık talep bulunmuyor</h5>
+                    <p class="text-muted">
+                        Şu anda teklif verebileceğiniz açık talep bulunmamaktadır. 
+                        <br>Yeni talepler geldiğinde buradan görüntüleyebilirsiniz.
+                    </p>
+                    <a href="@Url.Action("Dashboard")" class="btn btn-primary">
+                        <i class="ri-dashboard-line align-middle"></i> Dashboard'a Dön
+                    </a>
+                </div>
+            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const deliveryFilter = document.getElementById('deliveryFilter');
+            const siteFilter = document.getElementById('siteFilter');
+            const table = document.getElementById('requestsTable');
+            const totalCount = document.getElementById('total-count');
+            const selectedCount = document.getElementById('selected-count');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const bulkOfferBtn = document.getElementById('bulkOfferBtn');
+
+            // Cache for loaded brands to avoid duplicate requests
+            const brandsCache = new Map();
+
+            // Select all functionality
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = table.querySelectorAll('.row-select');
+                checkboxes.forEach(checkbox => {
+                    if (checkbox.closest('tr').style.display !== 'none') {
+                        checkbox.checked = this.checked;
+                        toggleOfferInputs(checkbox);
+                    }
+                });
+                updateBulkOfferButton();
+            });
+
+            // Individual row selection
+            table.addEventListener('change', function(e) {
+                if (e.target.classList.contains('row-select')) {
+                    toggleOfferInputs(e.target);
+                    updateSelectAllState();
+                    updateBulkOfferButton();
+                } else if (e.target.classList.contains('offer-currency')) {
+                    updateCurrencySymbols(e.target.closest('tr'));
+                }
+            });
+
+            // Price calculation
+            table.addEventListener('input', function(e) {
+                if (e.target.classList.contains('offer-price') || 
+                    e.target.classList.contains('offer-quantity') || 
+                    e.target.classList.contains('offer-discount')) {
+                    calculatePrices(e.target.closest('tr'));
+                }
+            });
+
+            function toggleOfferInputs(checkbox) {
+                const row = checkbox.closest('tr');
+                const offerInputs = row.querySelector('.offer-inputs');
+                const noOfferMessage = row.querySelector('.no-offer-message');
+                const requestId = row.dataset.requestId;
+                const requestDescription = row.dataset.requestDescription || '';
+                
+                // Check if this request already has an offer
+                const hasOffer = row.querySelector('.badge.bg-warning-subtle, .badge.bg-success-subtle, .badge.bg-danger-subtle');
+                
+                if (checkbox.checked) {
+                    if (hasOffer && !hasOffer.textContent.includes('Teklif Verilebilir')) {
+                        // Request already has an offer, show message and uncheck
+                        alert('Bu talep için zaten teklif verilmiş. Mevcut teklifinizi Tekliflerim sayfasından görüntüleyebilirsiniz.');
+                        checkbox.checked = false;
+                        return;
+                    }
+                    
+                    offerInputs.style.display = 'block';
+                    noOfferMessage.style.display = 'none';
+                    row.classList.add('table-active');
+                    
+                    // Fill the description field with product description from the row
+                    const descriptionInput = row.querySelector('.offer-description');
+                    const productDescriptionElement = row.querySelector('h6');
+                    if (descriptionInput && productDescriptionElement) {
+                        descriptionInput.value = productDescriptionElement.textContent.trim();
+                    }
+                    
+                    // Load brands for this request if not already loaded
+                    loadSiteBrands(requestId, row);
+                } else {
+                    offerInputs.style.display = 'none';
+                    noOfferMessage.style.display = 'block';
+                    row.classList.remove('table-active');
+                    // Clear form values
+                    row.querySelectorAll('.offer-inputs input, .offer-inputs select').forEach(input => {
+                        if (!input.readOnly && !input.classList.contains('offer-quantity')) {
+                            if (input.classList.contains('offer-discount')) {
+                                input.value = '0';
+                            } else if (input.tagName === 'SELECT') {
+                                if (input.classList.contains('offer-currency')) {
+                                    input.value = '1'; // TRY default
+                                    updateCurrencySymbols(row);
+                                } else {
+                                    input.selectedIndex = 0;
+                                }
+                            } else {
+                                input.value = '';
+                            }
+                        }
+                    });
+                }
+            }
+
+            async function loadSiteBrands(requestId, row) {
+                // Check cache first
+                if (brandsCache.has(requestId)) {
+                    populateBrandsDropdown(row, brandsCache.get(requestId));
+                    return;
+                }
+
+                const brandSelect = row.querySelector('.offer-brand');
+                const brandStatus = row.querySelector('.brand-status');
+                const brandLoading = row.querySelector('.brand-loading');
+                
+                // Show loading state
+                brandSelect.disabled = true;
+                brandSelect.classList.add('loading-brands');
+                brandLoading.classList.remove('d-none');
+                brandStatus.textContent = 'Markalar yükleniyor...';
+
+                try {
+                    const response = await fetch(`@Url.Action("GetRequestSiteBrands")?requestId=${requestId}`);
+                    const result = await response.json();
+
+                    if (result.success && result.data) {
+                        // Cache the brands for this request
+                        brandsCache.set(requestId, result.data);
+                        populateBrandsDropdown(row, result.data);
+                        
+                        brandStatus.textContent = `${result.data.length} marka mevcut`;
+                    } else {
+                        brandStatus.textContent = 'Marka yüklenemedi';
+                        brandSelect.innerHTML = '<option value="">Marka yüklenemedi</option>';
+                    }
+                } catch (error) {
+                    console.error('Error loading brands:', error);
+                    brandStatus.textContent = 'Hata oluştu';
+                    brandSelect.innerHTML = '<option value="">Hata oluştu</option>';
+                } finally {
+                    // Hide loading state
+                    brandSelect.disabled = false;
+                    brandSelect.classList.remove('loading-brands');
+                    brandLoading.classList.add('d-none');
+                }
+            }
+
+            function populateBrandsDropdown(row, brands) {
+                const brandSelect = row.querySelector('.offer-brand');
+                const brandStatus = row.querySelector('.brand-status');
+                
+                // Clear existing options
+                brandSelect.innerHTML = '<option value="">Marka seçin...</option>';
+                
+                if (brands && brands.length > 0) {
+                    brands.forEach(brand => {
+                        const option = document.createElement('option');
+                        option.value = brand.name;
+                        option.textContent = brand.name;
+                        brandSelect.appendChild(option);
+                    });
+                    brandStatus.textContent = `${brands.length} marka mevcut`;
+                } else {
+                    brandSelect.innerHTML = '<option value="">Bu şantiyede marka bulunamadı</option>';
+                    brandStatus.textContent = 'Marka bulunamadı';
+                }
+            }
+
+            function updateSelectAllState() {
+                const visibleCheckboxes = Array.from(table.querySelectorAll('.row-select'))
+                    .filter(cb => cb.closest('tr').style.display !== 'none');
+                const checkedBoxes = visibleCheckboxes.filter(cb => cb.checked);
+                
+                selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < visibleCheckboxes.length;
+                selectAllCheckbox.checked = checkedBoxes.length === visibleCheckboxes.length && visibleCheckboxes.length > 0;
+            }
+
+            function updateBulkOfferButton() {
+                const checkedBoxes = table.querySelectorAll('.row-select:checked');
+                bulkOfferBtn.disabled = checkedBoxes.length === 0;
+                
+                if (selectedCount) {
+                    selectedCount.textContent = `${checkedBoxes.length} seçili`;
+                    selectedCount.className = checkedBoxes.length > 0 ? 'badge bg-success' : 'badge bg-secondary';
+                }
+            }
+
+            function calculatePrices(row) {
+                const priceInput = row.querySelector('.offer-price');
+                const quantityInput = row.querySelector('.offer-quantity');
+                const discountInput = row.querySelector('.offer-discount');
+                const netPriceInput = row.querySelector('.net-price');
+                const totalPriceInput = row.querySelector('.total-price');
+
+                const price = parseFloat(priceInput.value) || 0;
+                const quantity = parseInt(quantityInput.value) || 0;
+                const discount = parseFloat(discountInput.value) || 0;
+
+                const totalPrice = price * quantity;
+                const discountAmount = (totalPrice * discount) / 100;
+                const netPrice = price - (price * discount / 100);
+                const finalTotal = totalPrice - discountAmount;
+
+                netPriceInput.value = netPrice.toFixed(2);
+                totalPriceInput.value = finalTotal.toFixed(2);
+            }
+
+            function filterTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const deliveryValue = deliveryFilter.value;
+                const siteValue = siteFilter.value;
+                
+                const rows = table.querySelectorAll('tbody tr');
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const searchData = row.getAttribute('data-search') || '';
+                    const deliveryData = row.getAttribute('data-delivery') || '';
+                    const siteData = row.getAttribute('data-site') || '';
+
+                    const matchesSearch = searchData.includes(searchTerm);
+                    const matchesDelivery = !deliveryValue || deliveryData === deliveryValue;
+                    const matchesSite = !siteValue || siteData === siteValue;
+
+                    if (matchesSearch && matchesDelivery && matchesSite) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                        // Uncheck hidden rows
+                        const checkbox = row.querySelector('.row-select');
+                        if (checkbox.checked) {
+                            checkbox.checked = false;
+                            toggleOfferInputs(checkbox);
+                        }
+                    }
+                });
+
+                if (totalCount) {
+                    totalCount.textContent = visibleCount;
+                }
+                updateSelectAllState();
+                updateBulkOfferButton();
+            }
+
+            // Event listeners for filters
+            searchInput.addEventListener('input', filterTable);
+            deliveryFilter.addEventListener('change', filterTable);
+            siteFilter.addEventListener('change', filterTable);
+
+            // Refresh function
+            window.refreshRequests = function() {
+                location.reload();
+            };
+
+            // Submit bulk offers
+            window.submitBulkOffers = function() {
+                const checkedRows = table.querySelectorAll('tr:has(.row-select:checked)');
+                const offers = [];
+                let hasErrors = false;
+                const errors = [];
+
+                checkedRows.forEach(row => {
+                    const requestId = parseInt(row.dataset.requestId);
+                    const brand = row.querySelector('.offer-brand').value.trim();
+                    const description = row.querySelector('.offer-description').value.trim();
+                    const quantity = parseInt(row.querySelector('.offer-quantity').value);
+                    const price = parseFloat(row.querySelector('.offer-price').value);
+                    const currency = parseInt(row.querySelector('.offer-currency').value);
+                    const discount = parseFloat(row.querySelector('.offer-discount').value) || 0;
+                    const deliveryType = parseInt(row.querySelector('.offer-delivery-type').value);
+
+                    // Validation
+                    if (!brand) {
+                        errors.push(`Talep #${requestId}: Marka seçimi gereklidir`);
+                        hasErrors = true;
+                    }
+                    if (!description) {
+                        errors.push(`Talep #${requestId}: Açıklama gereklidir`);
+                        hasErrors = true;
+                    }
+                    if (!quantity || quantity <= 0) {
+                        errors.push(`Talep #${requestId}: Geçerli miktar gereklidir`);
+                        hasErrors = true;
+                    }
+                    if (!price || price <= 0) {
+                        errors.push(`Talep #${requestId}: Geçerli fiyat gereklidir`);
+                        hasErrors = true;
+                    }
+                    if (!currency) {
+                        errors.push(`Talep #${requestId}: Para birimi seçimi gereklidir`);
+                        hasErrors = true;
+                    }
+
+                    if (!hasErrors || errors.filter(e => e.includes(`#${requestId}`)).length === 0) {
+                        offers.push({
+                            requestId: requestId,
+                            brand: brand,
+                            description: description,
+                            quantity: quantity,
+                            price: price,
+                            currency: currency,
+                            discount: discount,
+                            deliveryType: deliveryType
+                        });
+                    }
+                });
+
+                if (hasErrors) {
+                    alert('Lütfen tüm alanları doğru şekilde doldurun:\n' + errors.join('\n'));
+                    return;
+                }
+
+                if (offers.length === 0) {
+                    alert('Teklif verilecek hiçbir satır bulunamadı.');
+                    return;
+                }               
+
+                // Show loading state
+                bulkOfferBtn.disabled = true;
+                bulkOfferBtn.innerHTML = '<i class="ri-loader-2-fill spin"></i> Teklifler Gönderiliyor...';
+
+                // Submit offers
+                fetch('@Url.Action("CreateBulkOffers")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ offers: offers })
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response ok:', response.ok);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    
+                    if (data.success) {
+                        // Show success message using SweetAlert or simple alert
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Başarılı!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonText: 'Tamam'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            // Fallback to regular alert
+                            alert('Başarılı: ' + data.message);
+                            location.reload();
+                        }
+                    } else {
+                        console.error('Operation failed:', data);
+                        
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Hata!',
+                                text: data.message,
+                                icon: 'error',
+                                confirmButtonText: 'Tamam'
+                            });
+                        } else {
+                            alert('Hata: ' + data.message);
+                        }
+                        
+                        if (data.errors && data.errors.length > 0) {
+                            console.error('Detailed errors:', data.errors);
+                            
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Detaylı Hatalar',
+                                    text: data.errors.join('\n'),
+                                    icon: 'error',
+                                    confirmButtonText: 'Tamam'
+                                });
+                            } else {
+                                alert('Detaylı hatalar:\n' + data.errors.join('\n'));
+                            }
+                        }
+                        
+                        bulkOfferBtn.disabled = false;
+                        bulkOfferBtn.innerHTML = '<i class="ri-send-plane-line align-middle"></i> Toplu Teklif Ver';
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Hata!',
+                            text: 'Teklifler gönderilirken bir hata oluştu: ' + error.message,
+                            icon: 'error',
+                            confirmButtonText: 'Tamam'
+                        });
+                    } else {
+                        alert('Teklifler gönderilirken bir hata oluştu: ' + error.message);
+                    }
+                    
+                    bulkOfferBtn.disabled = false;
+                    bulkOfferBtn.innerHTML = '<i class="ri-send-plane-line align-middle"></i> Toplu Teklif Ver';
+                });
+            };
+
+            // Initialize button state
+            updateBulkOfferButton();
+        });
+        
+        function updateCurrencySymbols(row) {
+            const currencySelect = row.querySelector('.offer-currency');
+            const currencySymbols = row.querySelectorAll('.currency-symbol');
+            
+            const currencyValue = parseInt(currencySelect.value);
+            let symbol = '₺';
+            
+            switch (currencyValue) {
+                case 1: // TRY
+                    symbol = '₺';
+                    break;
+                case 2: // USD
+                    symbol = '$';
+                    break;
+                case 3: // EUR
+                    symbol = '€';
+                    break;
+                case 4: // GBP
+                    symbol = '£';
+                    break;
+            }
+            
+            currencySymbols.forEach(symbolElement => {
+                symbolElement.textContent = symbol;
+            });
+        }
+    </script>
+}

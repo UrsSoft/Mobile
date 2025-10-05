@@ -65,7 +65,7 @@
                             <div class="card-body p-4">
                                 <div class="text-center mt-2">
                                     <h5 class="text-primary">Tekrar Hoşgeldiniz!</h5>
-                                    <p class="text-muted">Hesabınızla giriş yapın.</p>
+                                    <p class="text-muted">Telefon numaranız ve şifrenizle giriş yapın.</p>
                                 </div>
                                 
                                 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -80,9 +80,9 @@
                                         <input type="hidden" asp-for="ReturnUrl" />
                                         
                                         <div class="mb-3">
-                                            <label asp-for="LoginDto.Email" class="form-label">E-posta <span class="text-danger">*</span></label>
-                                            <input asp-for="LoginDto.Email" class="form-control" placeholder="E-posta adresinizi giriniz" />
-                                            <span asp-validation-for="LoginDto.Email" class="text-danger"></span>
+                                            <label asp-for="LoginDto.Phone" class="form-label">Telefon Numarası <span class="text-danger">*</span></label>
+                                            <input asp-for="LoginDto.Phone" class="form-control" placeholder="Telefon numaranızı giriniz" />
+                                            <span asp-validation-for="LoginDto.Phone" class="text-danger"></span>
                                         </div>
 
                                         <div class="mb-3">
@@ -91,16 +91,16 @@
                                             </div>
                                             <label class="form-label" asp-for="LoginDto.Password">Şifre <span class="text-danger">*</span></label>
                                             <div class="position-relative auth-pass-inputgroup mb-3">
-                                                <input asp-for="LoginDto.Password" type="password" class="form-control pe-5 password-input" placeholder="Şifrenizi giriniz" />
-                                                <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" id="password-addon">
-                                                    <i class="ri-eye-fill align-middle"></i>
+                                                <input asp-for="LoginDto.Password" type="password" class="form-control pe-5 password-input" placeholder="Şifrenizi giriniz" id="password-input" />
+                                                <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" id="password-addon" style="background: none; border: none; padding: 0.375rem 0.75rem;">
+                                                    <i class="ri-eye-fill align-middle" id="password-icon"></i>
                                                 </button>
                                             </div>
                                             <span asp-validation-for="LoginDto.Password" class="text-danger"></span>
                                         </div>
 
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="" id="auth-remember-check">
+                                            <input asp-for="RememberMe" class="form-check-input" type="checkbox" id="auth-remember-check">
                                             <label class="form-check-label" for="auth-remember-check">Beni hatırla</label>
                                         </div>
 
@@ -125,9 +125,6 @@
                         </div>
                         <!-- end card -->
 
-                        <div class="mt-4 text-center">
-                            <p class="mb-0 text-white-50">© <script>document.write(new Date().getFullYear())</script> Şantiye Talep Sistemi. <i class="mdi mdi-heart text-danger"></i> ile geliştirildi</p>
-                        </div>
 
                     </div>
                 </div>
@@ -143,7 +140,7 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="text-center">
-                            <p class="mb-0 text-white-50">© <script>document.write(new Date().getFullYear())</script> Şantiye Talep Sistemi. <i class="mdi mdi-heart text-danger"></i> ile geliştirildi
+                            <p class="mb-0">© <script>document.write(new Date().getFullYear())</script> Şantiye Talep Sistemi. <a href="https://www.urssoft.com">UrsSoft Teknoloji A.Ş.</a> tarafından geliştirildi.
                             </p>
                         </div>
                     </div>
@@ -166,33 +163,71 @@
     <script src="~/assets/libs/particles.js/particles.js"></script>
     <!-- particles app js -->
     <script src="~/assets/js/pages/particles.app.js"></script>
-    <!-- password-addon init -->
-    <script src="~/assets/js/pages/password-addon.init.js"></script>
 
     <script>
-        // Password show/hide functionality
+        // Geliştirilmiş şifre göster/gizle fonksiyonu
         document.addEventListener('DOMContentLoaded', function() {
-            const passwordInput = document.querySelector('.password-input');
-            const passwordAddon = document.querySelector('.password-addon');
+            const passwordInput = document.getElementById('password-input');
+            const passwordAddon = document.getElementById('password-addon');
+            const passwordIcon = document.getElementById('password-icon');
             
-            if (passwordAddon && passwordInput) {
-                passwordAddon.addEventListener('click', function() {
-                    const icon = this.querySelector('i');
+            console.log('Password elements:', { passwordInput, passwordAddon, passwordIcon });
+            
+            // Elementlerin varlığını kontrol et
+            if (passwordAddon && passwordInput && passwordIcon) {
+                // Mevcut event listener'ları temizle
+                passwordAddon.replaceWith(passwordAddon.cloneNode(true));
+                const newPasswordAddon = document.getElementById('password-addon');
+                const newPasswordIcon = document.getElementById('password-icon');
+                
+                newPasswordAddon.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('Password toggle clicked');
+                    
                     if (passwordInput.type === 'password') {
                         passwordInput.type = 'text';
-                        icon.classList.remove('ri-eye-fill');
-                        icon.classList.add('ri-eye-off-fill');
+                        newPasswordIcon.classList.remove('ri-eye-fill');
+                        newPasswordIcon.classList.add('ri-eye-off-fill');
+                        newPasswordAddon.setAttribute('title', 'Şifreyi gizle');
+                        console.log('Password shown');
                     } else {
                         passwordInput.type = 'password';
-                        icon.classList.remove('ri-eye-off-fill');
-                        icon.classList.add('ri-eye-fill');
+                        newPasswordIcon.classList.remove('ri-eye-off-fill');
+                        newPasswordIcon.classList.add('ri-eye-fill');
+                        newPasswordAddon.setAttribute('title', 'Şifreyi göster');
+                        console.log('Password hidden');
                     }
+                });
+                
+                // İlk yüklemede tooltip ve cursor ayarla
+                newPasswordAddon.setAttribute('title', 'Şifreyi göster');
+                newPasswordAddon.style.cursor = 'pointer';
+                
+                console.log('Password toggle initialized successfully');
+            } else {
+                console.error('Password toggle elements not found:', {
+                    passwordInput: !!passwordInput,
+                    passwordAddon: !!passwordAddon,
+                    passwordIcon: !!passwordIcon
                 });
             }
         });
+        
+        // Alternatif olarak, sayfa tamamen yüklendikten sonra da dene
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const passwordInput = document.getElementById('password-input');
+                const passwordAddon = document.getElementById('password-addon');
+                
+                if (passwordAddon && passwordInput && !passwordAddon.hasAttribute('data-initialized')) {
+                    passwordAddon.setAttribute('data-initialized', 'true');
+                    console.log('Password toggle re-initialized on window load');
+                }
+            }, 100);
+        });
     </script>
-
-   
 </body>
 
 </html>

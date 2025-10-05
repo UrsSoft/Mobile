@@ -18,10 +18,16 @@ namespace SantiyeTalepApi.Services
             CreateMap<Site, SiteDto>();
             CreateMap<CreateSiteDto, Site>();
             
-            CreateMap<Request, RequestDto>();
+            CreateMap<Request, RequestDto>()
+                .ForMember(dest => dest.EmployeeName, opt => opt.MapFrom(src => src.Employee.User.FullName))
+                .ForMember(dest => dest.SiteName, opt => opt.MapFrom(src => src.Site.Name));
             CreateMap<CreateRequestDto, Request>();
             
-            CreateMap<Offer, OfferDto>();
+            CreateMap<Offer, OfferDto>()
+                .ForMember(dest => dest.RequestTitle, opt => opt.MapFrom(src => src.Request.ProductDescription))
+                .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Supplier.User.FullName))
+                .ForMember(dest => dest.SupplierEmail, opt => opt.MapFrom(src => src.Supplier.User.Email))
+                .ForMember(dest => dest.CompanyName, opt => opt.MapFrom(src => src.Supplier.CompanyName));
             CreateMap<CreateOfferDto, Offer>();
         }
     }

@@ -63,6 +63,32 @@ app.UseStaticFiles();
 
 app.UseRouting();
 app.UseSession();
+
+// Add middleware to initialize auth from cookies
+app.Use(async (context, next) =>
+{
+    // Only initialize for non-API requests to avoid interference
+    if (!context.Request.Path.StartsWithSegments("/api"))
+    {
+        var authService = context.RequestServices.GetService<IAuthService>();
+        if (authService != null)
+        {
+            try
+            {
+                authService.InitializeFromCookies();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't break the request
+                var logger = context.RequestServices.GetService<ILogger<Program>>();
+                logger?.LogError(ex, "Error initializing auth from cookies");
+            }
+        }
+    }
+    
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -62,14 +62,25 @@ namespace SantiyeTalepWebUI.Controllers
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Account");
 
-            // Use employee-specific endpoint that returns EmployeeRequestDto without offers
-            var requests = await _apiService.GetAsync<List<EmployeeRequestDto>>("api/Request/employee", token) ?? new List<EmployeeRequestDto>();
-            var model = new EmployeeRequestListViewModel
+            try
             {
-                Requests = requests
-            };
+                var requests = await _apiService.GetAsync<List<EmployeeRequestDto>>("api/Employee/my-requests", token) ?? new List<EmployeeRequestDto>();
+                var model = new SantiyeTalepWebUI.Models.DTOs.EmployeeRequestListViewModel
+                {
+                    Requests = requests,
+                    TotalRequests = requests.Count,
+                    OpenRequests = requests.Count(r => r.Status == RequestStatus.Open),
+                    CompletedRequests = requests.Count(r => r.Status == RequestStatus.Completed)
+                };
 
-            return View(model);
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading employee requests");
+                var model = new SantiyeTalepWebUI.Models.DTOs.EmployeeRequestListViewModel();
+                return View(model);
+            }
         }
 
         [HttpGet]
@@ -103,7 +114,7 @@ namespace SantiyeTalepWebUI.Controllers
                 if (result != null)
                 {
                     TempData["SuccessMessage"] = "Talep başarıyla oluşturuldu";
-                    return RedirectToAction("Requests");
+                    return RedirectToAction("Dashboard");
                 }
 
                 TempData["ErrorMessage"] = "Talep oluşturulurken bir hata oluştu";

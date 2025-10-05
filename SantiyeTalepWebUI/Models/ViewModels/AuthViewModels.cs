@@ -7,6 +7,7 @@ namespace SantiyeTalepWebUI.Models.ViewModels
         public LoginDto LoginDto { get; set; } = new();
         public string? ReturnUrl { get; set; }
         public string? ErrorMessage { get; set; }
+        public bool RememberMe { get; set; }
     }
 
     public class RegisterSupplierViewModel

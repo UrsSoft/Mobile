@@ -16,13 +16,15 @@ namespace SantiyeTalepApi.Models
         [Required]
         public string FullName { get; set; } = string.Empty;
         
+        [Required]
+        [Phone]
         public string Phone { get; set; } = string.Empty;
         
         public UserRole Role { get; set; }
         
         public bool IsActive { get; set; } = true;
         
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
         
         // Navigation Properties
         public Employee? Employee { get; set; }

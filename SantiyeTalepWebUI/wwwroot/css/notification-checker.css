@@ -1,0 +1,205 @@
+/* Notification Checker Styles */
+
+.notification-toast {
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.notification-content {
+    padding: 8px 0;
+}
+
+.notification-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: #fff;
+}
+
+.notification-message {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.4;
+}
+
+.notification-success {
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+}
+
+.notification-info {
+    background: linear-gradient(135deg, #17a2b8, #007bff) !important;
+}
+
+.notification-warning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14) !important;
+}
+
+.notification-error,
+.notification-danger {
+    background: linear-gradient(135deg, #dc3545, #e83e8c) !important;
+}
+
+/* Badge pulse animation for counters */
+.badge-pulse {
+    animation: badge-pulse 2s infinite;
+}
+
+@keyframes badge-pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+/* Success badge pulse (green) */
+.badge.bg-success.badge-pulse {
+    animation: badge-pulse-success 2s infinite;
+}
+
+@keyframes badge-pulse-success {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+/* Info badge pulse (blue) */
+.badge.bg-info.badge-pulse,
+.badge.bg-primary.badge-pulse {
+    animation: badge-pulse-info 2s infinite;
+}
+
+@keyframes badge-pulse-info {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(23, 162, 184, 0.7);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(23, 162, 184, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(23, 162, 184, 0);
+    }
+}
+
+/* Warning badge pulse (yellow) */
+.badge.bg-warning.badge-pulse {
+    animation: badge-pulse-warning 2s infinite;
+}
+
+@keyframes badge-pulse-warning {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+
+/* Notification panel highlight */
+.notification-highlight {
+    background: linear-gradient(90deg, transparent, rgba(23, 162, 184, 0.1), transparent);
+    animation: notification-sweep 2s ease-in-out;
+}
+
+@keyframes notification-sweep {
+    0% {
+        background-position: -100% 0;
+    }
+    100% {
+        background-position: 100% 0;
+    }
+}
+
+/* Real-time status indicator */
+.realtime-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: none;
+}
+
+.realtime-status.active {
+    display: flex;
+    align-items: center;
+    background: rgba(40, 167, 69, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.realtime-status .status-dot {
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: status-dot-pulse 2s infinite;
+}
+
+@keyframes status-dot-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Hover effects for clickable notifications */
+.notification-toast:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .notification-content {
+        padding: 6px 0;
+    }
+    
+    .notification-title {
+        font-size: 13px;
+    }
+    
+    .notification-message {
+        font-size: 12px;
+    }
+    
+    .realtime-status {
+        bottom: 10px;
+        right: 10px;
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+}

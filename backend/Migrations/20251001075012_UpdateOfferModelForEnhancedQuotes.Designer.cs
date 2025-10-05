@@ -12,8 +12,8 @@ using SantiyeTalepApi.Data;
 namespace SantiyeTalepApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250917110051_RemoveUnnecessaryFields")]
-    partial class RemoveUnnecessaryFields
+    [Migration("20251001075012_UpdateOfferModelForEnhancedQuotes")]
+    partial class UpdateOfferModelForEnhancedQuotes
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,60 @@ namespace SantiyeTalepApi.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.Brand", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Brands");
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)")
+                        .HasAnnotation("Display", "Kategori Adı");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.CategoryBrand", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BrandId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CategoryId", "BrandId");
+
+                    b.HasIndex("BrandId");
+
+                    b.ToTable("CategoryBrands");
+                });
 
             modelBuilder.Entity("SantiyeTalepApi.Models.Employee", b =>
                 {
@@ -54,6 +108,58 @@ namespace SantiyeTalepApi.Migrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("SantiyeTalepApi.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("OfferId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SupplierId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfferId");
+
+                    b.HasIndex("RequestId");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("SantiyeTalepApi.Models.Offer", b =>
                 {
                     b.Property<int>("Id")
@@ -62,7 +168,15 @@ namespace SantiyeTalepApi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<int>("DeliveryDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DeliveryType")
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
@@ -70,11 +184,17 @@ namespace SantiyeTalepApi.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<decimal>("Discount")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<DateTime>("OfferDate")
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
 
                     b.Property<int>("RequestId")
                         .HasColumnType("int");
@@ -106,7 +226,6 @@ namespace SantiyeTalepApi.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
@@ -151,8 +270,10 @@ namespace SantiyeTalepApi.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -167,24 +288,21 @@ namespace SantiyeTalepApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Sites");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Address = "İstanbul, Türkiye",
-                            Description = "Ana şantiye lokasyonu",
-                            IsActive = true,
-                            Name = "Ana Şantiye"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Address = "Ankara, Türkiye",
-                            Description = "İkinci şantiye lokasyonu",
-                            IsActive = true,
-                            Name = "Ankara Şantiye"
-                        });
+            modelBuilder.Entity("SantiyeTalepApi.Models.SiteBrand", b =>
+                {
+                    b.Property<int>("SiteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BrandId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SiteId", "BrandId");
+
+                    b.HasIndex("BrandId");
+
+                    b.ToTable("SiteBrands");
                 });
 
             modelBuilder.Entity("SantiyeTalepApi.Models.Supplier", b =>
@@ -288,9 +406,28 @@ namespace SantiyeTalepApi.Migrations
                             FullName = "Sistem Yöneticisi",
                             IsActive = true,
                             Password = "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.",
-                            Phone = "555-000-0000",
+                            Phone = "05366295131",
                             Role = 1
                         });
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.CategoryBrand", b =>
+                {
+                    b.HasOne("SantiyeTalepApi.Models.Brand", "Brand")
+                        .WithMany("CategoryBrands")
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SantiyeTalepApi.Models.Category", "Category")
+                        .WithMany("CategoryBrands")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Brand");
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("SantiyeTalepApi.Models.Employee", b =>
@@ -308,6 +445,37 @@ namespace SantiyeTalepApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Site");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.Notification", b =>
+                {
+                    b.HasOne("SantiyeTalepApi.Models.Offer", "Offer")
+                        .WithMany()
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SantiyeTalepApi.Models.Request", "Request")
+                        .WithMany()
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SantiyeTalepApi.Models.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SantiyeTalepApi.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Offer");
+
+                    b.Navigation("Request");
+
+                    b.Navigation("Supplier");
 
                     b.Navigation("User");
                 });
@@ -350,6 +518,25 @@ namespace SantiyeTalepApi.Migrations
                     b.Navigation("Site");
                 });
 
+            modelBuilder.Entity("SantiyeTalepApi.Models.SiteBrand", b =>
+                {
+                    b.HasOne("SantiyeTalepApi.Models.Brand", "Brand")
+                        .WithMany("SiteBrands")
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SantiyeTalepApi.Models.Site", "Site")
+                        .WithMany("SiteBrands")
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Brand");
+
+                    b.Navigation("Site");
+                });
+
             modelBuilder.Entity("SantiyeTalepApi.Models.Supplier", b =>
                 {
                     b.HasOne("SantiyeTalepApi.Models.User", "User")
@@ -359,6 +546,18 @@ namespace SantiyeTalepApi.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.Brand", b =>
+                {
+                    b.Navigation("CategoryBrands");
+
+                    b.Navigation("SiteBrands");
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.Category", b =>
+                {
+                    b.Navigation("CategoryBrands");
                 });
 
             modelBuilder.Entity("SantiyeTalepApi.Models.Employee", b =>
@@ -376,6 +575,8 @@ namespace SantiyeTalepApi.Migrations
                     b.Navigation("Employees");
 
                     b.Navigation("Requests");
+
+                    b.Navigation("SiteBrands");
                 });
 
             modelBuilder.Entity("SantiyeTalepApi.Models.Supplier", b =>

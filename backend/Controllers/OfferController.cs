@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SantiyeTalepApi.Data;
 using SantiyeTalepApi.DTOs;
 using SantiyeTalepApi.Models;
+using SantiyeTalepApi.Services;
 using System.Security.Claims;
 
 namespace SantiyeTalepApi.Controllers
@@ -16,11 +17,13 @@ namespace SantiyeTalepApi.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
-        public OfferController(ApplicationDbContext context, IMapper mapper)
+        public OfferController(ApplicationDbContext context, IMapper mapper, INotificationService notificationService)
         {
             _context = context;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         [HttpPost]
@@ -32,6 +35,7 @@ namespace SantiyeTalepApi.Controllers
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var supplier = await _context.Suppliers
+                .Include(s => s.User)
                 .FirstOrDefaultAsync(s => s.UserId == userId);
 
             if (supplier == null)
@@ -40,14 +44,26 @@ namespace SantiyeTalepApi.Controllers
             if (supplier.Status != SupplierStatus.Approved)
                 return BadRequest(new { message = "Onaylanmamış tedarikçi teklif veremez" });
 
+            // Tedarikçinin bu talebe erişim yetkisi var mı kontrol et
+            var hasAccess = await _context.Notifications
+                .AnyAsync(n => n.Type == NotificationType.RequestSentToSupplier 
+                              && n.UserId == userId 
+                              && n.RequestId == model.RequestId);
+
+            if (!hasAccess)
+                return Forbid("Bu talebe teklif verme yetkiniz bulunmamaktadır");
+
             // Request kontrolü
             var request = await _context.Requests
+                .Include(r => r.Employee)
+                    .ThenInclude(e => e.User)
+                .Include(r => r.Site)
                 .FirstOrDefaultAsync(r => r.Id == model.RequestId);
 
             if (request == null)
                 return BadRequest(new { message = "Talep bulunamadı" });
 
-            if (request.Status != RequestStatus.Open)
+            if (request.Status != RequestStatus.Open && request.Status != RequestStatus.InProgress)
                 return BadRequest(new { message = "Bu talep için teklif verilemez" });
 
             // Daha önce teklif verilip verilmediğini kontrol et
@@ -61,8 +77,13 @@ namespace SantiyeTalepApi.Controllers
             {
                 RequestId = model.RequestId,
                 SupplierId = supplier.Id,
-                Price = model.Price,
+                Brand = model.Brand,
                 Description = model.Description,
+                Quantity = model.Quantity,
+                Price = model.Price,
+                Currency = model.Currency,
+                Discount = model.Discount,
+                DeliveryType = model.DeliveryType,
                 DeliveryDays = model.DeliveryDays,
                 Status = OfferStatus.Pending
             };
@@ -72,6 +93,17 @@ namespace SantiyeTalepApi.Controllers
             // Request durumunu güncelle
             request.Status = RequestStatus.InProgress;
             await _context.SaveChangesAsync();
+
+            // Admin'e bildirim gönder
+            await _notificationService.CreateNotificationAsync(
+                "Yeni Teklif Alındı",
+                $"{supplier.CompanyName} ({supplier.User.FullName}) {request.ProductDescription} talebi için {offer.FinalPrice:C} tutarında teklif verdi.",
+                NotificationType.NewOffer,
+                null, // admin notification, userId null
+                request.Id,
+                offer.Id,
+                supplier.Id
+            );
 
             // Offer'ı detaylarıyla birlikte geri döndür
             var createdOffer = await _context.Offers
@@ -149,18 +181,27 @@ namespace SantiyeTalepApi.Controllers
             {
                 case "Employee":
                     // Employees are now restricted from viewing offer details for security
-                    return Forbid("Çalışanlar teklif detaylarını görüntüleyemez. Bu bilgiler güvenlik amacıyla sadece yönetim tərəfindən görüntülenebilir.");
+                    return Forbid("Çalışanlar teklif detaylarını görüntüleyemez. Bu bilgiler güvenlik amacıyla sadece yönetim tarafından görüntülenebilir.");
 
                 case "Supplier":
-                    // Tedarikçiler sadece kendi tekliflerini görebilir
                     var supplier = await _context.Suppliers
                         .FirstOrDefaultAsync(s => s.UserId == userId);
                     if (supplier == null)
                         return BadRequest(new { message = "Tedarikçi bilgisi bulunamadı" });
                     
+                    // Tedarikçinin bu talebe erişim yetkisi var mı kontrol et
+                    var hasAccess = await _context.Notifications
+                        .AnyAsync(n => n.Type == NotificationType.RequestSentToSupplier 
+                                      && n.UserId == userId 
+                                      && n.RequestId == requestId);
+
+                    if (!hasAccess)
+                        return Forbid("Bu talebe erişim yetkiniz bulunmamaktadır");
+                    
                     var supplierOffer = await _context.Offers
                         .Include(o => o.Supplier)
                             .ThenInclude(s => s.User)
+                        .Include(o => o.Request)
                         .FirstOrDefaultAsync(o => o.RequestId == requestId && o.SupplierId == supplier.Id);
                     
                     if (supplierOffer == null)
@@ -180,8 +221,9 @@ namespace SantiyeTalepApi.Controllers
             var offers = await _context.Offers
                 .Include(o => o.Supplier)
                     .ThenInclude(s => s.User)
+                .Include(o => o.Request)
                 .Where(o => o.RequestId == requestId)
-                .OrderBy(o => o.Price) // Fiyata göre sırala
+                .OrderBy(o => o.FinalPrice) // Final price'a göre sırala
                 .ToListAsync();
 
             var offerDtos = _mapper.Map<List<OfferDto>>(offers);

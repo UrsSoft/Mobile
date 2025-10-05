@@ -28,6 +28,7 @@ namespace SantiyeTalepWebUI.Models.DTOs
         [Required(ErrorMessage = "Ad Soyad gereklidir")]
         public string FullName { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Telefon numarasý gereklidir")]
         public string Phone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Pozisyon gereklidir")]

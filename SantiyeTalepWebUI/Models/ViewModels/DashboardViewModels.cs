@@ -51,5 +51,7 @@ namespace SantiyeTalepWebUI.Models.ViewModels
         public List<OfferDto> MyOffers { get; set; } = new();
         public List<RequestDto> AvailableRequests { get; set; } = new();
         public SupplierDto? MyProfile { get; set; }
+        public NotificationSummaryDto? NotificationSummary { get; set; }
+        public List<NotificationDto> Notifications { get; set; } = new();
     }
 }

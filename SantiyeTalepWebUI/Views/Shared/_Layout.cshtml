@@ -22,9 +22,13 @@
     <link href="~/assets/css/custom.min.css" rel="stylesheet" type="text/css" />
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <!-- Notification Checker CSS -->
+    <link href="~/css/notification-checker.css" rel="stylesheet" type="text/css" />
+    
+    @RenderSection("Styles", false)
 </head>
 
-<body>
+<body class="admin-page">
 
     <!-- Begin page -->
     <div id="layout-wrapper">
@@ -300,7 +304,22 @@
         <!-- ============================================================== -->
        @RenderBody()
         <!-- end main content-->
-
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <script>document.write(new Date().getFullYear())</script> © Şantiye Talep Yönetim Sistemi.
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-sm-end d-none d-sm-block">
+                            <a href="http://elementelk.com/">
+                                Element Elektrik Proje Taah. Tic. Ltd. Sti.
+                            </a> tarafından geliştirildi.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
     <!-- END layout-wrapper -->
     
@@ -326,7 +345,7 @@
     <script src="~/assets/libs/feather-icons/feather.min.js"></script>
     <script src="~/assets/js/pages/plugins/lord-icon-2.1.0.js"></script>
     <script src="~/assets/js/plugins.js"></script>
-
+    <script src="~/assets/libs/sweetalert2/sweetalert2.min.js"></script>
     <!-- apexcharts -->
     <script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
 
@@ -336,6 +355,9 @@
     
     <!-- Toastr Notifications -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <!-- Include notification checker (global) -->
+    <script src="~/js/notification-checker.js"></script>
     
     <!-- App js -->
   @*   <script src="~/assets/js/app.js"></script> *@

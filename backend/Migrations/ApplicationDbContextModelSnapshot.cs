@@ -105,6 +105,58 @@ namespace SantiyeTalepApi.Migrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("SantiyeTalepApi.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("OfferId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SupplierId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfferId");
+
+                    b.HasIndex("RequestId");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("SantiyeTalepApi.Models.Offer", b =>
                 {
                     b.Property<int>("Id")
@@ -113,7 +165,18 @@ namespace SantiyeTalepApi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Currency")
+                        .HasColumnType("int");
+
                     b.Property<int>("DeliveryDays")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DeliveryType")
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
@@ -121,11 +184,17 @@ namespace SantiyeTalepApi.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<decimal>("Discount")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<DateTime>("OfferDate")
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
 
                     b.Property<int>("RequestId")
                         .HasColumnType("int");
@@ -157,7 +226,6 @@ namespace SantiyeTalepApi.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
@@ -206,7 +274,6 @@ namespace SantiyeTalepApi.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -339,7 +406,7 @@ namespace SantiyeTalepApi.Migrations
                             FullName = "Sistem Yöneticisi",
                             IsActive = true,
                             Password = "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.",
-                            Phone = "555-000-0000",
+                            Phone = "05366295131",
                             Role = 1
                         });
                 });
@@ -378,6 +445,37 @@ namespace SantiyeTalepApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Site");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.Notification", b =>
+                {
+                    b.HasOne("SantiyeTalepApi.Models.Offer", "Offer")
+                        .WithMany()
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SantiyeTalepApi.Models.Request", "Request")
+                        .WithMany()
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SantiyeTalepApi.Models.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SantiyeTalepApi.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Offer");
+
+                    b.Navigation("Request");
+
+                    b.Navigation("Supplier");
 
                     b.Navigation("User");
                 });

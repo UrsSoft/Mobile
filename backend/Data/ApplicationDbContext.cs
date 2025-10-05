@@ -19,6 +19,7 @@ namespace SantiyeTalepApi.Data
         public DbSet<Brand> Brands { get; set; }
         public DbSet<CategoryBrand> CategoryBrands { get; set; }
         public DbSet<SiteBrand> SiteBrands { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -110,6 +111,34 @@ namespace SantiyeTalepApi.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // Notification configurations - cascade sorununu çözmek için NoAction kullan
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Title).HasMaxLength(200);
+                entity.Property(e => e.Message).HasMaxLength(1000);
+                
+                entity.HasOne(n => n.User)
+                    .WithMany()
+                    .HasForeignKey(n => n.UserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+                
+                entity.HasOne(n => n.Request)
+                    .WithMany()
+                    .HasForeignKey(n => n.RequestId)
+                    .OnDelete(DeleteBehavior.NoAction);
+                
+                entity.HasOne(n => n.Offer)
+                    .WithMany()
+                    .HasForeignKey(n => n.OfferId)
+                    .OnDelete(DeleteBehavior.NoAction);
+                
+                entity.HasOne(n => n.Supplier)
+                    .WithMany()
+                    .HasForeignKey(n => n.SupplierId)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
             #region Category Fluent API
             modelBuilder.Entity<Category>()
                 .HasKey(c => c.Id);
@@ -183,7 +212,7 @@ namespace SantiyeTalepApi.Data
                     // admin123 şifresi için doğru BCrypt hash
                     Password = "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.",
                     FullName = "Sistem Yöneticisi",
-                    Phone = "555-000-0000",
+                    Phone = "05366295131",
                     Role = UserRole.Admin,
                     IsActive = true,
                     CreatedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)

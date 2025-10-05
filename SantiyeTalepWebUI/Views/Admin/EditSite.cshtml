@@ -380,11 +380,14 @@
             const countElement = document.getElementById('selectedBrandCount');
             const infoElement = document.getElementById('brandSelectionInfo');
             
-            if (selectedCount > 0) {
-                countElement.textContent = selectedCount;
-                infoElement.classList.remove('d-none');
-            } else {
-                infoElement.classList.add('d-none');
+            // Check if elements exist before accessing their properties
+            if (countElement && infoElement) {
+                if (selectedCount > 0) {
+                    countElement.textContent = selectedCount;
+                    infoElement.classList.remove('d-none');
+                } else {
+                    infoElement.classList.add('d-none');
+                }
             }
         }
 

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SantiyeTalepApi.Data;
 using SantiyeTalepApi.DTOs;
 using SantiyeTalepApi.Models;
+using SantiyeTalepApi.Services;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -20,14 +21,16 @@ namespace SantiyeTalepApi.Controllers
         private readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
         private readonly ILogger<RequestController> _logger;
+        private readonly INotificationService _notificationService;
 
-        public RequestController(ApplicationDbContext context, IMapper mapper, IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<RequestController> logger)
+        public RequestController(ApplicationDbContext context, IMapper mapper, IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<RequestController> logger, INotificationService notificationService)
         {
             _context = context;
             _mapper = mapper;
             _configuration = configuration;
             _httpClient = httpClientFactory.CreateClient("ProductApi");
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         [HttpPost]
@@ -62,6 +65,7 @@ namespace SantiyeTalepApi.Controllers
 
                 var employee = await _context.Employees
                     .Include(e => e.Site)
+                    .Include(e => e.User)
                     .FirstOrDefaultAsync(e => e.UserId == userId);
 
                 if (employee == null)
@@ -81,7 +85,7 @@ namespace SantiyeTalepApi.Controllers
                     DeliveryType = model.DeliveryType,
                     Description = model.Description,
                     Status = RequestStatus.Open,
-                    RequestDate = DateTime.UtcNow
+                    RequestDate = DateTime.Now
                 };
 
                 _logger.LogInformation("Adding request to database");
@@ -89,6 +93,17 @@ namespace SantiyeTalepApi.Controllers
                 await _context.SaveChangesAsync();
                 
                 _logger.LogInformation("Request created with ID: {RequestId}", request.Id);
+
+                // Admin'e bildirim gönder
+                await _notificationService.CreateNotificationAsync(
+                    "Yeni Talep Oluşturuldu",
+                    $"{employee.User.FullName} ({employee.Site.Name}) yeni bir talep oluşturdu: {model.ProductDescription}",
+                    NotificationType.NewRequest,
+                    null, // admin notification, userId null
+                    request.Id,
+                    null,
+                    null
+                );
 
                 // Request'i detaylarıyla birlikte geri döndür
                 var createdRequest = await _context.Requests
@@ -221,7 +236,7 @@ namespace SantiyeTalepApi.Controllers
                     .ThenInclude(o => o.Supplier)
                         .ThenInclude(s => s.User);
 
-            // Role-based filtering - this endpoint is now primarily for admin use
+            // Role-based filtering
             switch (userRole)
             {
                 case "Employee":
@@ -229,9 +244,23 @@ namespace SantiyeTalepApi.Controllers
                     return BadRequest(new { message = "Çalışanlar için employee endpoint kullanın" });
 
                 case "Supplier":
-                    // Tedarikçiler sadece açık talepleri ve kendi tekliflerini görebilir
-                    query = query.Where(r => r.Status == RequestStatus.Open || 
-                                           r.Offers.Any(o => o.Supplier.UserId == userId));
+                    // Tedarikçiler sadece kendilerine gönderilen talepleri görebilir
+                    var supplier = await _context.Suppliers
+                        .FirstOrDefaultAsync(s => s.UserId == userId);
+
+                    if (supplier == null)
+                        return BadRequest(new { message = "Tedarikçi bilgisi bulunamadı" });
+
+                    // Sadece bu tedarikçiye bildirim gönderilen talepleri getir
+                    var assignedRequestIds = await _context.Notifications
+                        .Where(n => n.Type == NotificationType.RequestSentToSupplier 
+                                   && n.UserId == userId 
+                                   && n.RequestId.HasValue)
+                        .Select(n => n.RequestId.Value)
+                        .Distinct()
+                        .ToListAsync();
+
+                    query = query.Where(r => assignedRequestIds.Contains(r.Id));
                     break;
 
                 case "Admin":
@@ -282,10 +311,14 @@ namespace SantiyeTalepApi.Controllers
                     if (supplier == null)
                         return BadRequest(new { message = "Tedarikçi bilgisi bulunamadı" });
                     
-                    // Tedarikçi sadece açık talepleri veya kendi teklifini verdiği talepleri görebilir
-                    if (request.Status != RequestStatus.Open && 
-                        !request.Offers.Any(o => o.SupplierId == supplier.Id))
-                        return Forbid();
+                    // Tedarikçi sadece kendisine gönderilen talepleri görebilir
+                    var hasAccess = await _context.Notifications
+                        .AnyAsync(n => n.Type == NotificationType.RequestSentToSupplier 
+                                      && n.UserId == userId 
+                                      && n.RequestId == id);
+
+                    if (!hasAccess)
+                        return Forbid("Bu talebe erişim yetkiniz bulunmamaktadır");
                     break;
 
                 case "Admin":
@@ -584,9 +617,38 @@ namespace SantiyeTalepApi.Controllers
                                 var productsJson = property.Value.GetRawText();
                                 _logger.LogInformation("Processing array property '{PropertyName}' with {Count} items", propertyName, property.Value.GetArrayLength());
                                 
+                                // First, try with JsonDocument to handle flexible parsing
+                                var productElements = property.Value.EnumerateArray().ToList();
+                                
+                                foreach (var productElement in productElements)
+                                {
+                                    try
+                                    {
+                                        var productDto = ParseProductFromJsonElement(productElement);
+                                        if (productDto != null)
+                                        {
+                                            mappedProducts.Add(productDto);
+                                        }
+                                    }
+                                    catch (Exception productEx)
+                                    {
+                                        _logger.LogWarning(productEx, "Failed to parse individual product from JSON element: {Element}", productElement.GetRawText());
+                                        // Continue with next product instead of failing completely
+                                    }
+                                }
+                                
+                                // If we successfully parsed any products, break
+                                if (mappedProducts.Any())
+                                {
+                                    _logger.LogInformation("Successfully parsed {Count} products using JsonElement parsing", mappedProducts.Count);
+                                    break;
+                                }
+                                
+                                // Fallback: try the original JsonSerializer approach
                                 var apiProducts = JsonSerializer.Deserialize<List<ExternalProductDto>>(productsJson, new JsonSerializerOptions
                                 {
-                                    PropertyNameCaseInsensitive = true
+                                    PropertyNameCaseInsensitive = true,
+                                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                                 });
 
                                 if (apiProducts != null)
@@ -606,6 +668,7 @@ namespace SantiyeTalepApi.Controllers
                             catch (JsonException jsonEx)
                             {
                                 _logger.LogError(jsonEx, "JSON parsing error while processing property: {PropertyName}", propertyName);
+                                // Continue to next property instead of failing completely
                             }
                         }
                     }
@@ -650,6 +713,7 @@ namespace SantiyeTalepApi.Controllers
                             Brand = fallbackBrand,
                             Category = "Fallback Test Category",
                             Units = new List<string> { "Adet" }
+
                         });
                         
                         _logger.LogInformation("Added fallback mock product with brand filter");
@@ -667,6 +731,139 @@ namespace SantiyeTalepApi.Controllers
                 _logger.LogError(ex, "=== EXCEPTION IN GET PRODUCTS FROM API WITH BRAND FILTER ===");
                 _logger.LogError("Error occurred while calling external product API");
                 return new List<ProductDto>();
+            }
+        }
+
+        private ProductDto? ParseProductFromJsonElement(JsonElement productElement)
+        {
+            try
+            {
+                var productDto = new ProductDto();
+                
+                // Parse ID
+                if (productElement.TryGetProperty("id", out var idProp))
+                {
+                    productDto.Id = idProp.GetInt32();
+                }
+
+                // Parse Name (try multiple property names)
+                var nameProps = new[] { "name", "productName", "title" };
+                foreach (var nameProp in nameProps)
+                {
+                    if (productElement.TryGetProperty(nameProp, out var nameElement) && nameElement.ValueKind == JsonValueKind.String)
+                    {
+                        productDto.Name = nameElement.GetString() ?? "";
+                        break;
+                    }
+                }
+
+                // Parse Description
+                if (productElement.TryGetProperty("description", out var descProp) && descProp.ValueKind == JsonValueKind.String)
+                {
+                    productDto.Description = descProp.GetString() ?? "";
+                }
+
+                // Parse Brand (handle complex structures)
+                var brandProps = new[] { "brand", "brandName", "manufacturer" };
+                foreach (var brandProp in brandProps)
+                {
+                    if (productElement.TryGetProperty(brandProp, out var brandElement))
+                    {
+                        productDto.Brand = ExtractBrandFromJsonElement(brandElement);
+                        if (!string.IsNullOrEmpty(productDto.Brand))
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                // Parse Category
+                var categoryProps = new[] { "category", "type" };
+                foreach (var categoryProp in categoryProps)
+                {
+                    if (productElement.TryGetProperty(categoryProp, out var categoryElement) && categoryElement.ValueKind == JsonValueKind.String)
+                    {
+                        productDto.Category = categoryElement.GetString() ?? "";
+                        break;
+                    }
+                }
+
+                // Parse Units
+                if (productElement.TryGetProperty("units", out var unitsProp) && unitsProp.ValueKind == JsonValueKind.Array)
+                {
+                    productDto.Units = unitsProp.EnumerateArray()
+                        .Where(u => u.ValueKind == JsonValueKind.String)
+                        .Select(u => u.GetString() ?? "")
+                        .Where(u => !string.IsNullOrEmpty(u))
+                        .ToList();
+                }
+                else if (productElement.TryGetProperty("unit", out var unitProp) && unitProp.ValueKind == JsonValueKind.String)
+                {
+                    var unit = unitProp.GetString();
+                    if (!string.IsNullOrEmpty(unit))
+                    {
+                        productDto.Units = new List<string> { unit };
+                    }
+                }
+
+                return productDto;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse product from JsonElement");
+                return null;
+            }
+        }
+
+        private string ExtractBrandFromJsonElement(JsonElement brandElement)
+        {
+            try
+            {
+                if (brandElement.ValueKind == JsonValueKind.String)
+                {
+                    return brandElement.GetString() ?? "";
+                }
+                else if (brandElement.ValueKind == JsonValueKind.Object)
+                {
+                    // Try common object properties for brand name
+                    var brandNameProps = new[] { "name", "brandName", "title", "label" };
+                    foreach (var prop in brandNameProps)
+                    {
+                        if (brandElement.TryGetProperty(prop, out var nameProperty) && nameProperty.ValueKind == JsonValueKind.String)
+                        {
+                            var brandName = nameProperty.GetString();
+                            if (!string.IsNullOrEmpty(brandName))
+                            {
+                                return brandName;
+                            }
+                        }
+                    }
+                    
+                    // Fallback: try to get any string property
+                    foreach (var property in brandElement.EnumerateObject())
+                    {
+                        if (property.Value.ValueKind == JsonValueKind.String)
+                        {
+                            var value = property.Value.GetString();
+                            if (!string.IsNullOrEmpty(value))
+                            {
+                                return value;
+                            }
+                        }
+                    }
+                }
+                else if (brandElement.ValueKind == JsonValueKind.Array && brandElement.GetArrayLength() > 0)
+                {
+                    // If it's an array, try to extract from the first element
+                    return ExtractBrandFromJsonElement(brandElement[0]);
+                }
+                
+                return "";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to extract brand from JsonElement");
+                return "";
             }
         }
 
@@ -718,6 +915,159 @@ namespace SantiyeTalepApi.Controllers
                 _logger.LogError(ex, "=== ERROR IN GET MY SITE ===");
                 return StatusCode(500, new { 
                     message = "Şantiye bilgisi alınırken bir hata oluştu", 
+                    error = ex.Message 
+                });
+            }
+        }
+
+        [HttpGet("open")]
+        [Authorize(Roles = "Supplier,Admin")]
+        public async Task<IActionResult> GetOpenRequests()
+        {
+            _logger.LogInformation("=== GET OPEN REQUESTS STARTED ===");
+            
+            try
+            {
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                _logger.LogInformation("User role: {Role}", userRole);
+
+                IQueryable<Request> query = _context.Requests
+                    .Include(r => r.Employee)
+                        .ThenInclude(e => e.User)
+                    .Include(r => r.Site)
+                    .Include(r => r.Offers)
+                        .ThenInclude(o => o.Supplier)
+                            .ThenInclude(s => s.User)
+                    .Where(r => r.Status == RequestStatus.Open || r.Status == RequestStatus.InProgress);
+
+                // Tedarikçi ise sadece kendisine gönderilen talepleri görsün ve daha önce teklif verdiklerini hariç tutsun
+                if (userRole == "Supplier")
+                {
+                    var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                    var supplier = await _context.Suppliers
+                        .FirstOrDefaultAsync(s => s.UserId == userId);
+
+                    if (supplier == null)
+                    {
+                        _logger.LogError("Supplier not found for user ID: {UserId}", userId);
+                        return BadRequest(new { message = "Tedarikçi bilgisi bulunamadı" });
+                    }
+
+                    // Sadece bu tedarikçiye bildirim gönderilen talepleri getir
+                    var assignedRequestIds = await _context.Notifications
+                        .Where(n => n.Type == NotificationType.RequestSentToSupplier 
+                                   && n.UserId == userId 
+                                   && n.RequestId.HasValue)
+                        .Select(n => n.RequestId.Value)
+                        .Distinct()
+                        .ToListAsync();
+
+                    _logger.LogInformation("Found {Count} assigned requests for supplier {SupplierId}: [{RequestIds}]", 
+                        assignedRequestIds.Count, supplier.Id, string.Join(", ", assignedRequestIds));
+
+                    // Bu tedarikçinin daha önce teklif verdiği taleplerin ID'lerini al
+                    var requestsWithOffers = await _context.Offers
+                        .Where(o => o.SupplierId == supplier.Id)
+                        .Select(o => o.RequestId)
+                        .Distinct()
+                        .ToListAsync();
+
+                    _logger.LogInformation("Found {Count} requests with existing offers from supplier {SupplierId}: [{RequestIds}]", 
+                        requestsWithOffers.Count, supplier.Id, string.Join(", ", requestsWithOffers));
+
+                    // Kendisine atanan ama henüz teklif vermediği talepleri getir
+                    query = query.Where(r => assignedRequestIds.Contains(r.Id) && !requestsWithOffers.Contains(r.Id));
+
+                    _logger.LogInformation("Filtering requests: assigned={Count}, with offers={Count}", 
+                        assignedRequestIds.Count, requestsWithOffers.Count);
+                }
+
+                var requests = await query
+                    .OrderByDescending(r => r.RequestDate)
+                    .ToListAsync();
+
+                _logger.LogInformation("Found {Count} open/in-progress requests for user role {Role}", requests.Count, userRole);
+
+                var requestDtos = _mapper.Map<List<RequestDto>>(requests);
+                
+                _logger.LogInformation("=== GET OPEN REQUESTS COMPLETED SUCCESSFULLY ===");
+                return Ok(requestDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "=== ERROR IN GET OPEN REQUESTS ===");
+                return StatusCode(500, new { 
+                    message = "Açık talepler yüklenirken bir hata oluştu", 
+                    error = ex.Message 
+                });
+            }
+        }
+
+        [HttpGet("{requestId}/site-brands")]
+        [Authorize(Roles = "Supplier,Admin")]
+        public async Task<IActionResult> GetRequestSiteBrands(int requestId)
+        {
+            _logger.LogInformation("=== GET REQUEST SITE BRANDS STARTED ===");
+            
+            try
+            {
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+                // Tedarikçi ise sadece kendisine gönderilen taleplerin markalarına erişebilir
+                if (userRole == "Supplier")
+                {
+                    var hasAccess = await _context.Notifications
+                        .AnyAsync(n => n.Type == NotificationType.RequestSentToSupplier 
+                                      && n.UserId == userId 
+                                      && n.RequestId == requestId);
+
+                    if (!hasAccess)
+                    {
+                        _logger.LogWarning("Supplier {UserId} tried to access brands for request {RequestId} without permission", userId, requestId);
+                        return Forbid("Bu talebe erişim yetkiniz bulunmamaktadır");
+                    }
+                }
+
+                var request = await _context.Requests
+                    .Include(r => r.Site)
+                        .ThenInclude(s => s.SiteBrands)
+                            .ThenInclude(sb => sb.Brand)
+                    .FirstOrDefaultAsync(r => r.Id == requestId);
+
+                if (request == null)
+                {
+                    _logger.LogWarning("Request not found: {RequestId}", requestId);
+                    return NotFound(new { message = "Talep bulunamadı" });
+                }
+
+                if (request.Site == null)
+                {
+                    _logger.LogWarning("Site not found for request: {RequestId}", requestId);
+                    return NotFound(new { message = "Şantiye bilgisi bulunamadı" });
+                }
+
+                var brands = request.Site.SiteBrands
+                    .Where(sb => sb.Brand.IsActive)
+                    .Select(sb => new BrandDto
+                    {
+                        Id = sb.Brand.Id,
+                        Name = sb.Brand.Name,
+                        IsActive = sb.Brand.IsActive
+                    })
+                    .OrderBy(b => b.Name)
+                    .ToList();
+
+                _logger.LogInformation("Found {Count} brands for site {SiteId} (request {RequestId})", 
+                    brands.Count, request.SiteId, requestId);
+
+                return Ok(brands);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "=== ERROR IN GET REQUEST SITE BRANDS ===");
+                return StatusCode(500, new { 
+                    message = "Şantiye markaları yüklenirken bir hata oluştu", 
                     error = ex.Message 
                 });
             }

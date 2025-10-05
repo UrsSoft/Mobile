@@ -1,5 +1,15 @@
 @model SantiyeTalepWebUI.Models.ViewModels.AdminDashboardViewModel
-<div class="main-content">
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Add notification checker styles -->
+@section Styles {
+    <link href="~/css/notification-checker.css" rel="stylesheet" />
+}
+
+<div class="main-content" data-enable-notifications="true">
     <div class="page-content">
         <div class="container-fluid">
 
@@ -19,6 +29,57 @@
                 </div>
             </div>
             <!-- end page title -->
+            <!-- Bildirimler Kartı -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-3">
+                                        <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
+                                            <i class="ri-notification-3-line fs-16"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Son Bildirimler</h6>
+                                        <p class="text-muted mb-0">
+                                            <span id="unread-count" class="badge bg-danger me-2">0</span>
+                                            okunmamış bildirim
+                                        </p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="loadNotifications()">
+                                        <i class="ri-eye-line me-1"></i>Tümünü Gör
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bildirim Listesi (Gizli) -->
+            <div class="row" id="notification-panel" style="display: none;">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-notification-3-line me-2"></i>Bildirimler
+                                <button type="button" class="btn btn-sm btn-ghost-secondary float-end" onclick="toggleNotifications()">
+                                    <i class="ri-close-line"></i>
+                                </button>
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="notifications-list" class="list-group list-group-flush">
+                                <!-- Bildirimler buraya yüklenecek -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- KPI Cards Row -->
             <div class="row">
@@ -96,34 +157,73 @@
                     </div><!-- end card -->
                 </div><!-- end col -->
             </div><!-- end row -->
-
             <!-- Charts Row -->
             <div class="row">
-                <div class="col-xxl-4 col-md-6">
-                    <div class="card">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Talep Durumu Dağılımı</h4>
-                            <div class="flex-shrink-0">
-                                <div class="dropdown card-header-dropdown">
-                                    <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="fw-semibold text-uppercase fs-12">Filtre: </span><span class="text-muted">Bu Ay<i class="mdi mdi-chevron-down ms-1"></i></span>
-                                    </a>
-                                    <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Bu Hafta</a>
-                                        <a class="dropdown-item" href="#">Bu Ay</a>
-                                        <a class="dropdown-item" href="#">Son 3 Ay</a>
-                                        <a class="dropdown-item" href="#">Bu Yıl</a>
+                <div class="col-xxl-4 col-md-12">
+                <div class="row">
+                    <div class="col-xxl-12 col-md-12">
+                        <div class="card">
+                            <div class="card-header align-items-center d-flex">
+                                <h4 class="card-title mb-0 flex-grow-1">Talep Durumu Dağılımı</h4>
+                                <div class="flex-shrink-0">
+                                    <div class="dropdown card-header-dropdown">
+                                        <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <span class="fw-semibold text-uppercase fs-12">Filtre: </span><span class="text-muted">Bu Ay<i class="mdi mdi-chevron-down ms-1"></i></span>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-end">
+                                            <a class="dropdown-item" href="#">Bu Hafta</a>
+                                            <a class="dropdown-item" href="#">Bu Ay</a>
+                                            <a class="dropdown-item" href="#">Son 3 Ay</a>
+                                            <a class="dropdown-item" href="#">Bu Yıl</a>
+                                        </div>
                                     </div>
                                 </div>
+                            </div><!-- end card header -->
+                            <div class="card-body pb-0">
+                                <div id="request-status-chart" data-colors='["--vz-warning", "--vz-success", "--vz-danger", "--vz-info"]' class="apex-charts" dir="ltr"></div>
                             </div>
-                        </div><!-- end card header -->
-                        <div class="card-body pb-0">
-                            <div id="request-status-chart" data-colors='["--vz-warning", "--vz-success", "--vz-danger", "--vz-info"]' class="apex-charts" dir="ltr"></div>
-                        </div>
-                    </div><!-- end card -->
-                </div><!-- end col -->
+                        </div><!-- end card -->
+                    </div><!-- end col -->
+                    <div class="col-xxl-12 col-md-12">
+                        <div class="card card-height-100">
+                            <div class="card-header align-items-center d-flex">
+                                <h4 class="card-title mb-0 flex-grow-1">Maliyet Analizi</h4>
+                                <div class="flex-shrink-0">
+                                    <div class="dropdown card-header-dropdown">
+                                        <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <span class="fw-semibold text-uppercase fs-12">Dönem: </span><span class="text-muted">Bu Yıl<i class="mdi mdi-chevron-down ms-1"></i></span>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-end">
+                                            <a class="dropdown-item" href="#">Bu Ay</a>
+                                            <a class="dropdown-item" href="#">Son 3 Ay</a>
+                                            <a class="dropdown-item" href="#">Son 6 Ay</a>
+                                            <a class="dropdown-item" href="#">Bu Yıl</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div><!-- end card header -->
+                            <div class="card-body px-0">
+                                <ul class="list-inline main-chart text-center mb-0">
+                                    <li class="list-inline-item chart-border-left me-0 border-0">
+                                        <h4 class="text-primary">₺@(Model.RecentRequests.Where(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed).Sum(r => (decimal?)r.EstimatedCost ?? 0).ToString("N0")) <span class="text-muted d-inline-block fs-13 align-middle ms-2">Toplam Maliyet</span></h4>
+                                    </li>
+                                    <li class="list-inline-item chart-border-left me-0">
+                                        <h4>
+                                            ₺@(Model.RecentRequests.Where(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed).Sum(r => (decimal?)r.EstimatedCost ?? 0).ToString("N0"))<span class="text-muted d-inline-block fs-13 align-middle ms-2">Onaylanan</span>
+                                        </h4>
+                                    </li>
+                                    <li class="list-inline-item chart-border-left me-0">
+                                        <h4><span data-plugin="counterup">@(Model.Stats.TotalRequests > 0 ? Math.Round((double)Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed) / Model.Stats.TotalRequests * 100, 0) : 0)</span>%<span class="text-muted d-inline-block fs-13 align-middle ms-2">Verimlilik</span></h4>
+                                    </li>
+                                </ul>
 
-                <div class="col-xxl-4 col-md-6">
+                                <div id="cost-analysis-chart" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
+                            </div>
+                        </div><!-- end card -->
+                    </div><!-- end col -->
+                </div>
+                </div>
+                <div class="col-xxl-8 col-md-12">
                     <div class="card card-height-100">
                         <div class="card-header align-items-center d-flex">
                             <h4 class="card-title mb-0 flex-grow-1">Şantiye Performansı</h4>
@@ -147,45 +247,8 @@
                     </div><!-- end card -->
                 </div><!-- end col -->
 
-                <div class="col-xxl-4">
-                    <div class="card card-height-100">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Maliyet Analizi</h4>
-                            <div class="flex-shrink-0">
-                                <div class="dropdown card-header-dropdown">
-                                    <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="fw-semibold text-uppercase fs-12">Dönem: </span><span class="text-muted">Bu Yıl<i class="mdi mdi-chevron-down ms-1"></i></span>
-                                    </a>
-                                    <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Bu Ay</a>
-                                        <a class="dropdown-item" href="#">Son 3 Ay</a>
-                                        <a class="dropdown-item" href="#">Son 6 Ay</a>
-                                        <a class="dropdown-item" href="#">Bu Yıl</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div><!-- end card header -->
-                        <div class="card-body px-0">
-                            <ul class="list-inline main-chart text-center mb-0">
-                                <li class="list-inline-item chart-border-left me-0 border-0">
-                                    <h4 class="text-primary">₺@(Model.RecentRequests.Where(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed).Sum(r => (decimal?)r.EstimatedCost ?? 0).ToString("N0")) <span class="text-muted d-inline-block fs-13 align-middle ms-2">Toplam Maliyet</span></h4>
-                                </li>
-                                <li class="list-inline-item chart-border-left me-0">
-                                    <h4>
-                                        ₺@(Model.RecentRequests.Where(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed).Sum(r => (decimal?)r.EstimatedCost ?? 0).ToString("N0"))<span class="text-muted d-inline-block fs-13 align-middle ms-2">Onaylanan</span>
-                                    </h4>
-                                </li>
-                                <li class="list-inline-item chart-border-left me-0">
-                                    <h4><span data-plugin="counterup">@(Model.Stats.TotalRequests > 0 ? Math.Round((double)Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed) / Model.Stats.TotalRequests * 100, 0) : 0)</span>%<span class="text-muted d-inline-block fs-13 align-middle ms-2">Verimlilik</span></h4>
-                                </li>
-                            </ul>
 
-                            <div id="cost-analysis-chart" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
-                        </div>
-                    </div><!-- end card -->
-                </div><!-- end col -->
             </div><!-- end row -->
-
             <!-- Data Tables Row -->
             <div class="row">
                 <div class="col-xl-7">
@@ -331,7 +394,6 @@
                     </div><!-- end card -->
                 </div><!-- end col -->
             </div><!-- end row -->
-
             <!-- Employee List Row -->
             <div class="row">
                 <div class="col-12">
@@ -413,7 +475,7 @@
                 </div>
                 <div class="col-sm-6">
                     <div class="text-sm-end d-none d-sm-block">
-                        Velzon Template ile geliştirilmiştir.
+                        <a href="https://www.urssoft.com">UrsSoft Teknoloji A.Ş.</a> tarafından geliştirildi.
                     </div>
                 </div>
             </div>
@@ -421,15 +483,373 @@
     </footer>
 </div>
 <!-- end main content-->
-
+<!-- Bildirim JavaScript'leri -->
 <script>
+    let notifications = [];
+
+    // Sayfa yüklendiğinde bildirimleri kontrol et
+    document.addEventListener('DOMContentLoaded', function() {
+        loadNotificationSummary();
+        // Her 30 saniyede bir bildirim özetini güncelle
+        setInterval(loadNotificationSummary, 30000);
+    });
+
+    // Bildirim özetini yükle
+    function loadNotificationSummary() {
+        fetch('/Admin/GetNotificationSummary')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.summary) {
+                    document.getElementById('unread-count').textContent = data.summary.unreadCount;
+
+                    // Eğer okunmamış bildirim varsa renk değiştir
+                    const badge = document.getElementById('unread-count');
+                    if (data.summary.unreadCount > 0) {
+                        badge.className = 'badge bg-danger me-2';
+                        badge.style.display = 'inline';
+                    } else {
+                        badge.className = 'badge bg-success me-2';
+                        badge.textContent = '0';
+                        badge.style.display = 'inline';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Bildirim özeti yüklenirken hata:', error);
+            });
+    }
+
+    // Bildirimleri yükle ve göster
+    function loadNotifications() {
+        fetch('/Admin/GetNotifications')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    notifications = data.notifications;
+                    displayNotifications();
+
+                    // Eğer hiç okunmamış bildirim yoksa paneli kapalı tut
+                    const unreadCount = notifications.filter(n => !n.isRead).length;
+                    if (unreadCount > 0) {
+                        toggleNotifications();
+                    } else {
+                        // Panel zaten açıksa kapat
+                        const panel = document.getElementById('notification-panel');
+                        if (panel.style.display === 'block') {
+                            toggleNotifications();
+                        }
+
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Bilgi',
+                            text: 'Yeni bildirim bulunmuyor',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Bildirimler yüklenirken hata:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata!',
+                    text: 'Bildirimler yüklenirken bir hata oluştu',
+                    timer: 3000
+                });
+            });
+    }
+
+    // Bildirimleri listele
+    function displayNotifications() {
+        const container = document.getElementById('notifications-list');
+        container.innerHTML = '';
+
+        // Sadece okunmamış bildirimleri göster
+        const unreadNotifications = notifications.filter(n => !n.isRead);
+
+        if (unreadNotifications.length === 0) {
+            container.innerHTML = `
+                <div class="list-group-item text-center py-4">
+                    <i class="ri-notification-off-line display-4 text-muted mb-2"></i>
+                    <p class="text-muted mb-0">Yeni bildirim bulunmuyor</p>
+                    <small class="text-muted">Tüm bildirimler okundu</small>
+                </div>
+            `;
+            return;
+        }
+
+        // Okunmamış bildirimleri göster
+        unreadNotifications.forEach(notification => {
+            const notificationHtml = createNotificationHtml(notification);
+            container.appendChild(notificationHtml);
+        });
+
+        // Eğer okunmuş bildirimler de varsa, alt kısımda bilgi ver
+        const readCount = notifications.length - unreadNotifications.length;
+        if (readCount > 0) {
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'list-group-item text-center py-2 bg-light border-top';
+            infoDiv.innerHTML = `
+                <small class="text-muted">
+                    <i class="ri-check-double-line me-1"></i>
+                    ${readCount} bildirim okundu olarak işaretlendi
+                </small>
+            `;
+            container.appendChild(infoDiv);
+        }
+    }
+
+    // Bildirim HTML'i oluştur
+    function createNotificationHtml(notification) {
+        const div = document.createElement('div');
+        div.className = `list-group-item list-group-item-action ${!notification.isRead ? 'bg-light' : ''}`;
+
+        const typeIcon = getNotificationIcon(notification.type);
+        const typeColor = getNotificationColor(notification.type);
+        const timeAgo = getTimeAgo(notification.createdDate);
+
+        div.innerHTML = `
+            <div class="d-flex w-100 justify-content-between align-items-start">
+                <div class="d-flex">
+                    <div class="avatar-xs me-3">
+                        <div class="avatar-title ${typeColor} rounded-circle">
+                            <i class="${typeIcon} fs-14"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1 ${!notification.isRead ? 'fw-bold' : ''}">${notification.title}</h6>
+                        <p class="mb-1 text-muted">${notification.message}</p>
+                        <small class="text-muted">${timeAgo}</small>
+                        ${!notification.isRead ? '<span class="badge bg-primary ms-2">Yeni</span>' : ''}}
+                    </div>
+                </div>
+                <div class="d-flex gap-1">
+                    ${!notification.isRead ? `
+                        <button class="btn btn-sm btn-outline-success" onclick="markAsRead(${notification.id})" title="Okundu İşaretle">
+                            <i class="ri-check-line"></i> Okundu
+                        </button>` : ''}
+                    <button class="btn btn-sm btn-outline-primary" onclick="goToRelatedPage(${notification.type}, ${notification.requestId}, ${notification.offerId}, ${notification.supplierId}, ${notification.id})" title="İlgili Sayfaya Git">
+                        <i class="ri-external-link-line"></i> İlgili Sayfaya Git
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Bildirime tıklandığında okundu işaretle
+        div.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                if (!notification.isRead) {
+                    markAsRead(notification.id);
+                }
+            }
+        });
+
+        return div;
+    }
+
+    // Bildirim tipine göre ikon döndür
+    function getNotificationIcon(type) {
+        switch(type) {
+            case 1: return 'ri-user-add-line'; // SupplierRegistration
+            case 2: return 'ri-file-add-line'; // NewRequest
+            case 3: return 'ri-price-tag-3-line'; // NewOffer
+            default: return 'ri-notification-3-line';
+        }
+    }
+
+    // Bildirim tipine göre renk döndür
+    function getNotificationColor(type) {
+        switch(type) {
+            case 1: return 'bg-info-subtle text-info'; // SupplierRegistration
+            case 2: return 'bg-primary-subtle text-primary'; // NewRequest
+            case 3: return 'bg-success-subtle text-success'; // NewOffer
+            default: return 'bg-secondary-subtle text-secondary';
+        }
+    }
+
+    // Zaman farkını hesapla
+    function getTimeAgo(dateString) {
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return 'Az önce';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} dakika önce`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} saat önce`;
+        if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} gün önce`;
+        return date.toLocaleDateString('tr-TR');
+    }
+
+    // Bildirimi okundu işaretle
+    function markAsRead(notificationId) {
+        fetch(`/Admin/MarkNotificationAsRead`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: notificationId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Bildirimi güncelle
+                const notification = notifications.find(n => n.id === notificationId);
+                if (notification) {
+                    notification.isRead = true;
+                }
+
+                // Görünümü güncelle
+                displayNotifications();
+                loadNotificationSummary();
+
+                // Başarı mesajı göster
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Bildirim okundu olarak işaretlendi'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Bildirim güncellenirken hata:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Hata!',
+                text: 'Bildirim güncellenirken bir hata oluştu',
+                timer: 3000
+            });
+        });
+    }
+
+    // Tüm bildirimleri okundu işaretle
+    function markAllAsRead() {
+        const unreadNotifications = notifications.filter(n => !n.isRead);
+
+        if (unreadNotifications.length === 0) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Bilgi',
+                text: 'Zaten tüm bildirimler okunmuş durumda',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            return;
+        }
+
+        fetch('/Admin/MarkAllNotificationsAsRead', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Tüm bildirimleri okundu olarak işaretle
+                notifications.forEach(n => n.isRead = true);
+
+                // Görünümü güncelle
+                displayNotifications();
+                loadNotificationSummary();
+
+                // Başarı mesajı göster
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Başarılı!',
+                    text: `${unreadNotifications.length} bildirim okundu olarak işaretlendi`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Bildirimler güncellenirken hata:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Hata!',
+                text: 'Bildirimler güncellenirken bir hata oluştu',
+                timer: 3000
+            });
+        });
+    }
+
+    // Bildirim panelini aç/kapat
+    function toggleNotifications() {
+        const panel = document.getElementById('notification-panel');
+        if (panel.style.display === 'none' || panel.style.display === '') {
+            panel.style.display = 'block';
+           /*  panel.scrollIntoView({ behavior: 'smooth' }) */;
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    // İlgili sayfaya git
+    function goToRelatedPage(type, requestId, offerId, supplierId, notificationId) {
+        // Önce bildirimi okundu olarak işaretle (eğer okunmamışsa)
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification && !notification.isRead) {
+            // Async olarak okundu işaretle ama sayfaya yönlendirmeyi bekletme
+            fetch(`/Admin/MarkNotificationAsRead`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: notificationId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Lokal olarak güncelle
+                    notification.isRead = true;
+                    displayNotifications();
+                    loadNotificationSummary();
+                }
+            })
+            .catch(error => {
+                console.error('Bildirim güncellenirken hata:', error);
+            });
+        }
+
+        // Sayfaya yönlendir
+        let targetUrl = '/Admin/Dashboard';
+
+        switch(type) {
+            case 1: // SupplierRegistration
+                targetUrl = '/Admin/Suppliers';
+                break;
+            case 2: // NewRequest
+                targetUrl = '/Admin/Requests';
+                break;
+            case 3: // NewOffer
+                targetUrl = '/Admin/Offers';
+                break;
+        }
+
+        // Kısa bir gecikme ile sayfaya yönlendir (okundu işaretleme tamamlansın diye)
+        setTimeout(() => {
+            window.location.href = targetUrl;
+        }, 100);
+    }
+
+    // Existing dashboard chart initialization code...
+    // (keeping all existing chart code unchanged)
+
     // Initialize charts with real data
     document.addEventListener('DOMContentLoaded', function() {
         // Request Status Chart
         var openCount = @Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open);
         var completedCount = @Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed);
         var cancelledCount = @Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Cancelled);
-        
+
         var requestStatusOptions = {
             series: [openCount, completedCount, cancelledCount],
             chart: {
@@ -481,4 +901,24 @@
         var costAnalysisChart = new ApexCharts(document.querySelector("#cost-analysis-chart"), costAnalysisOptions);
         costAnalysisChart.render();
     });
+
+    // Show real-time status indicator after page load
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            const statusIndicator = document.getElementById('realtimeStatus');
+            if (statusIndicator) {
+                statusIndicator.classList.add('active');
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    statusIndicator.classList.remove('active');
+                }, 3000);
+            }
+        }, 2000);
+    });
 </script>
+
+<!-- Real-time status indicator -->
+<div class="realtime-status" id="realtimeStatus">
+    <div class="status-dot"></div>
+    <span>Canlı takip aktif</span>
+</div>

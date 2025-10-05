@@ -1,0 +1,995 @@
+﻿@model SantiyeTalepWebUI.Models.DTOs.RequestListViewModel
+@{
+    ViewData["Title"] = "Tüm Talepler";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Page Title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">
+                            <i class="ri-file-list-3-line me-2"></i>Tüm Talepler
+                        </h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Talepler</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-animate">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Toplam Talepler</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <h5 class="text-success fs-14 mb-0">
+                                        <i class="ri-arrow-right-up-line fs-13 align-middle"></i>
+                                    </h5>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end justify-content-between mt-2">
+                                <div>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-primary">
+                                        <span class="counter-value" data-target="@Model.Requests.Count">@Model.Requests.Count</span>
+                                    </h4>
+                                </div>
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-primary-subtle rounded fs-3">
+                                        <i class="ri-file-list-3-line text-primary"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-animate">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Açık Talepler</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end justify-content-between mt-2">
+                                <div>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-warning">
+                                        <span class="counter-value" data-target="@Model.Requests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)">@Model.Requests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)</span>
+                                    </h4>
+                                </div>
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-warning-subtle rounded fs-3">
+                                        <i class="ri-time-line text-warning"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-animate">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">İşlemde</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end justify-content-between mt-2">
+                                <div>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-info">
+                                        <span class="counter-value" data-target="@Model.Requests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.InProgress)">@Model.Requests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.InProgress)</span>
+                                    </h4>
+                                </div>
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-info-subtle rounded fs-3">
+                                        <i class="ri-loader-line text-info"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-animate">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Tamamlanan</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end justify-content-between mt-2">
+                                <div>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-success">
+                                        <span class="counter-value" data-target="@Model.Requests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed)">@Model.Requests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed)</span>
+                                    </h4>
+                                </div>
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-success-subtle rounded fs-3">
+                                        <i class="ri-check-double-line text-success"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Card -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <div class="flex-grow-1">
+                                    <h4 class="card-title mb-0">Talep Listesi</h4>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="d-flex gap-1 flex-wrap">
+                                        <button class="btn btn-primary btn-sm" id="sendToSuppliersBtn" style="display: none;" onclick="showSupplierPanel()">
+                                            <i class="ri-send-plane-line align-bottom me-1"></i> Tedarikçilere Gönder
+                                        </button>
+                                        <div class="vr" id="actionsDivider" style="display: none;"></div>
+                                        <button class="btn btn-success btn-sm" id="bulkApproveBtn" style="display: none;" onclick="bulkAction('approve')">
+                                            <i class="ri-check-line align-bottom me-1"></i> Seçilenleri Onayla
+                                        </button>
+                                        <button class="btn btn-warning btn-sm" id="bulkInProgressBtn" style="display: none;" onclick="bulkAction('inprogress')">
+                                            <i class="ri-loader-line align-bottom me-1"></i> Seçilenleri İşleme Al
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" id="bulkDeleteBtn" style="display: none;" onclick="bulkAction('delete')">
+                                            <i class="ri-delete-bin-line align-bottom me-1"></i> Seçilenleri Sil
+                                        </button>
+                                        <div class="vr"></div>
+                                        <button class="btn btn-primary btn-sm" onclick="exportToExcel()">
+                                            <i class="ri-file-excel-line align-bottom me-1"></i> Excel
+                                        </button>
+                                        <button class="btn btn-secondary btn-sm" onclick="exportToPDF()">
+                                            <i class="ri-file-pdf-line align-bottom me-1"></i> PDF
+                                        </button>
+                                        <button class="btn btn-info btn-sm" onclick="window.location.reload()">
+                                            <i class="ri-refresh-line align-bottom me-1"></i> Yenile
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Filters -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <div class="search-box">
+                                        <input type="text" class="form-control search" placeholder="Talep ara..." id="searchInput">
+                                        <i class="ri-search-line search-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="statusFilter">
+                                        <option value="">Tüm Durumlar</option>
+                                        <option value="1">Açık</option>
+                                        <option value="2">İşlemde</option>
+                                        <option value="3">Tamamlandı</option>
+                                        <option value="4">İptal</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="siteFilter">
+                                        <option value="">Tüm Şantiyeler</option>
+                                        @foreach (var site in Model.Requests.GroupBy(r => new { r.SiteId, r.SiteName }).Select(g => g.Key))
+                                        {
+                                            <option value="@site.SiteId">@site.SiteName</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="date" class="form-control" id="dateFilter" placeholder="Tarih filtrele">
+                                </div>
+                            </div>
+
+                            <!-- Selection Info Bar -->
+                            <div class="alert alert-info" id="selectionInfo" style="display: none;">
+                                <i class="ri-information-line me-2"></i>
+                                <span id="selectionCount">0</span> talep seçildi.
+                                <button class="btn btn-sm btn-outline-info ms-2" onclick="clearSelection()">
+                                    <i class="ri-close-line me-1"></i> Seçimi Temizle
+                                </button>
+                            </div>
+
+                            <!-- Supplier Selection Panel -->
+                            <div class="card" id="supplierSelectionPanel" style="display: none;">
+                                <div class="card-header">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <h6 class="card-title mb-0">
+                                            <i class="ri-user-3-line text-primary me-2"></i>
+                                            Tedarikçi Seçimi
+                                        </h6>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="hideSupplierPanel()">
+                                            <i class="ri-close-line me-1"></i> Kapat
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <div class="alert alert-warning">
+                                                <i class="ri-information-line me-2"></i>
+                                                Seçilen talepleri hangi tedarikçilere göndermek istiyorsunuz? Seçilen talepler otomatik olarak "İşlemde" durumuna geçecek ve tedarikçilere bildirim gönderilecektir.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Onaylı Tedarikçiler</label>
+                                            <div class="form-text mb-3">En az bir tedarikçi seçmelisiniz</div>
+                                            <div id="suppliersList" class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                                <div class="text-center py-3">
+                                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                        <span class="visually-hidden">Yükleniyor...</span>
+                                                    </div>
+                                                    <p class="mt-2 mb-0 text-muted">Tedarikçiler yükleniyor...</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Seçilen Talepler</label>
+                                            <div class="form-text mb-3">Bu taleplerin tümü seçilen tedarikçilere gönderilecek</div>
+                                            <div id="selectedRequestsList" class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                                <!-- Selected requests will be populated here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button type="button" class="btn btn-secondary" onclick="hideSupplierPanel()">
+                                                    <i class="ri-close-line me-1"></i> İptal
+                                                </button>
+                                                <button type="button" class="btn btn-primary" id="sendToSuppliersBtn" onclick="sendRequestsToSuppliers()">
+                                                    <i class="ri-send-plane-line me-1"></i> Tedarikçilere Gönder
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Requests Table -->
+                            <div class="table-responsive table-card mb-1" >
+                                <table class="table align-middle table-nowrap" id="requestsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 50px;">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="checkAll">
+                                                </div>
+                                            </th>
+                                            <th class="sort" data-sort="id">ID</th>
+                                            <th class="sort" data-sort="product">Ürün</th>
+                                            <th class="sort" data-sort="quantity">Miktar</th>
+                                            <th class="sort" data-sort="employee">Çalışan</th>
+                                            <th class="sort" data-sort="site">Şantiye</th>
+                                            <th class="sort" data-sort="delivery">Teslim</th>
+                                            <th class="sort" data-sort="status">Durum</th>
+                                            <th class="sort" data-sort="date">Tarih</th>
+                                            <th class="sort" data-sort="offers">Teklifler</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="list form-check-all">
+                                        @if (Model.Requests.Any())
+                                        {
+                                            @foreach (var request in Model.Requests.OrderByDescending(r => r.RequestDate))
+                                            {
+                                                <tr class="request-row" data-id="@request.Id" data-status="@((int)request.Status)" data-site="@request.SiteId" data-date="@request.RequestDate.ToString("yyyy-MM-dd")">
+                                                    <td>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input request-checkbox" type="checkbox" value="@request.Id">
+                                                        </div>
+                                                    </td>
+                                                    <td class="id">
+                                                        <a href="javascript:void(0);" onclick="viewRequestDetails(@request.Id)" class="fw-medium link-primary">#@request.Id</a>
+                                                    </td>
+                                                    <td class="product">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="flex-grow-1">
+                                                                <h6 class="fs-14 mb-1">@request.ProductDescription</h6>
+                                                                @if (!string.IsNullOrEmpty(request.Description))
+                                                                {
+                                                                    <p class="text-muted mb-0 fs-12">@(request.Description.Length > 50 ? request.Description.Substring(0, 50) + "..." : request.Description)</p>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="quantity">
+                                                        <span class="badge bg-primary-subtle text-primary">@request.Quantity</span>
+                                                    </td>
+                                                    <td class="employee">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-xs me-2">
+                                                                <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
+                                                                    @(request.EmployeeName.Substring(0, 1).ToUpper())
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="fs-13 mb-0">@request.EmployeeName</h6>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="site">
+                                                        <span class="badge bg-info-subtle text-info">@request.SiteName</span>
+                                                    </td>
+                                                    <td class="delivery">
+                                                        @switch (request.DeliveryType)
+                                                        {
+                                                            case SantiyeTalepWebUI.Models.DeliveryType.TodayPickup:
+                                                                <span class="badge bg-danger-subtle text-danger">Bugün Alınacak</span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.DeliveryType.SameDayDelivery:
+                                                                <span class="badge bg-warning-subtle text-warning">Gün İçi</span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.DeliveryType.NextDayDelivery:
+                                                                <span class="badge bg-info-subtle text-info">Yarın</span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.DeliveryType.BusinessDays1to2:
+                                                                <span class="badge bg-secondary-subtle text-secondary">1-2 Gün</span>
+                                                                break;
+                                                        }
+                                                    </td>
+                                                    <td class="status">
+                                                        @switch (request.Status)
+                                                        {
+                                                            case SantiyeTalepWebUI.Models.RequestStatus.Open:
+                                                                <span class="badge bg-warning">Açık</span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.RequestStatus.InProgress:
+                                                                <span class="badge bg-info">İşlemde</span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.RequestStatus.Completed:
+                                                                <span class="badge bg-success">Tamamlandı</span>
+                                                                break;
+                                                            case SantiyeTalepWebUI.Models.RequestStatus.Cancelled:
+                                                                <span class="badge bg-danger">İptal</span>
+                                                                break;
+                                                        }
+                                                    </td>
+                                                    <td class="date">
+                                                        <div class="text-muted">@request.RequestDate.ToString("dd.MM.yyyy")</div>
+                                                        <small class="text-muted">@request.RequestDate.ToString("HH:mm")</small>
+                                                    </td>
+                                                    <td class="offers">
+                                                        @if (request.Offers.Any())
+                                                        {
+                                                            <span class="badge bg-success-subtle text-success">@request.Offers.Count Teklif</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">Teklif Yok</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex gap-2">
+                                                            <div class="dropdown">
+                                                                <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <i class="ri-more-fill align-middle"></i>
+                                                                </button>
+                                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="viewRequestDetails(@request.Id)"><i class="ri-eye-fill align-bottom me-2 text-muted"></i> Görüntüle</a></li>
+                                                                    @if (request.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)
+                                                                    {
+                                                                        <li><a class="dropdown-item" href="javascript:void(0);" onclick="changeRequestStatus(@request.Id, 2)"><i class="ri-loader-line align-bottom me-2 text-muted"></i> İşleme Al</a></li>
+                                                                        <li><a class="dropdown-item" href="javascript:void(0);" onclick="changeRequestStatus(@request.Id, 3)"><i class="ri-check-line align-bottom me-2 text-muted"></i> Tamamla</a></li>
+                                                                    }
+                                                                    @if (request.Status == SantiyeTalepWebUI.Models.RequestStatus.InProgress)
+                                                                    {
+                                                                        <li><a class="dropdown-item" href="javascript:void(0);" onclick="changeRequestStatus(@request.Id, 3)"><i class="ri-check-line align-bottom me-2 text-muted"></i> Tamamla</a></li>
+                                                                    }
+                                                                    @if (request.Status != SantiyeTalepWebUI.Models.RequestStatus.Completed && request.Status != SantiyeTalepWebUI.Models.RequestStatus.Cancelled)
+                                                                    {
+                                                                        <li><a class="dropdown-item text-warning" href="javascript:void(0);" onclick="changeRequestStatus(@request.Id, 4)"><i class="ri-close-line align-bottom me-2"></i> İptal Et</a></li>
+                                                                    }
+                                                                    <li><hr class="dropdown-divider"></li>
+                                                                    <li><a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteRequest(@request.Id)"><i class="ri-delete-bin-fill align-bottom me-2"></i> Sil</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            @for (int i = Model.Requests.Count; i < 3; i++)
+                                            {
+                                                <tr class="empty-row" style="height: 80px;">
+                                                    <td colspan="11">&nbsp;</td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="11" class="text-center py-5">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <i class="ri-file-list-3-line display-4 text-muted mb-3"></i>
+                                                        <h5 class="text-muted">Henüz talep bulunmuyor</h5>
+                                                        <p class="text-muted mb-0">İlk talebin oluşturulmasını bekleyin.</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div class="text-muted">
+                                    Toplam <strong>@Model.Requests.Count</strong> talep gösteriliyor
+                                </div>
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination pagination-sm mb-0">
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" tabindex="-1">Önceki</a>
+                                        </li>
+                                        <li class="page-item active">
+                                            <a class="page-link" href="#">1</a>
+                                        </li>
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#">Sonraki</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Request Details Modal -->
+<div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-labelledby="requestDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="requestDetailsModalLabel">
+                    <i class="ri-file-list-3-line me-2"></i>Talep Detayları
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="requestDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Include SweetAlert2 for better user notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        // Check all functionality
+        document.getElementById('checkAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.request-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateBulkActionButtons();
+            updateSelectionInfo();
+        });
+
+        // Individual checkbox change
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('request-checkbox')) {
+                updateBulkActionButtons();
+                updateSelectionInfo();
+                
+                // Update check all state
+                const checkboxes = document.querySelectorAll('.request-checkbox');
+                const checkedBoxes = document.querySelectorAll('.request-checkbox:checked');
+                const checkAll = document.getElementById('checkAll');
+                
+                if (checkedBoxes.length === checkboxes.length) {
+                    checkAll.checked = true;
+                    checkAll.indeterminate = false;
+                } else if (checkedBoxes.length > 0) {
+                    checkAll.checked = false;
+                    checkAll.indeterminate = true;
+                } else {
+                    checkAll.checked = false;
+                    checkAll.indeterminate = false;
+                }
+            }
+        });
+
+        function updateBulkActionButtons() {
+            const checkedBoxes = document.querySelectorAll('.request-checkbox:checked');
+            const bulkButtons = ['sendToSuppliersBtn', 'bulkApproveBtn', 'bulkInProgressBtn', 'bulkDeleteBtn'];
+            const actionsDivider = document.getElementById('actionsDivider');
+            
+            bulkButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (checkedBoxes.length > 0) {
+                    btn.style.display = 'inline-block';
+                } else {
+                    btn.style.display = 'none';
+                }
+            });
+            
+            // Show/hide the divider
+            if (checkedBoxes.length > 0) {
+                actionsDivider.style.display = 'inline-block';
+            } else {
+                actionsDivider.style.display = 'none';
+            }
+        }
+
+        function updateSelectionInfo() {
+            const checkedBoxes = document.querySelectorAll('.request-checkbox:checked');
+            const infoBar = document.getElementById('selectionInfo');
+            const countSpan = document.getElementById('selectionCount');
+            
+            if (checkedBoxes.length > 0) {
+                countSpan.textContent = checkedBoxes.length;
+                infoBar.style.display = 'block';
+            } else {
+                infoBar.style.display = 'none';
+            }
+        }
+
+        function clearSelection() {
+            const checkboxes = document.querySelectorAll('.request-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            document.getElementById('checkAll').checked = false;
+            document.getElementById('checkAll').indeterminate = false;
+            updateBulkActionButtons();
+            updateSelectionInfo();
+        }
+
+        // Filtering functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            filterRequests();
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            filterRequests();
+        });
+
+        document.getElementById('siteFilter').addEventListener('change', function() {
+            filterRequests();
+        });
+
+        document.getElementById('dateFilter').addEventListener('change', function() {
+            filterRequests();
+        });
+
+        function filterRequests() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const siteFilter = document.getElementById('siteFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            
+            const rows = document.querySelectorAll('.request-row');
+            
+            rows.forEach(row => {
+                let show = true;
+                
+                // Text search
+                if (searchTerm) {
+                    const text = row.textContent.toLowerCase();
+                    if (!text.includes(searchTerm)) {
+                        show = false;
+                    }
+                }
+                
+                // Status filter
+                if (statusFilter && row.dataset.status !== statusFilter) {
+                    show = false;
+                }
+                
+                // Site filter
+                if (siteFilter && row.dataset.site !== siteFilter) {
+                    show = false;
+                }
+                
+                // Date filter
+                if (dateFilter && row.dataset.date !== dateFilter) {
+                    show = false;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+
+        // View request details
+        async function viewRequestDetails(requestId) {
+            try {
+                const response = await fetch(`/Admin/GetRequestDetails/${requestId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        document.getElementById('requestDetailsContent').innerHTML = result.html;
+                        new bootstrap.Modal(document.getElementById('requestDetailsModal')).show();
+                    } else {
+                        Swal.fire('Hata', result.message, 'error');
+                    }
+                } else {
+                    Swal.fire('Hata', 'Talep detayları yüklenirken hata oluştu', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Hata', 'Bir hata oluştu', 'error');
+            }
+        }
+
+        // Change request status
+        async function changeRequestStatus(requestId, newStatus) {
+            const statusNames = {
+                1: 'Açık',
+                2: 'İşlemde',
+                3: 'Tamamlandı',
+                4: 'İptal'
+            };
+
+            const result = await Swal.fire({
+                title: 'Durum Değişikliği',
+                text: `Talep durumunu "${statusNames[newStatus]}" olarak değiştirmek istediğinizden emin misiniz?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Evet, Değiştir',
+                cancelButtonText: 'İptal'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    
+                    const response = await fetch(`/Admin/ChangeRequestStatus`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({ requestId: requestId, newStatus: newStatus })
+                    });
+
+                    const apiResult = await response.json();
+                    
+                    if (apiResult.success) {
+                        Swal.fire('Başarılı', 'Talep durumu güncellendi', 'success')
+                            .then(() => window.location.reload());
+                    } else {
+                        Swal.fire('Hata', apiResult.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire('Hata', 'Bir hata oluştu', 'error');
+                }
+            }
+        }
+
+        // Delete request
+        async function deleteRequest(requestId) {
+            const result = await Swal.fire({
+                title: 'Talep Silme',
+                text: 'Bu talebi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Evet, Sil',
+                cancelButtonText: 'İptal',
+                confirmButtonColor: '#dc3545'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    
+                    const response = await fetch(`/Admin/DeleteRequest/${requestId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        }
+                    });
+
+                    const apiResult = await response.json();
+                    
+                    if (apiResult.success) {
+                        Swal.fire('Başarılı', 'Talep silindi', 'success')
+                            .then(() => window.location.reload());
+                    } else {
+                        Swal.fire('Hata', apiResult.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire('Hata', 'Bir hata oluştu', 'error');
+                }
+            }
+        }
+
+        // Bulk actions
+        async function bulkAction(action) {
+            const checkedBoxes = document.querySelectorAll('.request-checkbox:checked');
+            const requestIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+            
+            if (requestIds.length === 0) {
+                Swal.fire('Uyarı', 'Lütfen en az bir talep seçin', 'warning');
+                return;
+            }
+
+            const actionMessages = {
+                approve: { title: 'Toplu Onaylama', text: 'Seçilen talepleri onaylamak istediğinizden emin misiniz?', action: 'Onayla' },
+                inprogress: { title: 'Toplu İşleme Alma', text: 'Seçilen talepleri işleme almak istediğinizden emin misiniz?', action: 'İşleme Al' },
+                delete: { title: 'Toplu Silme', text: 'Seçilen talepleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.', action: 'Sil' }
+            };
+
+            const message = actionMessages[action];
+            
+            const result = await Swal.fire({
+                title: message.title,
+                text: `${requestIds.length} talep seçildi. ${message.text}`,
+                icon: action === 'delete' ? 'warning' : 'question',
+                showCancelButton: true,
+                confirmButtonText: `Evet, ${message.action}`,
+                cancelButtonText: 'İptal',
+                confirmButtonColor: action === 'delete' ? '#dc3545' : '#0ab39c'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    
+                    const response = await fetch('/Admin/BulkRequestAction', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({ requestIds: requestIds, action: action })
+                    });
+
+                    const apiResult = await response.json();
+                    
+                    if (apiResult.success) {
+                        Swal.fire('Başarılı', 'Toplu işlem tamamlandı', 'success')
+                            .then(() => window.location.reload());
+                    } else {
+                        Swal.fire('Hata', apiResult.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire('Hata', 'Bir hata oluştu', 'error');
+                }
+            }
+        }
+
+        // Export functions
+        function exportToExcel() {
+            window.location.href = '@Url.Action("ExportRequestsToExcel", "Admin")';
+        }
+
+        function exportToPDF() {
+            window.location.href = '@Url.Action("ExportRequestsToPDF", "Admin")';
+        }
+
+        // Supplier Selection Functions
+        async function showSupplierPanel() {
+            const checkedBoxes = document.querySelectorAll('.request-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                Swal.fire('Uyarı', 'Önce en az bir talep seçin', 'warning');
+                return;
+            }
+
+            // Show the panel
+            document.getElementById('supplierSelectionPanel').style.display = 'block';
+            
+            // Load suppliers
+            await loadSuppliers();
+            
+            // Populate selected requests
+            populateSelectedRequests();
+            
+            // Scroll to the panel
+            document.getElementById('supplierSelectionPanel').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+
+        function hideSupplierPanel() {
+            document.getElementById('supplierSelectionPanel').style.display = 'none';
+        }
+
+        async function loadSuppliers() {
+            const suppliersList = document.getElementById('suppliersList');
+            
+            try {
+                const response = await fetch('@Url.Action("GetApprovedSuppliers", "Admin")', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const suppliers = result || [];
+                    
+                    if (suppliers.length > 0) {
+                        let html = '<div class="mb-3">';
+                        html += '<button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllSuppliers()">';
+                        html += '<i class="ri-check-double-line me-1"></i>Tümünü Seç</button>';
+                        html += '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllSuppliers()">';
+                        html += '<i class="ri-close-line me-1"></i>Temizle</button></div>';
+                        
+                        html += '<div class="row g-2">';
+                        suppliers.forEach(supplier => {
+                            html += `
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input supplier-checkbox" type="checkbox" 
+                                               value="${supplier.id}" id="supplier_${supplier.id}">
+                                        <label class="form-check-label" for="supplier_${supplier.id}">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-xs me-2">
+                                                    <div class="avatar-title bg-success-subtle text-success rounded-circle">
+                                                        <i class="ri-building-2-line"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">${supplier.companyName}</h6>
+                                                    <small class="text-muted">${supplier.fullName} - ${supplier.phone}</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>`;
+                        });
+                        html += '</div>';
+                        
+                        suppliersList.innerHTML = html;
+                    } else {
+                        suppliersList.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="ri-user-3-line display-4 text-muted mb-3"></i>
+                                <h6 class="text-muted">Onaylı tedarikçi bulunamadı</h6>
+                                <p class="text-muted mb-0">Önce tedarikçileri onaylamanız gerekiyor.</p>
+                            </div>`;
+                    }
+                } else {
+                    throw new Error('Tedarikçiler yüklenemedi');
+                }
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+                suppliersList.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="ri-error-warning-line display-4 text-danger mb-3"></i>
+                        <h6 class="text-danger">Hata Oluştu</h6>
+                        <p class="text-muted mb-0">Tedarikçiler yüklenirken bir hata oluştu.</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadSuppliers()">
+                            <i class="ri-refresh-line me-1"></i>Yeniden Dene
+                        </button>
+                    </div>`;
+            }
+        }
+
+        function populateSelectedRequests() {
+            const checkedBoxes = document.querySelectorAll('.request-checkbox:checked');
+            const selectedRequestsList = document.getElementById('selectedRequestsList');
+            
+            let html = '';
+            checkedBoxes.forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                const requestId = checkbox.value;
+                const productDesc = row.querySelector('.product h6').textContent;
+                const quantity = row.querySelector('.quantity .badge').textContent;
+                const siteName = row.querySelector('.site .badge').textContent;
+                
+                html += `
+                    <div class="d-flex align-items-center justify-content-between mb-2 p-2 border rounded">
+                        <div>
+                            <h6 class="mb-1">#${requestId} - ${productDesc}</h6>
+                            <small class="text-muted">Miktar: ${quantity} | Şantiye: ${siteName}</small>
+                        </div>
+                        <div class="badge bg-primary">${requestId}</div>
+                    </div>`;
+            });
+            
+            selectedRequestsList.innerHTML = html;
+        }
+
+        function selectAllSuppliers() {
+            const checkboxes = document.querySelectorAll('.supplier-checkbox');
+            checkboxes.forEach(cb => cb.checked = true);
+        }
+
+        function clearAllSuppliers() {
+            const checkboxes = document.querySelectorAll('.supplier-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+
+        async function sendRequestsToSuppliers() {
+            const selectedRequests = Array.from(document.querySelectorAll('.request-checkbox:checked')).map(cb => parseInt(cb.value));
+            const selectedSuppliers = Array.from(document.querySelectorAll('.supplier-checkbox:checked')).map(cb => parseInt(cb.value));
+            
+            if (selectedRequests.length === 0) {
+                Swal.fire('Uyarı', 'En az bir talep seçmelisiniz', 'warning');
+                return;
+            }
+            
+            if (selectedSuppliers.length === 0) {
+                Swal.fire('Uyarı', 'En az bir tedarikçi seçmelisiniz', 'warning');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Talepleri Gönder',
+                html: `<p>${selectedRequests.length} talep ${selectedSuppliers.length} tedarikçiye gönderilecek.</p>
+                       <p class="text-warning"><i class="ri-information-line me-1"></i>Talepler "İşlemde" durumuna geçecek ve tedarikçilere bildirim gönderilecektir.</p>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Evet, Gönder',
+                cancelButtonText: 'İptal',
+                confirmButtonColor: '#0ab39c'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    
+                    const response = await fetch('/Admin/SendRequestsToSuppliers', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({ 
+                            requestIds: selectedRequests, 
+                            supplierIds: selectedSuppliers 
+                        })
+                    });
+
+                    const apiResult = await response.json();
+                    
+                    if (apiResult.success) {
+                        Swal.fire('Başarılı', 'Talepler tedarikçilere başarıyla gönderildi', 'success')
+                            .then(() => {
+                                hideSupplierPanel();
+                                clearSelection();
+                                window.location.reload();
+                            });
+                    } else {
+                        Swal.fire('Hata', apiResult.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire('Hata', 'Bir hata oluştu', 'error');
+                }
+            }
+        }
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+}
+

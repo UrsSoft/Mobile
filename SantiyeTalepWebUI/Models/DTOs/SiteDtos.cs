@@ -7,7 +7,7 @@ namespace SantiyeTalepWebUI.Models.DTOs
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }
         public List<EmployeeDto>? Employees { get; set; }
@@ -21,10 +21,9 @@ namespace SantiyeTalepWebUI.Models.DTOs
         public string Name { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Adres gereklidir")]
-        [MinLength(10, ErrorMessage = "Adres en az 10 karakter olmalýdýr")]
         public string Address { get; set; } = string.Empty;
         
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "En az bir marka seçilmelidir")]
         public List<int> BrandIds { get; set; } = new List<int>();
@@ -39,10 +38,9 @@ namespace SantiyeTalepWebUI.Models.DTOs
         public string Name { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Adres gereklidir")]
-        [MinLength(10, ErrorMessage = "Adres en az 10 karakter olmalýdýr")]
         public string Address { get; set; } = string.Empty;
         
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "En az bir marka seçilmelidir")]
         public List<int> BrandIds { get; set; } = new List<int>();

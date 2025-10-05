@@ -36,4 +36,26 @@ namespace SantiyeTalepWebUI.Models
         NextDayDelivery = 3, // Yarın siz sevk edin
         BusinessDays1to2 = 4 // 1-2 iş günü
     }
+
+    public enum Currency
+    {
+        TRY = 1, // Türk Lirası
+        USD = 2, // Amerikan Doları
+        EUR = 3, // Euro
+        GBP = 4  // İngiliz Sterlini
+    }
+
+    public enum NotificationType
+    {
+        SupplierRegistration = 1, // Tedarikçi kayıt olduğunda
+        NewRequest = 2, // Çalışan talep girdiğinde
+        NewOffer = 3, // Tedarikçi teklif verdiğinde
+        RequestApproved = 4, // Talep onaylandığında
+        RequestRejected = 5, // Talep reddedildiğinde
+        OfferApproved = 6, // Teklif onaylandığında
+        OfferRejected = 7, // Teklif reddedildiğinde
+        SupplierApproved = 8, // Tedarikçi onaylandığında
+        SupplierRejected = 9, // Tedarikçi reddedildiğinde
+        RequestSentToSupplier = 10 // Admin talebi tedarikçilere gönderdiğinde
+    }
 }
