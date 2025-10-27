@@ -1,0 +1,1204 @@
+@model CreateRequestViewModel
+@{
+    ViewData["Title"] = "Yeni Talep Oluþtur";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Page Title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">
+                            <i class="ri-file-add-line me-2"></i>Yeni Talep Oluþtur
+                        </h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="@Url.Action("Requests", "Admin")">Talepler</a></li>
+                                <li class="breadcrumb-item active">Yeni Talep</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Method Selection Cards -->
+            <div class="row">
+                <!-- Manuel Form Card -->
+                <div class="col-lg-6">
+                    <div class="card card-height-100" id="manualFormCard">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-edit-box-line me-2 text-primary"></i>
+                                Manuel Talep Oluþturma
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Form doldurarak tek bir talep oluþturabilirsiniz.<br />Ürün bilgilerini manuel olarak girerek tedarikçilere gönderebilirsiniz.
+                            </p>
+                            <button type="button" class="btn btn-primary w-100" onclick="showManualForm()">
+                                <i class="ri-add-circle-line me-1"></i> Manuel Form ile Devam Et
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Excel Upload Card -->
+                <div class="col-lg-6">
+                    <div class="card card-height-100" id="excelUploadCard">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-file-excel-2-line me-2 text-success"></i>
+                                Excel ile Talep Oluþturma
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Excel dosyasý yükleyerek toplu talep oluþturun.<br>Yüklenen dosya tedarikçilere gönderilir ve tedarikçiler teklif hazýrlayýp tekrar yükler.
+                            </p>
+                            <button type="button" class="btn btn-success w-100" onclick="showExcelUpload()">
+                                <i class="ri-upload-2-line me-1"></i> Excel ile Devam Et
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manuel Form Section -->
+            <div class="row" id="manualFormSection" style="display: none;">
+                <div class="col-lg-8 mx-auto">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h5 class="card-title mb-0">
+                                    <i class="ri-file-list-line me-2"></i>
+                                    Talep Formu
+                                </h5>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="backToSelection()">
+                                    <i class="ri-arrow-left-line me-1"></i> Geri
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="CreateRequest" method="post" id="manualRequestForm">
+                                @Html.AntiForgeryToken()
+
+                                <!-- Þantiye Seçimi -->
+                                <div class="mb-3">
+                                    <label class="form-label">Þantiye <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="SiteId" id="siteSelect" required>
+                                        <option value="">Þantiye seçin...</option>
+                                    </select>
+                                    <div class="invalid-feedback">Lütfen bir þantiye seçin</div>
+                                </div>
+
+                                <!-- Çalýþan Seçimi -->
+                                <div class="mb-3">
+                                    <label class="form-label">Talep Eden Çalýþan <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="EmployeeId" id="employeeSelect" required>
+                                        <option value="">Önce þantiye seçin...</option>
+                                    </select>
+                                    <div class="invalid-feedback">Lütfen bir çalýþan seçin</div>
+                                </div>
+
+                                <!-- Ürün Açýklamasý -->
+                                <div class="mb-3">
+                                    <label asp-for="ProductDescription" class="form-label">
+                                        Ürün Açýklamasý <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input asp-for="ProductDescription" name="ProductDescription" class="form-control" placeholder="Ürün adý veya açýklamasý" id="productSearch" required />
+                                        <button type="button" class="btn btn-outline-secondary" id="searchBtn" disabled title="Önce þantiye seçin">
+                                            <i class="ri-search-line"></i> Ara
+                                        </button>
+                                    </div>
+                                    <span asp-validation-for="ProductDescription" class="text-danger"></span>
+                                    <small class="form-text text-muted">
+                                        <i class="ri-information-line"></i>
+                                        <strong>Marka Bazlý Arama:</strong> Önce yukarýdan bir þantiye seçin.
+                                        Ürün aramasý, seçtiðiniz þantiyeye kayýtlý markalarla otomatik olarak filtrelenecektir.
+                                    </small>
+                                </div>
+
+                                <!-- Product Search Modal -->
+                                <div class="modal fade" id="productSearchModal" tabindex="-1" aria-labelledby="productSearchModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="productSearchModalLabel">
+                                                    <i class="ri-search-line me-2"></i>Ürün Arama Sonuçlarý
+                                                </h5>
+                                                <button type="button" class="btn-close" onclick="closeProductSearchModal()" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div id="searchResultsModal">
+                                                    <div class="text-center" id="loadingSpinnerModal" style="display: none;">
+                                                        <div class="spinner-border text-primary" role="status">
+                                                            <span class="visually-hidden">Yükleniyor...</span>
+                                                        </div>
+                                                        <div class="mt-2">Ürünler aranýyor...</div>
+                                                    </div>
+                                                    <div id="productListModal"></div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" onclick="closeProductSearchModal()">Kapat</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Miktar -->
+                                <div class="mb-3">
+                                    <label asp-for="Quantity" class="form-label">
+                                        Miktar <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="Quantity" name="Quantity" type="number" class="form-control" placeholder="Miktar" min="1" required />
+                                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                                </div>
+
+                                <!-- Teslim Tipi -->
+                                <div class="mb-3">
+                                    <label asp-for="DeliveryType" class="form-label">
+                                        Teslim Tipi <span class="text-danger">*</span>
+                                    </label>
+                                    <select asp-for="DeliveryType" name="DeliveryType" class="form-select" required>
+                                        <option value="">Teslim tipi seçin...</option>
+                                        @{
+                                            // Generate options from DeliveryType enum to ensure binding matches backend
+                                            foreach (var dt in Enum.GetValues(typeof(DeliveryType)).Cast<DeliveryType>())
+                                            {
+                                                var value = dt.ToString();
+                                                var text = value;
+
+                                                // Localize labels
+                                                switch (dt)
+                                                {
+                                                    case DeliveryType.TodayPickup:
+                                                        text = "Bugün Alýnacak";
+                                                        break;
+                                                    case DeliveryType.SameDayDelivery:
+                                                        text = "Gün Ýçi Teslimat";
+                                                        break;
+                                                    case DeliveryType.NextDayDelivery:
+                                                        text = "Yarýn Teslimat";
+                                                        break;
+                                                    case DeliveryType.BusinessDays1to2:
+                                                        text = "1-2 Ýþ Günü";
+                                                        break;
+                                                }
+
+                                                <option value="@value">@text</option>
+                                            }
+                                        }
+                                    </select>
+                                    <span asp-validation-for="DeliveryType" class="text-danger"></span>
+                                </div>
+
+                                <!-- Açýklama -->
+                                <div class="mb-3">
+                                    <label asp-for="Description" class="form-label">Açýklama (Opsiyonel)</label>
+                                    <textarea asp-for="Description" name="Description" class="form-control" rows="3" placeholder="Ek bilgiler..."></textarea>
+                                </div>
+
+                                <!-- Buttons -->
+                                <div class="d-flex gap-2 justify-content-end">
+                                    <a href="@Url.Action("Requests", "Admin")" class="btn btn-light">
+                                        <i class="ri-close-line me-1"></i> Ýptal
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i> Talebi Kaydet
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Excel Upload Section -->
+            <div class="row" id="excelUploadSection" style="display: none;">
+                <div class="col-lg-10 mx-auto">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h5 class="card-title mb-0">
+                                    <i class="ri-file-excel-2-line me-2 text-success"></i>
+                                    Excel ile Talep Oluþturma
+                                </h5>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="backToSelection()">
+                                    <i class="ri-arrow-left-line me-1"></i> Geri
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Ýþlem Adýmlarý -->
+                            <div class="alert alert-info mb-4">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="ri-information-line me-2"></i>Excel Ýle Talep Oluþturma Süreci
+                                </h6>
+                                <ol class="mb-0 ps-3">
+                                    <li>Excel þablonunu indirin veya kendi Excel dosyanýzý hazýrlayýn</li>
+                                    <li>Excel dosyasýný yükleyin (ürünler otomatik olarak parse edilecek)</li>
+                                    <li>Tedarikçi seçin ve Excel'i gönderin</li>
+                                    <li>Tedarikçi Excel'i indirip teklif fiyatlarýný ekleyerek tekrar yükleyecek</li>
+                                    <li>Yüklenen teklifli Excel'leri görüntüleyip karþýlaþtýrabilirsiniz</li>
+                                </ol>
+                            </div>
+
+                            <!-- Excel Template Download -->
+                            <div class="card bg-light-subtle border mb-4">
+                                <div class="card-body">
+                                    <h6 class="mb-3">
+                                        <i class="ri-download-2-line me-2 text-primary"></i>
+                                        Þablon Ýndir
+                                    </h6>
+                                    <p class="text-muted mb-3">
+                                        Excel dosyanýzý oluþturmak için þablon dosyayý indirin. Þablon gerekli kolonlarý içermektedir.
+                                    </p>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="downloadTemplate()">
+                                        <i class="ri-file-excel-2-line me-1"></i> Excel Þablonunu Ýndir
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Excel Upload Form -->
+                            <form id="excelUploadForm" enctype="multipart/form-data">
+                                <!-- Þantiye ve Çalýþan Seçimi -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Þantiye <span class="text-danger">*</span></label>
+                                        <select class="form-select" name="SiteId" id="excelSiteSelect" required>
+                                            <option value="">Þantiye seçin...</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Talep Eden Çalýþan <span class="text-danger">*</span></label>
+                                        <select class="form-select" name="EmployeeId" id="excelEmployeeSelect" required>
+                                            <option value="">Önce þantiye seçin...</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- File Upload -->
+                                <div class="mb-4">
+                                    <label class="form-label">Excel Dosyasý Yükle <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx,.xls" required />
+                                    <div class="form-text">
+                                        Sadece .xlsx veya .xls dosyalarý kabul edilir. Maksimum dosya boyutu: 5MB
+                                    </div>
+                                </div>
+
+                                <!-- Excel Preview -->
+                                <div id="excelPreview" class="mb-4" style="display: none;">
+                                    <h6 class="mb-3">
+                                        <i class="ri-eye-line me-2"></i>Excel Önizleme
+                                    </h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-sm" id="excelPreviewTable">
+                                            <thead class="table-light">
+                                                <tr id="excelHeaderRow"></tr>
+                                            </thead>
+                                            <tbody id="excelBodyRows"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="alert alert-success">
+                                        <i class="ri-checkbox-circle-line me-2"></i>
+                                        <span id="rowCountText"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Tedarikçi Seçimi -->
+                                <div class="card border mb-4" id="supplierSelectionCard" style="display: none;">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">
+                                            <i class="ri-user-3-line me-2"></i>
+                                            Tedarikçi Seçimi
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">
+                                            Bu Excel dosyasýný hangi tedarikçi veya tedarikçilere göndermek istiyorsunuz?
+                                        </p>
+                                        <div id="supplierCheckboxList" class="row g-2">
+                                            <!-- Suppliers will be loaded here -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2 justify-content-end">
+                                    <button type="button" class="btn btn-light" onclick="resetExcelForm()">
+                                        <i class="ri-refresh-line me-1"></i> Formu Sýfýrla
+                                    </button>
+                                    <button type="submit" class="btn btn-success" id="submitExcelBtn" disabled>
+                                        <i class="ri-send-plane-line me-1"></i> Tedarikçilere Gönder
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1055;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            outline: 0;
+        }
+
+            .modal.show {
+                display: block !important;
+            }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1050;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            opacity: 0.5;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+    </style>
+
+    <script>
+        // Global variables
+        let parsedExcelData = null;
+        let selectedSiteInfo = null;
+        let selectedSiteBrands = [];
+
+        // ===== SITE AND BRAND MANAGEMENT =====
+
+        async function loadSiteInfoAndBrands(siteId) {
+            if (!siteId || siteId === '') {
+                selectedSiteInfo = null;
+                selectedSiteBrands = [];
+                updateSiteBrandInfo();
+                return;
+            }
+
+            console.log('=== LOADING SITE INFO AND BRANDS ===');
+            console.log('Site ID:', siteId);
+
+            try {
+                // Fetch sites list to get site name
+                const sitesResponse = await fetch('/Admin/GetSites');
+                if (!sitesResponse.ok) {
+                    throw new Error(`Failed to fetch sites: ${sitesResponse.status}`);
+                }
+
+                const allSites = await sitesResponse.json();
+                const currentSite = allSites.find(s => s.id == siteId);
+
+                if (!currentSite) {
+                    console.error('Site not found in sites list');
+                    selectedSiteInfo = null;
+                    selectedSiteBrands = [];
+                    updateSiteBrandInfo();
+                    return;
+                }
+
+                selectedSiteInfo = currentSite;
+
+                // Fetch detailed site info with brands
+                const detailsResponse = await fetch(`/Admin/GetSiteDetails?id=${siteId}`);
+
+                if (!detailsResponse.ok) {
+                    console.warn('Failed to fetch site details, will use empty brands array');
+                    selectedSiteBrands = [];
+                } else {
+                    const detailsResult = await detailsResponse.json();
+
+                    if (detailsResult.success) {
+                        // Parse HTML response to extract brand information
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = detailsResult.html;
+
+                        const brandBadges = tempDiv.querySelectorAll('.badge.bg-primary');
+                        selectedSiteBrands = [];
+
+                        brandBadges.forEach((badge, index) => {
+                            const brandName = badge.textContent.trim();
+                            if (brandName && brandName !== '') {
+                                selectedSiteBrands.push({
+                                    id: index + 1,
+                                    name: brandName
+                                });
+                            }
+                        });
+                    } else {
+                        selectedSiteBrands = [];
+                    }
+                }
+
+                updateSiteBrandInfo();
+            } catch (error) {
+                console.error('Error loading site info:', error);
+                selectedSiteInfo = null;
+                selectedSiteBrands = [];
+                updateSiteBrandInfo();
+            }
+
+            console.log('=== SITE INFO LOADED ===');
+            console.log('Site:', selectedSiteInfo);
+            console.log('Brands:', selectedSiteBrands);
+        }
+
+        function updateSiteBrandInfo() {
+            const searchContainer = document.getElementById('productSearch')?.closest('.mb-3');
+            if (!searchContainer) return;
+
+            // Remove existing brand info
+            const existingInfo = document.getElementById('siteBrandInfo');
+            if (existingInfo) {
+                existingInfo.remove();
+            }
+
+            if (selectedSiteInfo && selectedSiteBrands.length > 0) {
+                // Create brand info display
+                const brandInfo = document.createElement('div');
+                brandInfo.id = 'siteBrandInfo';
+                brandInfo.className = 'alert alert-success mt-2';
+                brandInfo.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="ri-information-line me-2"></i>
+                        <div>
+                            <strong>${selectedSiteInfo.name}</strong> þantiyesinde kayýtlý markalar:
+                            ${selectedSiteBrands.map(brand => `<span class="badge bg-primary ms-1">${brand.name}</span>`).join('')}
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        <i class="ri-check-circle-line me-1"></i>
+                        Ürün arama bu markalarla sýnýrlandýrýlacaktýr.
+                    </small>
+                `;
+                searchContainer.appendChild(brandInfo);
+            } else if (selectedSiteInfo && selectedSiteBrands.length === 0) {
+                // Show warning if site has no brands
+                const warningInfo = document.createElement('div');
+                warningInfo.id = 'siteBrandInfo';
+                warningInfo.className = 'alert alert-warning mt-2';
+                warningInfo.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="ri-alert-line me-2"></i>
+                        <div>
+                            <strong>${selectedSiteInfo.name}</strong> þantiyesinde henüz marka tanýmlanmamýþ.
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        Ürün aramasý tüm markalardan yapýlacaktýr. Þantiyeye marka eklemek için Þantiye Yönetimi sayfasýný kullanýn.
+                    </small>
+                `;
+                searchContainer.appendChild(warningInfo);
+            }
+        }
+
+        // ===== MODAL MANAGEMENT =====
+
+        function openProductSearchModal() {
+            const modalElement = document.getElementById('productSearchModal');
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            modalElement.setAttribute('aria-modal', 'true');
+            modalElement.setAttribute('role', 'dialog');
+
+            // Add backdrop
+            if (!document.querySelector('.modal-backdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(backdrop);
+
+                // Backdrop click to close
+                backdrop.addEventListener('click', closeProductSearchModal);
+            }
+
+            document.body.classList.add('modal-open');
+        }
+
+        function closeProductSearchModal() {
+            const modalElement = document.getElementById('productSearchModal');
+
+            // Hide modal
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
+            modalElement.removeAttribute('aria-modal');
+            modalElement.removeAttribute('role');
+
+            // Remove backdrop
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+
+            // Restore body
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }
+
+        // ===== PRODUCT SEARCH =====
+
+        async function performProductSearch() {
+            const searchTerm = document.getElementById('productSearch').value.trim();
+            const siteId = document.getElementById('siteSelect')?.value;
+
+            // Validation
+            if (!siteId || siteId === '') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Þantiye Seçimi Gerekli',
+                    html: `
+                        <p>Ürün arama yapmadan önce lütfen bir þantiye seçin.</p>
+                        <p class="text-muted small">Arama, seçtiðiniz þantiyenin markalarýna göre yapýlacaktýr.</p>
+                    `,
+                    confirmButtonText: 'Tamam'
+                });
+                document.getElementById('siteSelect').focus();
+                return;
+            }
+
+            if (searchTerm.length < 3) {
+                Swal.fire('Uyarý', 'Arama terimi en az 3 karakter olmalýdýr', 'warning');
+                return;
+            }
+
+            // Open modal and show loading
+            openProductSearchModal();
+
+            const loadingSpinner = document.getElementById('loadingSpinnerModal');
+            const productListModal = document.getElementById('productListModal');
+
+            loadingSpinner.style.display = 'block';
+            productListModal.innerHTML = '';
+
+            // Build search URL
+            const searchUrl = `/Admin/SearchProducts?query=${encodeURIComponent(searchTerm)}&siteId=${siteId}`;
+
+            console.log('=== PERFORMING PRODUCT SEARCH ===');
+            console.log('Search term:', searchTerm);
+            console.log('Selected site ID:', siteId);
+            console.log('Search URL:', searchUrl);
+
+            try {
+                const response = await fetch(searchUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                loadingSpinner.style.display = 'none';
+
+                let products = [];
+                if (result.success && result.data && Array.isArray(result.data)) {
+                    products = result.data;
+                } else if (Array.isArray(result)) {
+                    products = result;
+                }
+
+                displaySearchResults(products, searchTerm);
+
+            } catch (error) {
+                console.error('Search error:', error);
+                loadingSpinner.style.display = 'none';
+                productListModal.innerHTML = `
+                    <div class="text-center text-danger py-4">
+                        <i class="ri-error-warning-line fs-1"></i>
+                        <p class="mt-3">Arama sýrasýnda bir hata oluþtu: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displaySearchResults(products, searchTerm) {
+            const productListModal = document.getElementById('productListModal');
+
+            if (!products || products.length === 0) {
+                const brandList = selectedSiteBrands.length > 0
+                    ? selectedSiteBrands.map(b => b.name).join(', ')
+                    : 'tanýmlý marka yok';
+
+                productListModal.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="ri-search-line fs-1"></i>
+                        <p class="mt-3">Seçilen þantiyenin markalarýnda aradýðýnýz kriterlere uygun ürün bulunamadý.</p>
+                        <div class="alert alert-info mt-3 mx-auto" style="max-width: 500px;">
+                            <h6 class="alert-heading">Arama Kriterleri</h6>
+                            <hr>
+                            <p class="mb-1"><strong>Arama Terimi:</strong> "${searchTerm}"</p>
+                            <p class="mb-1"><strong>Þantiye:</strong> ${selectedSiteInfo?.name || 'Seçili'}</p>
+                            <p class="mb-0"><strong>Markalar:</strong> ${brandList}</p>
+                        </div>
+                        ${selectedSiteBrands.length === 0 ? `
+                            <div class="alert alert-warning mt-2 mx-auto" style="max-width: 500px;">
+                                <i class="ri-alert-line me-2"></i>
+                                <strong>Not:</strong> Bu þantiyede kayýtlý marka bulunmadýðý için tüm markalardan arama yapýldý.
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            // Display results
+            const siteName = selectedSiteInfo?.name || 'Seçili þantiye';
+            const brandList = selectedSiteBrands.length > 0
+                ? selectedSiteBrands.map(b => b.name).join(', ')
+                : 'tüm markalar';
+
+            let tableHtml = `
+                <div class="alert alert-success mb-3">
+                    <div class="d-flex align-items-start">
+                        <i class="ri-check-line me-2 fs-5"></i>
+                        <div class="flex-grow-1">
+                            <strong>${products.length}</strong> ürün bulundu
+                            <div class="mt-1">
+                                <small class="text-muted d-block">
+                                    <i class="ri-building-line me-1"></i>
+                                    <strong>Þantiye:</strong> ${siteName}
+                                </small>
+                                <small class="text-muted d-block">
+                                    <i class="ri-price-tag-3-line me-1"></i>
+                                    <strong>Markalar:</strong> ${brandList}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ürün Açýklamasý</th>
+                                <th>Marka</th>
+                                <th>Birim</th>
+                                <th width="100">Ýþlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            products.forEach((product, index) => {
+                const description = product.description || product.name || '';
+                const brand = product.brand || '';
+                const units = product.units && product.units.length > 0 ? product.units.join(', ') : '-';
+
+                // Check if brand matches site brands
+                const isSiteBrand = selectedSiteBrands.some(sb =>
+                    sb.name.toLowerCase().includes(brand.toLowerCase()) ||
+                    brand.toLowerCase().includes(sb.name.toLowerCase())
+                );
+
+                const brandBadgeClass = isSiteBrand ? 'bg-success' : 'bg-secondary';
+                const brandIcon = isSiteBrand ? '<i class="ri-check-line me-1"></i>' : '';
+
+                tableHtml += `
+                    <tr>
+                        <td>
+                            <div class="fw-medium">${description}</div>
+                        </td>
+                        <td>
+                            ${brand ? `<span class="badge ${brandBadgeClass}">${brandIcon}${brand}</span>` : '-'}
+                        </td>
+                        <td>
+                            <small class="text-muted">${units}</small>
+                        </td>
+                        <td>
+                            <button type="button"
+                                    class="btn btn-primary btn-sm"
+                                    data-product-description="${description}"
+                                    onclick="selectProductByData(this)">
+                                <i class="ri-add-line"></i> Seç
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `</tbody></table></div>`;
+
+            if (selectedSiteBrands.length > 0) {
+                tableHtml += `
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <i class="ri-information-line me-1"></i>
+                            <span class="badge bg-success"><i class="ri-check-line me-1"></i>Yeþil</span> renkte gösterilen markalar bu þantiyenin kayýtlý markalarýdýr.
+                        </small>
+                    </div>
+                `;
+            }
+
+            productListModal.innerHTML = tableHtml;
+        }
+
+        function selectProductByData(button) {
+            const description = button.getAttribute('data-product-description');
+
+            console.log('=== SELECT PRODUCT ===');
+            console.log('Description:', description);
+
+            const productSearchField = document.getElementById('productSearch');
+            if (productSearchField) {
+                productSearchField.value = description;
+            }
+
+            closeProductSearchModal();
+
+            // Show success message after modal is closed
+            setTimeout(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Ürün Seçildi',
+                    text: description,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }, 100);
+        }
+
+        // ===== SECTION MANAGEMENT =====
+
+        function showManualForm() {
+            document.getElementById('manualFormCard').parentElement.parentElement.style.display = 'none';
+            document.getElementById('manualFormSection').style.display = 'block';
+            loadSites('siteSelect');
+        }
+
+        function showExcelUpload() {
+            document.getElementById('manualFormCard').parentElement.parentElement.style.display = 'none';
+            document.getElementById('excelUploadSection').style.display = 'block';
+            loadSites('excelSiteSelect');
+            loadSuppliers();
+        }
+
+        function backToSelection() {
+            document.getElementById('manualFormSection').style.display = 'none';
+            document.getElementById('excelUploadSection').style.display = 'none';
+            document.getElementById('manualFormCard').parentElement.parentElement.style.display = 'flex';
+            resetExcelForm();
+        }
+
+        // ===== DATA LOADING =====
+
+        async function loadSites(selectId) {
+            try {
+                const response = await fetch('/Admin/GetSites');
+                const sites = await response.json();
+
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">Þantiye seçin...</option>';
+
+                sites.forEach(site => {
+                    const option = document.createElement('option');
+                    option.value = site.id;
+                    option.textContent = site.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading sites:', error);
+                Swal.fire('Hata', 'Þantiyeler yüklenirken hata oluþtu', 'error');
+            }
+        }
+
+        async function loadEmployees(siteId, selectId) {
+            const select = document.getElementById(selectId);
+
+            select.disabled = true;
+            select.innerHTML = '<option value="">Yükleniyor...</option>';
+
+            if (!siteId || siteId === '' || siteId === '0') {
+                select.innerHTML = '<option value="">Önce þantiye seçin...</option>';
+                select.disabled = false;
+                return;
+            }
+
+            try {
+                const parsedSiteId = parseInt(siteId, 10);
+                if (isNaN(parsedSiteId) || parsedSiteId <= 0) {
+                    throw new Error('Geçersiz þantiye ID');
+                }
+
+                const url = `/Admin/GetEmployeesBySite?siteId=${parsedSiteId}`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                }
+
+                const employees = await response.json();
+                select.innerHTML = '<option value="">Çalýþan seçin...</option>';
+
+                if (employees && employees.length > 0) {
+                    employees.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.id;
+                        option.textContent = `${emp.fullName} (${emp.position})`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    select.innerHTML = '<option value="">Bu þantiyede çalýþan yok</option>';
+                }
+
+                select.disabled = false;
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                select.innerHTML = '<option value="">Çalýþanlar yüklenemedi</option>';
+                select.disabled = false;
+                Swal.fire('Hata', 'Çalýþanlar yüklenirken hata oluþtu: ' + error.message, 'error');
+            }
+        }
+
+        async function loadSuppliers() {
+            try {
+                const response = await fetch('/Admin/GetApprovedSuppliers');
+                const suppliers = await response.json();
+
+                const container = document.getElementById('supplierCheckboxList');
+                container.innerHTML = '';
+
+                if (suppliers && suppliers.length > 0) {
+                    suppliers.forEach(supplier => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-6';
+                        col.innerHTML = `
+                            <div class="form-check form-check-primary mb-2">
+                                <input class="form-check-input supplier-checkbox" type="checkbox"
+                                       value="${supplier.id}" id="supplier_${supplier.id}">
+                                <label class="form-check-label" for="supplier_${supplier.id}">
+                                    <strong>${supplier.companyName}</strong>
+                                    <br><small class="text-muted">${supplier.fullName || supplier.user?.fullName || ''} - ${supplier.phone || supplier.user?.phone || ''}</small>
+                                </label>
+                            </div>
+                        `;
+                        container.appendChild(col);
+                    });
+
+                    // Add event listeners
+                    document.querySelectorAll('.supplier-checkbox').forEach(cb => {
+                        cb.addEventListener('change', checkFormValidity);
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-muted">Onaylý tedarikçi bulunamadý</p>';
+                }
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+                document.getElementById('supplierCheckboxList').innerHTML =
+                    '<p class="text-danger">Tedarikçiler yüklenirken hata oluþtu</p>';
+            }
+        }
+
+        // ===== EXCEL FUNCTIONALITY =====
+
+        function displayExcelPreview(data) {
+            const preview = document.getElementById('excelPreview');
+            const headerRow = document.getElementById('excelHeaderRow');
+            const bodyRows = document.getElementById('excelBodyRows');
+            const rowCountText = document.getElementById('rowCountText');
+
+            headerRow.innerHTML = '';
+            bodyRows.innerHTML = '';
+
+            if (data.length === 0) return;
+
+            // Display headers
+            data[0].forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+
+            // Display first 5 rows
+            const rowsToShow = Math.min(5, data.length - 1);
+            for (let i = 1; i <= rowsToShow; i++) {
+                const tr = document.createElement('tr');
+                data[i].forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell || '';
+                    tr.appendChild(td);
+                });
+                bodyRows.appendChild(tr);
+            }
+
+            rowCountText.textContent = `Toplam ${data.length - 1} satýr tespit edildi`;
+            preview.style.display = 'block';
+        }
+
+        function checkFormValidity() {
+            const siteSelected = document.getElementById('excelSiteSelect')?.value;
+            const employeeSelected = document.getElementById('excelEmployeeSelect')?.value;
+            const fileSelected = document.getElementById('excelFile')?.files.length > 0;
+            const supplierSelected = document.querySelectorAll('.supplier-checkbox:checked').length > 0;
+
+            const submitBtn = document.getElementById('submitExcelBtn');
+            if (submitBtn) {
+                submitBtn.disabled = !(siteSelected && employeeSelected && fileSelected && supplierSelected);
+            }
+        }
+
+        function downloadTemplate() {
+            const template = [
+                ['Ürün Kodu', 'Ürün Adý', 'Miktar', 'Birim', 'Açýklama'],
+                ['PROD001', 'Örnek Ürün 1', '10', 'Adet', 'Örnek açýklama 1'],
+                ['PROD002', 'Örnek Ürün 2', '5', 'Kutu', 'Örnek açýklama 2'],
+                ['PROD003', 'Örnek Ürün 3', '20', 'Metre', 'Örnek açýklama 3']
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(template);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Talep Listesi');
+            XLSX.writeFile(wb, 'Talep_Þablonu.xlsx');
+        }
+
+        function resetExcelForm() {
+            const form = document.getElementById('excelUploadForm');
+            if (form) {
+                form.reset();
+            }
+
+            const preview = document.getElementById('excelPreview');
+            if (preview) {
+                preview.style.display = 'none';
+            }
+
+            const supplierCard = document.getElementById('supplierSelectionCard');
+            if (supplierCard) {
+                supplierCard.style.display = 'none';
+            }
+
+            parsedExcelData = null;
+            checkFormValidity();
+        }
+
+        // ===== EVENT LISTENERS =====
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== DOM CONTENT LOADED ===');
+
+            // Form submit listener
+            const manualRequestForm = document.getElementById('manualRequestForm');
+            if (manualRequestForm) {
+                manualRequestForm.addEventListener('submit', function(e) {
+                    console.log('=== FORM SUBMIT EVENT ===');
+
+                    const formData = new FormData(this);
+                    console.log('Form Data:');
+                    for (let [key, value] of formData.entries()) {
+                        console.log(`  ${key}:`, value);
+                    }
+
+                    if (!this.checkValidity()) {
+                        console.warn('Form is invalid!');
+                        e.preventDefault();
+                        this.classList.add('was-validated');
+                        return false;
+                    }
+
+                    console.log('Form is valid, submitting...');
+                });
+            }
+
+            // Product search button
+            const searchBtn = document.getElementById('searchBtn');
+            if (searchBtn) {
+                searchBtn.addEventListener('click', performProductSearch);
+            }
+
+            // Enter key support for product search
+            const productSearch = document.getElementById('productSearch');
+            if (productSearch) {
+                productSearch.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        performProductSearch();
+                    }
+                });
+            }
+
+            // Modal backdrop click
+            const productSearchModal = document.getElementById('productSearchModal');
+            if (productSearchModal) {
+                productSearchModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeProductSearchModal();
+                    }
+                });
+            }
+
+            // ESC key to close modal
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('productSearchModal');
+                    if (modal && modal.classList.contains('show')) {
+                        closeProductSearchModal();
+                    }
+                }
+            });
+
+            // Site selection for manual form
+            const siteSelect = document.getElementById('siteSelect');
+            if (siteSelect) {
+                siteSelect.addEventListener('change', function() {
+                    const siteId = this.value;
+
+                    // Enable/disable search button
+                    const searchBtn = document.getElementById('searchBtn');
+                    if (searchBtn) {
+                        if (siteId && siteId !== '') {
+                            searchBtn.disabled = false;
+                            searchBtn.title = 'Ürün ara';
+                        } else {
+                            searchBtn.disabled = true;
+                            searchBtn.title = 'Önce þantiye seçin';
+                        }
+                    }
+
+                    // Load site info and employees
+                    loadSiteInfoAndBrands(siteId);
+                    loadEmployees(siteId, 'employeeSelect');
+                });
+            }
+
+            // Site selection for excel form
+            const excelSiteSelect = document.getElementById('excelSiteSelect');
+            if (excelSiteSelect) {
+                excelSiteSelect.addEventListener('change', function() {
+                    const siteId = this.value;
+                    loadEmployees(siteId, 'excelEmployeeSelect');
+                });
+            }
+
+            // Excel file upload
+            const excelFileInput = document.getElementById('excelFile');
+            if (excelFileInput) {
+                excelFileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        try {
+                            const data = new Uint8Array(event.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                            displayExcelPreview(jsonData);
+                            parsedExcelData = jsonData;
+
+                            document.getElementById('supplierSelectionCard').style.display = 'block';
+                            checkFormValidity();
+                        } catch (error) {
+                            console.error('Error parsing Excel:', error);
+                            Swal.fire('Hata', 'Excel dosyasý okunamadý', 'error');
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            // Excel form submit
+            const excelUploadForm = document.getElementById('excelUploadForm');
+            if (excelUploadForm) {
+                excelUploadForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    const siteId = document.getElementById('excelSiteSelect').value;
+                    const employeeId = document.getElementById('excelEmployeeSelect').value;
+                    const selectedSuppliers = Array.from(document.querySelectorAll('.supplier-checkbox:checked'))
+                        .map(cb => parseInt(cb.value));
+
+                    if (!parsedExcelData || !siteId || !employeeId || selectedSuppliers.length === 0) {
+                        Swal.fire('Uyarý', 'Lütfen tüm alanlarý doldurun', 'warning');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('SiteId', siteId);
+                    formData.append('EmployeeId', employeeId);
+                    formData.append('ExcelFile', document.getElementById('excelFile').files[0]);
+                    selectedSuppliers.forEach(id => formData.append('SupplierIds', id));
+
+                    try {
+                        Swal.fire({
+                            title: 'Yükleniyor...',
+                            text: 'Excel dosyasý iþleniyor ve tedarikçilere gönderiliyor',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        const response = await fetch('@Url.Action("CreateRequestFromExcel", "Admin")', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Baþarýlý!',
+                                text: result.message || 'Excel dosyasý baþarýyla yüklendi ve tedarikçilere gönderildi',
+                                confirmButtonText: 'Tamam'
+                            }).then(() => {
+                                window.location.href = '@Url.Action("Requests", "Admin")';
+                            });
+                        } else {
+                            Swal.fire('Hata', result.message || 'Ýþlem baþarýsýz', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        Swal.fire('Hata', 'Bir hata oluþtu', 'error');
+                    }
+                });
+            }
+
+            // Form validation
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+
+            console.log('=== DOM CONTENT LOADED COMPLETE ===');
+        });
+    </script>
+
+}

@@ -19,7 +19,7 @@ namespace SantiyeTalepApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetNotifications([FromQuery] bool unreadOnly = false)
+        public async Task<IActionResult> GetNotifications([FromQuery] bool unreadOnly = false, [FromQuery] int daysBack = 7)
         {
             try
             {
@@ -32,12 +32,12 @@ namespace SantiyeTalepApi.Controllers
                     userId = parsedUserId;
                 }
 
-                var notifications = await _notificationService.GetNotificationsAsync(userId, unreadOnly);
+                var notifications = await _notificationService.GetNotificationsAsync(userId, unreadOnly, daysBack);
                 return Ok(notifications);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Bildirimler alýnýrken bir hata oluþtu", error = ex.Message });
+                return StatusCode(500, new { message = "Bildirimler alÄ±nÄ±rken bir hata oluÅŸtu", error = ex.Message });
             }
         }
 
@@ -49,18 +49,35 @@ namespace SantiyeTalepApi.Controllers
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
                 
+                // Debug logging
+                Console.WriteLine($"NotificationController.GetNotificationSummary - UserIdClaim: {userIdClaim}, UserRole: {userRole}");
+                
                 int? userId = null;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
                 {
                     userId = parsedUserId;
+                    Console.WriteLine($"NotificationController.GetNotificationSummary - Parsed UserId: {userId}");
+                }
+                else
+                {
+                    Console.WriteLine($"NotificationController.GetNotificationSummary - Failed to parse UserId from claim: {userIdClaim}");
+                    // If we can't parse userId, return empty summary instead of potentially showing admin notifications
+                    return Ok(new NotificationSummaryDto
+                    {
+                        TotalCount = 0,
+                        UnreadCount = 0,
+                        RecentNotifications = new List<NotificationDto>()
+                    });
                 }
 
                 var summary = await _notificationService.GetNotificationSummaryAsync(userId);
+                Console.WriteLine($"NotificationController.GetNotificationSummary - Summary UnreadCount: {summary.UnreadCount}");
                 return Ok(summary);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Bildirim özeti alýnýrken bir hata oluþtu", error = ex.Message });
+                Console.WriteLine($"NotificationController.GetNotificationSummary - Exception: {ex.Message}");
+                return StatusCode(500, new { message = "Bildirim Ã¶zeti alÄ±nÄ±rken bir hata oluÅŸtu", error = ex.Message });
             }
         }
 
@@ -70,11 +87,11 @@ namespace SantiyeTalepApi.Controllers
             try
             {
                 await _notificationService.MarkAsReadAsync(id);
-                return Ok(new { message = "Bildirim okundu olarak iþaretlendi" });
+                return Ok(new { message = "Bildirim okundu olarak iÅŸaretlendi" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Bildirim güncellenirken bir hata oluþtu", error = ex.Message });
+                return StatusCode(500, new { message = "Bildirim gÃ¼ncellenirken bir hata oluÅŸtu", error = ex.Message });
             }
         }
 
@@ -93,11 +110,11 @@ namespace SantiyeTalepApi.Controllers
                 }
 
                 await _notificationService.MarkAllAsReadAsync(userId);
-                return Ok(new { message = "Tüm bildirimler okundu olarak iþaretlendi" });
+                return Ok(new { message = "TÃ¼m bildirimler okundu olarak iÅŸaretlendi" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Bildirimler güncellenirken bir hata oluþtu", error = ex.Message });
+                return StatusCode(500, new { message = "Bildirimler gÃ¼ncellenirken bir hata oluÅŸtu", error = ex.Message });
             }
         }
     }

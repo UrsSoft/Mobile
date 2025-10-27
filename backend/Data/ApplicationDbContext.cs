@@ -30,9 +30,10 @@ namespace SantiyeTalepApi.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.Phone).IsUnique(); // Phone unique constraint eklendi
                 entity.Property(e => e.Email).HasMaxLength(255);
                 entity.Property(e => e.FullName).HasMaxLength(255);
-                entity.Property(e => e.Phone).HasMaxLength(20);
+                entity.Property(e => e.Phone).HasMaxLength(20).IsRequired(); // Required eklendi
             });
 
             // Employee configurations
@@ -208,14 +209,14 @@ namespace SantiyeTalepApi.Data
                 new User
                 {
                     Id = 1,
-                    Email = "admin@santiye.com",
+                    Email = "altanemre1989@gmail.com",
                     // admin123 şifresi için doğru BCrypt hash
                     Password = "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.",
                     FullName = "Sistem Yöneticisi",
                     Phone = "05366295131",
                     Role = UserRole.Admin,
                     IsActive = true,
-                    CreatedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                    CreatedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) // Sabit UTC tarih
                 }
             );
             

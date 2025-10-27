@@ -7,6 +7,7 @@ using SantiyeTalepApi.DTOs;
 using SantiyeTalepApi.Models;
 using SantiyeTalepApi.Services;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace SantiyeTalepApi.Controllers
 {
@@ -18,13 +19,20 @@ namespace SantiyeTalepApi.Controllers
         private readonly IJwtService _jwtService;
         private readonly IMapper _mapper;
         private readonly INotificationService _notificationService;
+        private readonly IEmailService _emailService;
 
-        public AuthController(ApplicationDbContext context, IJwtService jwtService, IMapper mapper, INotificationService notificationService)
+        public AuthController(
+            ApplicationDbContext context, 
+            IJwtService jwtService, 
+            IMapper mapper, 
+            INotificationService notificationService,
+            IEmailService emailService)
         {
             _context = context;
             _jwtService = jwtService;
             _mapper = mapper;
             _notificationService = notificationService;
+            _emailService = emailService;
         }
 
         [HttpGet("health")]
@@ -122,11 +130,10 @@ namespace SantiyeTalepApi.Controllers
                 await _context.SaveChangesAsync();
 
                 // Admin'lere bildirim gönder
-                await _notificationService.CreateNotificationAsync(
+                await _notificationService.CreateAdminNotificationAsync(
                     "Yeni Tedarikçi Kaydı",
                     $"{model.CompanyName} ({model.FullName}) adlı tedarikçi kayıt oldu ve onay bekliyor.",
                     NotificationType.SupplierRegistration,
-                    null, // admin notification, userId null
                     null,
                     null,
                     supplier.Id
@@ -191,6 +198,14 @@ namespace SantiyeTalepApi.Controllers
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null)
                     return NotFound(new { message = "Kullanıcı bulunamadı" });
+
+                // Check if phone is being changed and if it's already in use by another user
+                if (user.Phone != model.Phone)
+                {
+                    var existingPhone = await _context.Users.FirstOrDefaultAsync(u => u.Phone == model.Phone && u.Id != userId);
+                    if (existingPhone != null)
+                        return BadRequest(new { message = "Bu telefon numarası başka bir kullanıcı tarafından kullanılıyor" });
+                }
 
                 user.FullName = model.FullName;
                 user.Phone = model.Phone;
@@ -269,6 +284,128 @@ namespace SantiyeTalepApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Test kullanıcıları oluşturulurken hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpPost("register-fcm-token")]
+        [Authorize]
+        public async Task<IActionResult> RegisterFCMToken([FromBody] FcmTokenDto model)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                    return Unauthorized(new { message = "Geçersiz token" });
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                    return NotFound(new { message = "Kullanıcı bulunamadı" });
+
+                // FCM token'ı güncelle
+                user.FcmToken = model.Token;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "FCM token başarıyla kaydedildi" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "FCM token kaydedilirken hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpPost("unregister-fcm-token")]
+        [Authorize]
+        public async Task<IActionResult> UnregisterFCMToken()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                    return Unauthorized(new { message = "Geçersiz token" });
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                    return NotFound(new { message = "Kullanıcı bulunamadı" });
+
+                // FCM token'ı temizle
+                user.FcmToken = null;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "FCM token başarıyla kaldırıldı" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "FCM token kaldırılırken hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+                
+                // Güvenlik için her durumda aynı mesajı döndür (kullanıcı varlığını belli etmemek için)
+                if (user == null)
+                {
+                    return Ok(new { message = "Eğer bu e-posta adresi sistemde kayıtlıysa, şifre sıfırlama bağlantısı gönderilecektir." });
+                }
+
+                // Reset token oluştur (kriptografik olarak güvenli)
+                var resetToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+                
+                user.PasswordResetToken = resetToken;
+                user.PasswordResetTokenExpiry = DateTime.Now.AddHours(1); // 1 saat geçerli
+                
+                await _context.SaveChangesAsync();
+
+                // Email gönder
+                await _emailService.SendPasswordResetEmailAsync(user.Email, user.FullName, resetToken);
+
+                return Ok(new { message = "Eğer bu e-posta adresi sistemde kayıtlıysa, şifre sıfırlama bağlantısı gönderilecektir." });
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't expose details to user
+                Console.WriteLine($"Forgot password error: {ex.Message}");
+                return StatusCode(500, new { message = "Şifre sıfırlama işlemi sırasında bir hata oluştu" });
+            }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => 
+                    u.PasswordResetToken == model.Token && 
+                    u.PasswordResetTokenExpiry > DateTime.Now);
+
+                if (user == null)
+                {
+                    return BadRequest(new { message = "Geçersiz veya süresi dolmuş şifre sıfırlama bağlantısı" });
+                }
+
+                // Yeni şifreyi hashle ve kaydet
+                user.Password = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+                user.PasswordResetToken = null;
+                user.PasswordResetTokenExpiry = null;
+                
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Şifreniz başarıyla sıfırlandı. Şimdi giriş yapabilirsiniz." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Reset password error: {ex.Message}");
+                return StatusCode(500, new { message = "Şifre sıfırlama işlemi sırasında bir hata oluştu" });
             }
         }
     }

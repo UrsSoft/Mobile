@@ -1,0 +1,458 @@
+@model SantiyeTalepWebUI.Models.DTOs.UpdateEmployeeDto
+@{
+    ViewData["Title"] = "Çalýþan Düzenle";
+    var sites = ViewBag.Sites as List<SantiyeTalepWebUI.Models.DTOs.SiteDto> ?? new List<SantiyeTalepWebUI.Models.DTOs.SiteDto>();
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Çalýþan Düzenle</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="@Url.Action("Employees", "Admin")">Çalýþanlar</a></li>
+                                <li class="breadcrumb-item active">Düzenle</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <!-- Success/Error Messages -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show alert-modern" role="alert">
+                    <i class="ri-checkbox-circle-line me-2 align-middle fs-16"></i>
+                    <strong>Baþarýlý!</strong> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show alert-modern" role="alert">
+                    <i class="ri-error-warning-line me-2 align-middle fs-16"></i>
+                    <strong>Hata!</strong> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-warning alert-dismissible fade show alert-modern" role="alert">
+                    <i class="ri-alert-line me-2 align-middle fs-16"></i>
+                    <strong>Dikkat!</strong> Lütfen formdaki hatalarý düzeltin.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <ul class="mb-0 mt-2">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <div class="row justify-content-center">
+                <div class="col-xxl-9">
+                    <div class="card">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">
+                                <i class="ri-user-settings-line align-middle me-1 text-muted"></i>
+                                Çalýþan Bilgilerini Düzenle
+                            </h4>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <form asp-action="EditEmployee" method="post" class="needs-validation" novalidate>
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" asp-for="Id" />
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="FullName" class="form-label">Ad Soyad <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="ri-user-line"></i></span>
+                                                <input asp-for="FullName" class="form-control" placeholder="Çalýþanýn adýný ve soyadýný giriniz" required />
+                                            </div>
+                                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                                            <div class="form-text">Çalýþanýn tam adýný ve soyadýný girin</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="Email" class="form-label">Email Adresi <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="ri-mail-line"></i></span>
+                                                <input asp-for="Email" type="email" class="form-control" placeholder="Email Adresiniz" required />
+                                            </div>
+                                            <span asp-validation-for="Email" class="text-danger small"></span>
+                                            <div class="form-text">Örnek: ahmet@gmail.com</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="Phone" class="form-label">Telefon Numarasý <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="ri-phone-line"></i></span>
+                                                <input asp-for="Phone" class="form-control" placeholder="5XX XXX XX XX" required />
+                                            </div>
+                                            <span asp-validation-for="Phone" class="text-danger small"></span>
+                                            <div class="form-text">Örnek: 05551234567</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="Password" class="form-label">Yeni Þifre</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="ri-lock-line"></i></span>
+                                                <input asp-for="Password" type="password" class="form-control" placeholder="Deðiþtirmek için yeni þifre girin" />
+                                                <button class="btn btn-outline-secondary password-toggle" type="button">
+                                                    <i class="ri-eye-line"></i>
+                                                </button>
+                                            </div>
+                                            <span asp-validation-for="Password" class="text-danger small"></span>
+                                            <div class="form-text">
+                                                <i class="ri-information-line me-1"></i>Boþ býrakýlýrsa þifre deðiþmez (En az 6 karakter)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="Position" class="form-label">Pozisyon <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="ri-briefcase-line"></i></span>
+                                                <input asp-for="Position" class="form-control" placeholder="Örn: Þantiye Þefi, Formen, vb." required />
+                                            </div>
+                                            <span asp-validation-for="Position" class="text-danger small"></span>
+                                            <div class="form-text">Çalýþanýn þantiyedeki görevini belirtin</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label asp-for="SiteId" class="form-label">Þantiye <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="ri-building-2-line"></i></span>
+                                                <select asp-for="SiteId" class="form-select" required>
+                                                    <option value="">Þantiye seçiniz</option>
+                                                    @foreach (var site in sites)
+                                                    {
+                                                        <option value="@site.Id">@site.Name</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <span asp-validation-for="SiteId" class="text-danger small"></span>
+                                            <div class="form-text">Çalýþanýn atanacaðý þantiyeyi seçin</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-3">
+                                            <label class="form-label">Durum</label>
+                                            <div class="form-check form-switch form-switch-lg" style="margin-top: 10px;">
+                                                <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" id="isActiveSwitch">
+                                                <label class="form-check-label" for="isActiveSwitch" id="statusLabel">
+                                                    @(Model.IsActive ? "Aktif" : "Pasif")
+                                                </label>
+                                            </div>
+                                            <div class="form-text">Çalýþan hesabýnýn durumunu belirtin</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Preview Card -->
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="card bg-light border-dashed">
+                                            <div class="card-header">
+                                                <h6 class="card-title mb-0">
+                                                    <i class="ri-eye-line me-2"></i>Önizleme
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-user-line text-primary me-2 fs-16"></i>
+                                                            <div>
+                                                                <h6 class="mb-0" id="previewName">@Model.FullName</h6>
+                                                                <small class="text-muted" id="previewPosition">@Model.Position</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-phone-line text-success me-2 fs-16"></i>
+                                                            <div>
+                                                                <p class="mb-0" id="previewPhone">@Model.Phone</p>
+                                                                <small class="text-muted">Telefon</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-mail-line text-success me-2 fs-16"></i>
+                                                            <div>
+                                                                <p class="mb-0" id="previewEmail">@Model.Email</p>
+                                                                <small class="text-muted">Email</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-building-2-line text-info me-2 fs-16"></i>
+                                                            <div>
+                                                                <p class="mb-0" id="previewSite">Þantiye seçilmedi</p>
+                                                                <small class="text-muted">Þantiye</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ri-shield-check-line me-2 fs-16" id="previewStatusIcon"></i>
+                                                            <div>
+                                                                <p class="mb-0" id="previewStatus">@(Model.IsActive ? "Aktif" : "Pasif")</p>
+                                                                <small class="text-muted">Hesap Durumu</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="hstack gap-2 justify-content-end">
+                                            <a href="@Url.Action("Employees", "Admin")" class="btn btn-light">
+                                                <i class="ri-arrow-left-line align-bottom me-1"></i> Geri Dön
+                                            </a>
+                                            <button type="button" class="btn btn-ghost-secondary" onclick="resetForm()">
+                                                <i class="ri-refresh-line align-bottom me-1"></i> Sýfýrla
+                                            </button>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="ri-save-line align-bottom me-1"></i> Deðiþiklikleri Kaydet
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+            </div><!-- end row -->
+
+            <!-- Additional Info Card -->
+            <div class="row justify-content-center">
+                <div class="col-xxl-9">
+                    <div class="card bg-info-subtle border-0">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="ri-information-line fs-24 text-info"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-info mb-2">Önemli Notlar</h6>
+                                    <ul class="mb-0 text-muted">
+                                        <li>Telefon numarasýný baþka bir kullanýcý kullanýyorsa güncelleyemezsiniz</li>
+                                        <li><strong>Þifre</strong> alanýný boþ býrakýrsanýz mevcut þifre deðiþmez</li>
+                                        <li>Çalýþan <strong>pasif</strong> yapýlýrsa sisteme giriþ yapamaz</li>
+                                        <li>Þantiye deðiþikliði anýnda geçerli olur</li>
+                                        <li>Telefon numarasýný boþluksuz ve tire olmadan giriniz (örn: 05551234567)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- container-fluid -->
+    </div>
+    <!-- End Page-content -->
+
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Store original values for reset
+        const originalValues = {
+            fullName: '@Model.FullName',
+            phone: '@Model.Phone',
+            email: '@Model.Email',
+            position: '@Model.Position',
+            siteId: '@Model.SiteId',
+            isActive: @(Model.IsActive ? "true" : "false")
+        };
+
+        // Form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+
+        // Real-time preview
+        function updatePreview() {
+            const fullName = document.getElementById('FullName').value || 'Ad Soyad belirtilmedi';
+            const phone = document.getElementById('Phone').value || 'Telefon belirtilmedi';
+            const email = document.getElementById('Email').value || 'Email belirtilmedi';
+            const position = document.getElementById('Position').value || 'Pozisyon belirtilmedi';
+            const siteId = document.getElementById('SiteId').value;
+            const isActive = document.getElementById('isActiveSwitch').checked;
+
+            document.getElementById('previewName').textContent = fullName;
+            document.getElementById('previewPhone').textContent = phone;
+            document.getElementById('previewEmail').textContent = email;
+            document.getElementById('previewPosition').textContent = position;
+
+            // Update site preview
+            const siteSelect = document.getElementById('SiteId');
+            const siteName = siteSelect.options[siteSelect.selectedIndex]?.text || 'Þantiye seçilmedi';
+            document.getElementById('previewSite').textContent = siteName;
+
+            // Update status preview
+            const statusText = isActive ? 'Aktif' : 'Pasif';
+            const statusIcon = document.getElementById('previewStatusIcon');
+            const statusElement = document.getElementById('previewStatus');
+            
+            statusElement.textContent = statusText;
+            statusElement.className = isActive ? 'mb-0 text-success' : 'mb-0 text-danger';
+            statusIcon.className = isActive ? 
+                'ri-shield-check-line me-2 fs-16 text-success' : 
+                'ri-shield-cross-line me-2 fs-16 text-danger';
+        }
+
+        // Status switch handler
+        document.getElementById('isActiveSwitch').addEventListener('change', function() {
+            const label = document.getElementById('statusLabel');
+            label.textContent = this.checked ? 'Aktif' : 'Pasif';
+            updatePreview();
+        });
+
+        // Reset form
+        function resetForm() {
+            if (confirm('Formu orijinal deðerlerine döndürmek istediðinizden emin misiniz?')) {
+                document.getElementById('FullName').value = originalValues.fullName;
+                document.getElementById('Phone').value = originalValues.phone;
+                document.getElementById('Email').value = originalValues.email;
+                document.getElementById('Position').value = originalValues.position;
+                document.getElementById('SiteId').value = originalValues.siteId;
+                document.getElementById('isActiveSwitch').checked = originalValues.isActive;
+                document.querySelector('input[name="Password"]').value = '';
+                
+                const label = document.getElementById('statusLabel');
+                label.textContent = originalValues.isActive ? 'Aktif' : 'Pasif';
+                
+                document.querySelector('form').classList.remove('was-validated');
+                updatePreview();
+            }
+        }
+
+        // Event listeners for real-time preview
+        document.addEventListener('DOMContentLoaded', function() {
+            const fullNameInput = document.getElementById('FullName');
+            const phoneInput = document.getElementById('Phone');
+            const emailInput = document.getElementById('Email');
+            const positionInput = document.getElementById('Position');
+            const siteSelect = document.getElementById('SiteId');
+            const passwordToggle = document.querySelector('.password-toggle');
+            const passwordInput = document.querySelector('input[name="Password"]');
+
+            fullNameInput.addEventListener('input', updatePreview);
+            phoneInput.addEventListener('input', updatePreview);
+            emailInput.addEventListener('input', updatePreview);
+            positionInput.addEventListener('input', updatePreview);
+            siteSelect.addEventListener('change', updatePreview);
+
+            // Phone number formatting
+            phoneInput.addEventListener('input', function() {
+                // Remove all non-numeric characters
+                this.value = this.value.replace(/\D/g, '');
+                
+                // Limit to 11 digits
+                if (this.value.length > 11) {
+                    this.value = this.value.substring(0, 11);
+                }
+            });
+
+            // Password visibility toggle
+            if (passwordToggle && passwordInput) {
+                passwordToggle.addEventListener('click', function() {
+                    const icon = this.querySelector('i');
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        icon.classList.remove('ri-eye-line');
+                        icon.classList.add('ri-eye-off-line');
+                    } else {
+                        passwordInput.type = 'password';
+                        icon.classList.remove('ri-eye-off-line');
+                        icon.classList.add('ri-eye-line');
+                    }
+                });
+            }
+
+            // Auto-capitalize first letters of names
+            fullNameInput.addEventListener('blur', function() {
+                this.value = this.value.replace(/\b\w/g, function(char) {
+                    return char.toUpperCase();
+                });
+                updatePreview();
+            });
+
+            // Initialize preview
+            updatePreview();
+        });
+    </script>
+}
+
+<style>
+    .alert-modern {
+        border-left: 4px solid;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08);
+    }
+    
+    .alert-success {
+        border-left-color: #0ab39c;
+    }
+    
+    .alert-danger {
+        border-left-color: #f06548;
+    }
+    
+    .alert-warning {
+        border-left-color: #f7b84b;
+    }
+</style>

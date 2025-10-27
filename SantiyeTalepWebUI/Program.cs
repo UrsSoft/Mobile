@@ -7,7 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
-    .AddNewtonsoftJson();
+    .AddNewtonsoftJson()
+    .AddRazorRuntimeCompilation(); // Enable runtime compilation for better hot reload
 
 // HTTP Context Accessor for sessions
 builder.Services.AddHttpContextAccessor();

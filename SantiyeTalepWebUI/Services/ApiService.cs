@@ -8,6 +8,7 @@ namespace SantiyeTalepWebUI.Services
     {
         Task<T?> GetAsync<T>(string endpoint, string? token = null);
         Task<T?> PostAsync<T>(string endpoint, object data, string? token = null);
+        Task<T?> PostMultipartAsync<T>(string endpoint, MultipartFormDataContent content, string? token = null);
         Task<T?> PutAsync<T>(string endpoint, object data, string? token = null);
         Task<bool> DeleteAsync(string endpoint, string? token = null);
     }
@@ -68,6 +69,27 @@ namespace SantiyeTalepWebUI.Services
 
                 var response = await _httpClient.SendAsync(request);
                 return await ProcessResponse<T>(response, endpoint, "POST", json);
+            });
+        }
+
+        public async Task<T?> PostMultipartAsync<T>(string endpoint, MultipartFormDataContent content, string? token = null)
+        {
+            return await ExecuteWithRetry(async () =>
+            {
+                _logger.LogInformation($"Making POST multipart request to: {endpoint}");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                {
+                    Content = content
+                };
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                }
+
+                var response = await _httpClient.SendAsync(request);
+                return await ProcessResponse<T>(response, endpoint, "POST-MULTIPART");
             });
         }
 

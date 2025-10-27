@@ -87,7 +87,7 @@
 
                                         <div class="mb-3">
                                             <div class="float-end">
-                                                <a href="#" class="text-muted">Şifrenizi mi unuttunuz?</a>
+                                                <a asp-action="ForgotPassword" class="text-muted">Şifrenizi mi unuttunuz?</a>
                                             </div>
                                             <label class="form-label" asp-for="LoginDto.Password">Şifre <span class="text-danger">*</span></label>
                                             <div class="position-relative auth-pass-inputgroup mb-3">
@@ -108,16 +108,7 @@
                                             <button class="btn btn-success w-100" type="submit">Giriş Yap</button>
                                         </div>
 
-                                        <div class="mt-4 text-center">
-                                            <div class="signin-other-title">
-                                                <h5 class="fs-13 mb-4 title">Hesabınız yok mu?</h5>
-                                            </div>
-                                            <div>
-                                                <a asp-action="RegisterSupplier" class="btn btn-primary waves-effect waves-light">
-                                                    <i class="ri-user-add-line fs-16"></i> Tedarikçi Kaydı
-                                                </a>
-                                            </div>
-                                        </div>
+                                       
                                     </form>
                                 </div>
                             </div>

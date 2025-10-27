@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using SantiyeTalepWebUI.Models;
 using SantiyeTalepWebUI.Models.DTOs;
 using SantiyeTalepWebUI.Models.ViewModels;
@@ -537,6 +538,27 @@ namespace SantiyeTalepWebUI.Controllers
             {
                 _logger.LogError(ex, "Error getting site brands for request {RequestId}", requestId);
                 return Json(new { success = false, message = "Şantiye markaları yüklenirken hata oluştu" });
+            }
+        }
+
+        [HttpGet("debug/notifications")]
+        [Authorize(Roles = "Supplier")]
+        public async Task<IActionResult> GetDebugNotifications()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi doldu" });
+
+            try
+            {
+                // Admin endpoint'ini kullanarak tüm bilgileri alalım
+                var response = await _apiService.GetAsync<dynamic>("api/Supplier/debug/notifications", token);
+                return Json(new { success = true, data = response });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting debug notifications");
+                return Json(new { success = false, message = "Debug bilgiler yüklenirken hata oluştu" });
             }
         }
     }

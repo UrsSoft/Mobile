@@ -17,9 +17,12 @@ namespace SantiyeTalepApi.DTOs
 
         [Required(ErrorMessage = "Teslim tipi seçimi gereklidir")]
         public DeliveryType DeliveryType { get; set; }
-
-        [Required(ErrorMessage = "Açıklama gereklidir")]
+        
         public string? Description { get; set; } = string.Empty;
+
+        // Admin için opsiyonel alanlar
+        public int? SiteId { get; set; }
+        public int? EmployeeId { get; set; }
     }
 
     public class RequestDto
@@ -33,6 +36,7 @@ namespace SantiyeTalepApi.DTOs
         public decimal? EstimatedCost { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime RequestDate { get; set; }
+        public bool IsRead { get; set; } = false;
 
         // Employee info
         public int EmployeeId { get; set; }
@@ -57,6 +61,7 @@ namespace SantiyeTalepApi.DTOs
         public RequestStatus Status { get; set; }
         public DateTime RequestDate { get; set; }
         public DateTime CreatedDate { get; set; }
+        public bool IsRead { get; set; } = false;
 
         public int EmployeeId { get; set; }
         public string EmployeeName { get; set; } = string.Empty;

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using SantiyeTalepWebUI.Models;
+using SantiyeTalepApi.Models;
 
-namespace SantiyeTalepWebUI.Models.DTOs
+namespace SantiyeTalepApi.DTOs
 {
     public class SupplierDto
     {
@@ -11,36 +11,33 @@ namespace SantiyeTalepWebUI.Models.DTOs
         public string TaxNumber { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public SupplierStatus Status { get; set; }
-        public UserDto? User { get; set; }
-        
-        // Flattened properties for compatibility
-        public string FullName => User?.FullName ?? string.Empty;
-        public string Email => User?.Email ?? string.Empty;
-        public string Phone => User?.Phone ?? string.Empty;
-        public bool IsActive => User?.IsActive ?? false;
-        public DateTime CreatedDate => User?.CreatedDate ?? DateTime.MinValue;
+        public string? ApprovalNote { get; set; }
+        public string? RejectionReason { get; set; }
+        public DateTime? ApprovedDate { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public UserDto User { get; set; } = null!;
     }
 
     public class CreateSupplierDto
     {
-        [Required(ErrorMessage = "E-posta adresi gereklidir")]
-        [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz")]
-        public string Email { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Şifre gereklidir")]
-        [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır")]
-        public string Password { get; set; } = string.Empty;
-
         [Required(ErrorMessage = "Ad Soyad gereklidir")]
         public string FullName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Telefon numarası gereklidir")]
+        [Required(ErrorMessage = "E-posta gereklidir")]
+        [EmailAddress(ErrorMessage = "GeÃ§erli bir e-posta adresi giriniz")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Åifre gereklidir")]
+        [MinLength(6, ErrorMessage = "Åifre en az 6 karakter olmalÄ±dÄ±r")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Telefon gereklidir")]
         public string Phone { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Şirket adı gereklidir")]
+        [Required(ErrorMessage = "Åirket adÄ± gereklidir")]
         public string CompanyName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Vergi numarası gereklidir")]
+        [Required(ErrorMessage = "Vergi numarasÄ± gereklidir")]
         public string TaxNumber { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Adres gereklidir")]
@@ -49,30 +46,35 @@ namespace SantiyeTalepWebUI.Models.DTOs
 
     public class UpdateSupplierDto
     {
-        public int Id { get; set; }
-        
         [Required(ErrorMessage = "Ad Soyad gereklidir")]
         public string FullName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "E-posta gereklidir")]
-        [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz")]
+        [EmailAddress(ErrorMessage = "GeÃ§erli bir e-posta adresi giriniz")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Telefon numarası gereklidir")]
+        [Required(ErrorMessage = "Telefon gereklidir")]
         public string Phone { get; set; } = string.Empty;
 
-        [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır")]
+        [MinLength(6, ErrorMessage = "Åifre en az 6 karakter olmalÄ±dÄ±r")]
         public string? Password { get; set; }
 
-        [Required(ErrorMessage = "Şirket adı gereklidir")]
+        [Required(ErrorMessage = "Åirket adÄ± gereklidir")]
         public string CompanyName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Vergi numarası gereklidir")]
+        [Required(ErrorMessage = "Vergi numarasÄ± gereklidir")]
         public string TaxNumber { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Adres gereklidir")]
         public string Address { get; set; } = string.Empty;
 
         public bool IsActive { get; set; }
+    }
+
+    public class SupplierStatusUpdateDto
+    {
+        public SupplierStatus Status { get; set; }
+        public string? Note { get; set; }
+        public string? RejectionReason { get; set; }
     }
 }

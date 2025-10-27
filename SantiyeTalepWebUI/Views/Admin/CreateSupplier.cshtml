@@ -1,0 +1,224 @@
+@model SantiyeTalepWebUI.Models.DTOs.CreateSupplierDto
+@{
+    ViewBag.Title = "Yeni Tedarikçi Ekle";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Yeni Tedarikçi Ekle</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="@Url.Action("Suppliers", "Admin")">Tedarikçiler</a></li>
+                                <li class="breadcrumb-item active">Yeni Tedarikçi</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <!-- Success/Error Messages -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show alert-modern" role="alert">
+                    <i class="ri-checkbox-circle-line me-2 align-middle fs-16"></i>
+                    <strong>Baþarýlý!</strong> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show alert-modern" role="alert">
+                    <i class="ri-error-warning-line me-2 align-middle fs-16"></i>
+                    <strong>Hata!</strong> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-warning alert-dismissible fade show alert-modern" role="alert">
+                    <i class="ri-alert-line me-2 align-middle fs-16"></i>
+                    <strong>Dikkat!</strong> Lütfen formdaki hatalarý düzeltin.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <ul class="mb-0 mt-2">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-xl-8 col-lg-10 mx-auto">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="ri-user-add-line text-primary me-2"></i>
+                                Tedarikçi Bilgileri
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="CreateSupplier" method="post" class="needs-validation" novalidate>
+                                @Html.AntiForgeryToken()
+                                
+                                <!-- User Information -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h6 class="text-muted fw-semibold mb-3">
+                                            <i class="ri-user-line me-2"></i>Kullanýcý Bilgileri
+                                        </h6>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="FullName" class="form-label">Ad Soyad <span class="text-danger">*</span></label>
+                                        <input asp-for="FullName" type="text" class="form-control" placeholder="Ad Soyad" required>
+                                        <span asp-validation-for="FullName" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Email" class="form-label">E-posta <span class="text-danger">*</span></label>
+                                        <input asp-for="Email" type="email" class="form-control" placeholder="ornek@email.com" required>
+                                        <span asp-validation-for="Email" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="Phone" class="form-label">Telefon <span class="text-danger">*</span></label>
+                                        <input asp-for="Phone" type="text" class="form-control" placeholder="05XX XXX XX XX" required>
+                                        <span asp-validation-for="Phone" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="Password" class="form-label">Þifre <span class="text-danger">*</span></label>
+                                        <input asp-for="Password" type="password" class="form-control" placeholder="En az 6 karakter" required>
+                                        <span asp-validation-for="Password" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <!-- Company Information -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h6 class="text-muted fw-semibold mb-3">
+                                            <i class="ri-building-line me-2"></i>Þirket Bilgileri
+                                        </h6>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="CompanyName" class="form-label">Þirket Adý <span class="text-danger">*</span></label>
+                                        <input asp-for="CompanyName" type="text" class="form-control" placeholder="Þirket Adý" required>
+                                        <span asp-validation-for="CompanyName" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label asp-for="TaxNumber" class="form-label">Vergi Numarasý <span class="text-danger">*</span></label>
+                                        <input asp-for="TaxNumber" type="text" class="form-control" placeholder="Vergi Numarasý" required>
+                                        <span asp-validation-for="TaxNumber" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <label asp-for="Address" class="form-label">Adres <span class="text-danger">*</span></label>
+                                        <textarea asp-for="Address" class="form-control" rows="3" placeholder="Þirket adresi" required></textarea>
+                                        <span asp-validation-for="Address" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="alert alert-info">
+                                            <i class="ri-information-line me-2"></i>
+                                            <strong>Bilgi:</strong> Admin tarafýndan oluþturulan tedarikçiler otomatik olarak onaylanýr ve sisteme hemen eriþim saðlayabilir.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-end">
+                                    <a href="@Url.Action("Suppliers", "Admin")" class="btn btn-light me-2">
+                                        <i class="ri-arrow-left-line me-1"></i> Ýptal
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-1"></i> Tedarikçi Ekle
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/libs/prismjs/prism.js"></script>
+    <script src="~/assets/js/pages/form-validation.init.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Phone input masking - limit to 11 digits (Turkish format: 05551234567)
+            $('#Phone').on('input', function() {
+                let value = this.value.replace(/\D/g, '');
+                // Limit to 11 digits
+                if (value.length > 11) {
+                    value = value.substring(0, 11);
+                }
+                // Format: 0555 123 45 67
+                if (value.length > 0) {
+                    if (value.length <= 4) {
+                        value = value;
+                    } else if (value.length <= 7) {
+                        value = value.replace(/(\d{4})(\d{1,3})/, '$1 $2');
+                    } else if (value.length <= 9) {
+                        value = value.replace(/(\d{4})(\d{3})(\d{1,2})/, '$1 $2 $3');
+                    } else {
+                        value = value.replace(/(\d{4})(\d{3})(\d{2})(\d{1,2})/, '$1 $2 $3 $4');
+                    }
+                }
+                this.value = value;
+            });
+
+            // Form validation
+            $('form').on('submit', function(e) {
+                if (!this.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                this.classList.add('was-validated');
+            });
+        });
+    </script>
+}
+
+<style>
+    .alert-modern {
+        border-left: 4px solid;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08);
+    }
+    
+    .alert-success {
+        border-left-color: #0ab39c;
+    }
+    
+    .alert-danger {
+        border-left-color: #f06548;
+    }
+    
+    .alert-warning {
+        border-left-color: #f7b84b;
+    }
+</style>

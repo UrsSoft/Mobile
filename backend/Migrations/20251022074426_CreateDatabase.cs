@@ -67,7 +67,10 @@ namespace SantiyeTalepApi.Migrations
                     Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Role = table.Column<int>(type: "int", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FcmToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PasswordResetToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PasswordResetTokenExpiry = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -129,8 +132,9 @@ namespace SantiyeTalepApi.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    SiteId = table.Column<int>(type: "int", nullable: false),
-                    Position = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                    SiteId = table.Column<int>(type: "int", nullable: true),
+                    Position = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -189,7 +193,8 @@ namespace SantiyeTalepApi.Migrations
                     DeliveryType = table.Column<int>(type: "int", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
                     Status = table.Column<int>(type: "int", nullable: false),
-                    RequestDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    RequestDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -216,8 +221,13 @@ namespace SantiyeTalepApi.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RequestId = table.Column<int>(type: "int", nullable: false),
                     SupplierId = table.Column<int>(type: "int", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Brand = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Currency = table.Column<int>(type: "int", nullable: false),
+                    Discount = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
+                    DeliveryType = table.Column<int>(type: "int", nullable: false),
                     DeliveryDays = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     OfferDate = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -282,8 +292,8 @@ namespace SantiyeTalepApi.Migrations
 
             migrationBuilder.InsertData(
                 table: "Users",
-                columns: new[] { "Id", "CreatedDate", "Email", "FullName", "IsActive", "Password", "Phone", "Role" },
-                values: new object[] { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@santiye.com", "Sistem Yöneticisi", true, "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.", "05366295131", 1 });
+                columns: new[] { "Id", "CreatedDate", "Email", "FcmToken", "FullName", "IsActive", "Password", "PasswordResetToken", "PasswordResetTokenExpiry", "Phone", "Role" },
+                values: new object[] { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "altanemre1989@gmail.com", null, "Sistem Yöneticisi", true, "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.", null, null, "05366295131", 1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_CategoryBrands_BrandId",
@@ -356,6 +366,12 @@ namespace SantiyeTalepApi.Migrations
                 name: "IX_Users_Email",
                 table: "Users",
                 column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Phone",
+                table: "Users",
+                column: "Phone",
                 unique: true);
         }
 

@@ -4,6 +4,26 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+@section Styles {
+    <style>
+        /* Pulse animation for highlighted offers */
+        @@keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse-animation {
+            animation: pulse 1s ease-in-out 3;
+        }
+
+        .offer-highlight {
+            background-color: #fff3cd !important;
+            border: 2px solid #ffc107 !important;
+        }
+    </style>
+}
+
 <div class="main-content" data-enable-notifications="true">
     <div class="page-content">
         <div class="container-fluid">
@@ -151,17 +171,25 @@
                         <div class="card-header">
                             <div class="d-flex align-items-center justify-content-between">
                                 <h4 class="card-title mb-0">Tedarikçi Teklifleri</h4>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-success btn-sm" onclick="bulkApprove()" id="bulkApproveBtn" style="display: none;">
-                                        <i class="ri-check-line me-1"></i> Seçilenleri Onayla
-                                    </button>
-                                    <button class="btn btn-danger btn-sm" onclick="bulkReject()" id="bulkRejectBtn" style="display: none;">
-                                        <i class="ri-close-line me-1"></i> Seçilenleri Reddet
-                                    </button>
-                                </div>
                             </div>
                         </div>
                         <div class="card-body">
+                            <!-- Currency Warning -->
+                            <div class="alert alert-info" role="alert">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0 me-3">
+                                        <i class="ri-information-line fs-16"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="alert-heading">Para Birimi Uyarýsý</h5>
+                                        <p class="mb-0">
+                                            Teklifler farklý para birimlerinde olabilir (?, $, €, £). 
+                                            Karþýlaþtýrma yaparken güncel kur deðerlerini dikkate alýnýz.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <!-- Filters -->
                             <div class="row g-3 mb-4">
                                 <div class="col-md-3">
@@ -192,25 +220,11 @@
                                 </div>
                             </div>
 
-                            <!-- Selection Info -->
-                            <div class="alert alert-info" id="selectionInfo" style="display: none;">
-                                <i class="ri-information-line me-2"></i>
-                                <span id="selectionCount">0</span> teklif seçildi.
-                                <button class="btn btn-sm btn-outline-info ms-2" onclick="clearSelection()">
-                                    <i class="ri-close-line me-1"></i> Seçimi Temizle
-                                </button>
-                            </div>
-
                             <!-- Offers Table -->
                             <div class="table-responsive table-card">
                                 <table class="table align-middle table-nowrap" id="offersTable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th style="width: 50px;">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="checkAll">
-                                                </div>
-                                            </th>
                                             <th>Talep</th>
                                             <th>Tedarikçi</th>
                                             <th>Marka</th>
@@ -218,10 +232,11 @@
                                             <th>Birim Fiyat</th>
                                             <th>Ýskonto</th>
                                             <th>Toplam</th>
+                                            <th>Para Birimi</th>
                                             <th>Teslimat</th>
                                             <th>Durum</th>
                                             <th>Tarih</th>
-                                            <th>Ýþlemler</th>
+                                            <th>Eylemler</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -230,11 +245,6 @@
                                             @foreach (var offer in Model.Offers.OrderByDescending(o => o.OfferDate))
                                             {
                                                 <tr class="offer-row" data-id="@offer.Id" data-status="@((int)offer.Status)" data-supplier="@offer.SupplierId" data-date="@offer.OfferDate.ToString("yyyy-MM-dd")">
-                                                    <td>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input offer-checkbox" type="checkbox" value="@offer.Id">
-                                                        </div>
-                                                    </td>
                                                     <td>
                                                         <div>
                                                             <h6 class="mb-1">#@offer.RequestId</h6>
@@ -255,29 +265,51 @@
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <span class="badge bg-primary-subtle text-primary">@offer.Brand</span>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-xs me-2">
+                                                                <div class="avatar-title bg-info-subtle text-info rounded-circle">
+                                                                    @(offer.Brand.Substring(0, 1).ToUpper())
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-0">@offer.Brand</h6>
+                                                            </div>
+                                                        </div>
                                                     </td>
                                                     <td>
                                                         <span class="fw-medium">@offer.Quantity</span>
                                                     </td>
                                                     <td>
-                                                        <span class="fw-medium">@offer.Price.ToString("C")</span>
+                                                        <span class="fw-medium">@offer.CurrencySymbol@offer.Price.ToString("N2")</span>
                                                     </td>
                                                     <td>
                                                         @if (offer.Discount > 0)
                                                         {
-                                                            <span class="badge bg-success-subtle text-success">%@offer.Discount</span>
+                                                            <span class="fw-medium">%@offer.Discount</span>
                                                         }
                                                         else
                                                         {
-                                                            <span class="text-muted">-</span>
+                                                            <span class="fw-medium">-</span>
                                                         }
                                                     </td>
                                                     <td>
-                                                        <h6 class="mb-0 text-primary">@offer.FinalPrice.ToString("C")</h6>
+                                                        <h6 class="mb-0 text-primary">@offer.CurrencySymbol@offer.FinalPrice.ToString("N2")</h6>
                                                     </td>
                                                     <td>
-                                                        <span class="badge bg-info-subtle text-info">@offer.DeliveryTypeText</span>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="avatar-xs me-2">
+                                                                <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
+                                                                    @offer.CurrencySymbol
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-0">@offer.CurrencyName</h6>
+                                                                <small class="text-muted">@offer.CurrencySymbol</small>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="fw-medium">@offer.DeliveryTypeText</span>
                                                     </td>
                                                     <td>
                                                         @switch (offer.Status)
@@ -298,22 +330,22 @@
                                                         <small class="text-muted">@offer.OfferDate.ToString("HH:mm")</small>
                                                     </td>
                                                     <td>
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                                                <i class="ri-more-fill"></i>
-                                                            </button>
-                                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                                <li><a class="dropdown-item" href="javascript:void(0);" onclick="viewOfferDetails(@offer.Id)"><i class="ri-eye-fill me-2"></i> Detaylarý Gör</a></li>
-                                                                @if (offer.Status == OfferStatus.Pending)
-                                                                {
-                                                                    <li><a class="dropdown-item text-success" href="javascript:void(0);" onclick="approveOffer(@offer.Id)"><i class="ri-check-line me-2"></i> Onayla</a></li>
-                                                                    <li><a class="dropdown-item text-danger" href="javascript:void(0);" onclick="rejectOffer(@offer.Id)"><i class="ri-close-line me-2"></i> Reddet</a></li>
-                                                                }
-                                                            </ul>
+                                                        <div class="d-flex gap-1">
+                                                            @if (offer.Status == OfferStatus.Pending)
+                                                            {
+                                                                <button class="btn btn-success btn-sm" onclick="approveOffer(@offer.Id)" title="Teklifi Onayla">
+                                                                    <i class="ri-check-line"></i> Onayla
+                                                                </button>
+                                                                <button class="btn btn-danger btn-sm" onclick="rejectOffer(@offer.Id)" title="Teklifi Reddet">
+                                                                    <i class="ri-close-line"></i> Reddet
+                                                                </button>
+                                                            }
                                                         </div>
                                                     </td>
+                                                
+
                                                 </tr>
-                                            }
+                                            }                                           
                                         }
                                         else
                                         {
@@ -360,239 +392,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
-        // Selection management
-        document.getElementById('checkAll').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.offer-checkbox');
-            checkboxes.forEach(cb => cb.checked = this.checked);
-            updateBulkActionButtons();
-            updateSelectionInfo();
-        });
-
-        document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('offer-checkbox')) {
-                updateBulkActionButtons();
-                updateSelectionInfo();
-                
-                const checkboxes = document.querySelectorAll('.offer-checkbox');
-                const checkedBoxes = document.querySelectorAll('.offer-checkbox:checked');
-                const checkAll = document.getElementById('checkAll');
-                
-                if (checkedBoxes.length === checkboxes.length) {
-                    checkAll.checked = true;
-                    checkAll.indeterminate = false;
-                } else if (checkedBoxes.length > 0) {
-                    checkAll.checked = false;
-                    checkAll.indeterminate = true;
-                } else {
-                    checkAll.checked = false;
-                    checkAll.indeterminate = false;
-                }
-            }
-        });
-
-        function updateBulkActionButtons() {
-            const checkedBoxes = document.querySelectorAll('.offer-checkbox:checked');
-            const bulkApproveBtn = document.getElementById('bulkApproveBtn');
-            const bulkRejectBtn = document.getElementById('bulkRejectBtn');
-            
-            if (checkedBoxes.length > 0) {
-                bulkApproveBtn.style.display = 'inline-block';
-                bulkRejectBtn.style.display = 'inline-block';
-            } else {
-                bulkApproveBtn.style.display = 'none';
-                bulkRejectBtn.style.display = 'none';
-            }
-        }
-
-        function updateSelectionInfo() {
-            const checkedBoxes = document.querySelectorAll('.offer-checkbox:checked');
-            const infoBar = document.getElementById('selectionInfo');
-            const countSpan = document.getElementById('selectionCount');
-            
-            if (checkedBoxes.length > 0) {
-                countSpan.textContent = checkedBoxes.length;
-                infoBar.style.display = 'block';
-            } else {
-                infoBar.style.display = 'none';
-            }
-        }
-
-        function clearSelection() {
-            const checkboxes = document.querySelectorAll('.offer-checkbox');
-            checkboxes.forEach(cb => cb.checked = false);
-            document.getElementById('checkAll').checked = false;
-            document.getElementById('checkAll').indeterminate = false;
-            updateBulkActionButtons();
-            updateSelectionInfo();
-        }
-
-        // Filtering
-        document.getElementById('searchInput').addEventListener('input', filterOffers);
-        document.getElementById('statusFilter').addEventListener('change', filterOffers);
-        document.getElementById('supplierFilter').addEventListener('change', filterOffers);
-        document.getElementById('dateFilter').addEventListener('change', filterOffers);
-
-        function filterOffers() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            const supplierFilter = document.getElementById('supplierFilter').value;
-            const dateFilter = document.getElementById('dateFilter').value;
-            
-            const rows = document.querySelectorAll('.offer-row');
-            
-            rows.forEach(row => {
-                let show = true;
-                
-                if (searchTerm) {
-                    const text = row.textContent.toLowerCase();
-                    if (!text.includes(searchTerm)) {
-                        show = false;
-                    }
-                }
-                
-                if (statusFilter && row.dataset.status !== statusFilter) {
-                    show = false;
-                }
-                
-                if (supplierFilter && row.dataset.supplier !== supplierFilter) {
-                    show = false;
-                }
-                
-                if (dateFilter && row.dataset.date !== dateFilter) {
-                    show = false;
-                }
-                
-                row.style.display = show ? '' : 'none';
-            });
-        }
-
-        // Offer actions
-        async function viewOfferDetails(offerId) {
-            // Implementation for viewing offer details
-            Swal.fire('Bilgi', 'Teklif detaylarý gösterimi henüz implementlenmedi', 'info');
-        }
-
-        async function approveOffer(offerId) {
-            const result = await Swal.fire({
-                title: 'Teklifi Onayla',
-                text: 'Bu teklifi onaylamak istediðinizden emin misiniz?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Evet, Onayla',
-                cancelButtonText: 'Ýptal',
-                confirmButtonColor: '#28a745'
-            });
-
-            if (result.isConfirmed) {
-                try {
-                    const response = await fetch(`/Admin/ApproveOffer/${offerId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        }
-                    });
-
-                    if (response.ok) {
-                        Swal.fire('Baþarýlý', 'Teklif onaylandý', 'success')
-                            .then(() => window.location.reload());
-                    } else {
-                        Swal.fire('Hata', 'Teklif onaylanýrken bir hata oluþtu', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire('Hata', 'Bir hata oluþtu', 'error');
-                }
-            }
-        }
-
-        async function rejectOffer(offerId) {
-            const result = await Swal.fire({
-                title: 'Teklifi Reddet',
-                text: 'Bu teklifi reddetmek istediðinizden emin misiniz?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Evet, Reddet',
-                cancelButtonText: 'Ýptal',
-                confirmButtonColor: '#dc3545'
-            });
-
-            if (result.isConfirmed) {
-                try {
-                    const response = await fetch(`/Admin/RejectOffer/${offerId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        }
-                    });
-
-                    if (response.ok) {
-                        Swal.fire('Baþarýlý', 'Teklif reddedildi', 'success')
-                            .then(() => window.location.reload());
-                    } else {
-                        Swal.fire('Hata', 'Teklif reddedilirken bir hata oluþtu', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire('Hata', 'Bir hata oluþtu', 'error');
-                }
-            }
-        }
-
-        // Bulk actions
-        async function bulkApprove() {
-            const checkedBoxes = document.querySelectorAll('.offer-checkbox:checked');
-            const offerIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
-            
-            if (offerIds.length === 0) {
-                Swal.fire('Uyarý', 'Lütfen en az bir teklif seçin', 'warning');
-                return;
-            }
-
-            const result = await Swal.fire({
-                title: 'Toplu Onaylama',
-                text: `${offerIds.length} teklifi onaylamak istediðinizden emin misiniz?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Evet, Onayla',
-                cancelButtonText: 'Ýptal',
-                confirmButtonColor: '#28a745'
-            });
-
-            if (result.isConfirmed) {
-                // Implementation for bulk approve
-                Swal.fire('Bilgi', 'Toplu onaylama iþlemi henüz implementlenmedi', 'info');
-            }
-        }
-
-        async function bulkReject() {
-            const checkedBoxes = document.querySelectorAll('.offer-checkbox:checked');
-            const offerIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
-            
-            if (offerIds.length === 0) {
-                Swal.fire('Uyarý', 'Lütfen en az bir teklif seçin', 'warning');
-                return;
-            }
-
-            const result = await Swal.fire({
-                title: 'Toplu Reddetme',
-                text: `${offerIds.length} teklifi reddetmek istediðinizden emin misiniz?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Evet, Reddet',
-                cancelButtonText: 'Ýptal',
-                confirmButtonColor: '#dc3545'
-            });
-
-            if (result.isConfirmed) {
-                // Implementation for bulk reject
-                Swal.fire('Bilgi', 'Toplu reddetme iþlemi henüz implementlenmedi', 'info');
-            }
-        }
-
-        // Counter animation
+        // Auto-scroll to specific offer if offerId is provided in URL
         document.addEventListener('DOMContentLoaded', function() {
+            // Counter animasyonlarý
             const counters = document.querySelectorAll('.counter-value');
             
             counters.forEach(counter => {
@@ -611,7 +413,203 @@
                     counter.textContent = Math.floor(current);
                 }, 16);
             });
+
+            // Check for offerId parameter and scroll to the offer
+            const urlParams = new URLSearchParams(window.location.search);
+            const offerId = urlParams.get('offerId');
+            
+            if (offerId) {
+                // Wait a moment for the page to fully load
+                setTimeout(() => {
+                    const offerRow = document.querySelector(`tr[data-id="${offerId}"]`);
+                    if (offerRow) {
+                        // Highlight the offer row
+                        offerRow.classList.add('offer-highlight', 'pulse-animation');
+                        
+                        // Scroll to the offer
+                        offerRow.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                        
+                        // Remove the highlight after 5 seconds
+                        setTimeout(() => {
+                            offerRow.classList.remove('offer-highlight', 'pulse-animation');
+                        }, 5000);
+                        
+                        // Show a toast notification
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'Teklif Bulundu',
+                                text: `Teklif #${offerId} vurgulandý`,
+                                timer: 3000,
+                                showConfirmButton: false,
+                                position: 'top-end',
+                                toast: true
+                            });
+                        }
+                    }
+                }, 500);
+            }
         });
+
+        // Filtering
+        if (document.getElementById('searchInput')) {
+            document.getElementById('searchInput').addEventListener('input', filterOffers);
+        }
+        if (document.getElementById('statusFilter')) {
+            document.getElementById('statusFilter').addEventListener('change', filterOffers);
+        }
+        if (document.getElementById('supplierFilter')) {
+            document.getElementById('supplierFilter').addEventListener('change', filterOffers);
+        }
+        if (document.getElementById('dateFilter')) {
+            document.getElementById('dateFilter').addEventListener('change', filterOffers);
+        }
+
+        function filterOffers() {
+            const searchInput = document.getElementById('searchInput');
+            const statusFilter = document.getElementById('statusFilter');
+            const supplierFilter = document.getElementById('supplierFilter');
+            const dateFilter = document.getElementById('dateFilter');
+            
+            if (!searchInput || !statusFilter || !supplierFilter || !dateFilter) {
+                return;
+            }
+            
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusValue = statusFilter.value;
+            const supplierValue = supplierFilter.value;
+            const dateValue = dateFilter.value;
+            
+            const rows = document.querySelectorAll('.offer-row');
+            
+            rows.forEach(row => {
+                let show = true;
+                
+                if (searchTerm) {
+                    const text = row.textContent.toLowerCase();
+                    if (!text.includes(searchTerm)) {
+                        show = false;
+                    }
+                }
+                
+                if (statusValue && row.dataset.status !== statusValue) {
+                    show = false;
+                }
+                
+                if (supplierValue && row.dataset.supplier !== supplierValue) {
+                    show = false;
+                }
+                
+                if (dateValue && row.dataset.date !== dateValue) {
+                    show = false;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+
+        // Offer actions
+        async function viewOfferDetails(offerId) {
+            // Implementation for viewing offer details
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Bilgi', 'Teklif detaylarý gösterimi henüz implementlenmedi', 'info');
+            }
+        }
+
+        async function approveOffer(offerId) {
+            if (typeof Swal === 'undefined') {
+                if (confirm('Bu teklifi onaylamak istediðinizden emin misiniz?')) {
+                    submitOfferAction(offerId, 'approve');
+                }
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Teklifi Onayla',
+                text: 'Bu teklifi onaylamak istediðinizden emin misiniz?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Evet, Onayla',
+                cancelButtonText: 'Ýptal',
+                confirmButtonColor: '#28a745'
+            });
+
+            if (result.isConfirmed) {
+                submitOfferAction(offerId, 'approve');
+            }
+        }
+
+        async function rejectOffer(offerId) {
+            if (typeof Swal === 'undefined') {
+                if (confirm('Bu teklifi reddetmek istediðinizden emin misiniz?')) {
+                    submitOfferAction(offerId, 'reject');
+                }
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Teklifi Reddet',
+                text: 'Bu teklifi reddetmek istediðinizden emin misiniz?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Evet, Reddet',
+                cancelButtonText: 'Ýptal',
+                confirmButtonColor: '#dc3545'
+            });
+
+            if (result.isConfirmed) {
+                submitOfferAction(offerId, 'reject');
+            }
+        }
+
+        async function submitOfferAction(offerId, action) {
+            try {
+                const url = action === 'approve' ? `/Admin/ApproveOffer/${offerId}` : `/Admin/RejectOffer/${offerId}`;
+                const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': tokenElement ? tokenElement.value : ''
+                    }
+                });
+
+                if (response.ok) {
+                    const actionText = action === 'approve' ? 'onaylandý' : 'reddedildi';
+                    const message = `Teklif ${actionText} ve tedarikçiye bildirim gönderildi`;
+                    
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Baþarýlý', message, 'success')
+                            .then(() => window.location.reload());
+                    } else {
+                        alert(message);
+                        window.location.reload();
+                    }
+                } else {
+                    const actionText = action === 'approve' ? 'onaylanýrken' : 'reddedilirken';
+                    const errorMessage = `Teklif ${actionText} bir hata oluþtu`;
+                    
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Hata', errorMessage, 'error');
+                    } else {
+                        alert(errorMessage);
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMessage = 'Bir hata oluþtu';
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Hata', errorMessage, 'error');
+                } else {
+                    alert(errorMessage);
+                }
+            }
+        }
     </script>
 }
 

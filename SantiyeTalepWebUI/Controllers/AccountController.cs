@@ -9,11 +9,13 @@ namespace SantiyeTalepWebUI.Controllers
     public class AccountController : Controller
     {
         private readonly IAuthService _authService;
+        private readonly IApiService _apiService;
         private readonly ILogger<AccountController> _logger;
 
-        public AccountController(IAuthService authService, ILogger<AccountController> logger)
+        public AccountController(IAuthService authService, IApiService apiService, ILogger<AccountController> logger)
         {
             _authService = authService;
+            _apiService = apiService;
             _logger = logger;
         }
 
@@ -263,6 +265,112 @@ namespace SantiyeTalepWebUI.Controllers
 
             model.User = currentUser;
             return View("Profile", model);
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                var forgotPasswordDto = new ForgotPasswordDto
+                {
+                    Email = model.Email
+                };
+
+                var response = await _apiService.PostAsync<dynamic>("api/Auth/forgot-password", forgotPasswordDto);
+                
+                model.SuccessMessage = "Eğer bu e-posta adresi sistemde kayıtlıysa, şifre sıfırlama bağlantısı gönderilecektir.";
+                model.Email = string.Empty; // Form'u temizle
+                
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Forgot password error");
+                model.ErrorMessage = "Şifre sıfırlama işlemi sırasında bir hata oluştu";
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var model = new ResetPasswordViewModel
+            {
+                Token = token
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                var resetPasswordDto = new ResetPasswordDto
+                {
+                    Token = model.Token,
+                    NewPassword = model.NewPassword,
+                    ConfirmPassword = model.ConfirmPassword
+                };
+
+                var response = await _apiService.PostAsync<dynamic>("api/Auth/reset-password", resetPasswordDto);
+                
+                if (response != null)
+                {
+                    model.SuccessMessage = "Şifreniz başarıyla sıfırlandı. Şimdi giriş yapabilirsiniz.";
+                    model.NewPassword = string.Empty;
+                    model.ConfirmPassword = string.Empty;
+                    return View(model);
+                }
+
+                model.ErrorMessage = "Şifre sıfırlama işlemi sırasında bir hata oluştu";
+                return View(model);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Reset password error");
+                
+                // Parse error message from exception
+                var errorMessage = ex.Message;
+                if (errorMessage.StartsWith("400:"))
+                {
+                    errorMessage = errorMessage.Substring(5).Trim();
+                }
+                
+                model.ErrorMessage = errorMessage;
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Reset password error");
+                model.ErrorMessage = "Şifre sıfırlama işlemi sırasında bir hata oluştu";
+                return View(model);
+            }
         }
     }
 }

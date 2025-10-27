@@ -100,13 +100,14 @@ class NotificationChecker {
     handleSupplierNotifications(data) {
         const { newRequestCount, unreadNotificationCount, hasNewContent } = data;
         
-        if (hasNewContent) {
+        // Only proceed if there's actually new content worth notifying about
+        if (hasNewContent && (newRequestCount > 0 || unreadNotificationCount > 0)) {
             let message = '';
             let notificationTitle = 'Yeni Bildirim';
             let type = 'info';
             
             if (newRequestCount > 0 && unreadNotificationCount > 0) {
-                message = `${newRequestCount} yeni talep ve ${unreadNotificationCount} okunmam\u0131\u015f bildiriminiz var!`;
+                message = `${newRequestCount} yeni talep ve ${unreadNotificationCount} okunmamýþ bildiriminiz var!`;
                 notificationTitle = 'Yeni Talepler ve Bildirimler';
                 type = 'success';
             } else if (newRequestCount > 0) {
@@ -114,11 +115,12 @@ class NotificationChecker {
                 notificationTitle = 'Yeni Talepler';
                 type = 'success';
             } else if (unreadNotificationCount > 0) {
-                message = `${unreadNotificationCount} okunmam\u0131\u015f bildiriminiz var.`;
+                message = `${unreadNotificationCount} okunmamýþ bildiriminiz var.`;
                 notificationTitle = 'Yeni Bildirimler';
-                type = 'info';
+                type = 'success';
             }
             
+            // Only show notification if we have a meaningful message
             if (message) {
                 this.showNotification(notificationTitle, message, type, {
                     onClick: () => {
@@ -132,20 +134,21 @@ class NotificationChecker {
                         }
                     }
                 });
-                
-                // Update dashboard counters if elements exist
-                this.updateDashboardCounters({
-                    newRequests: newRequestCount,
-                    notifications: unreadNotificationCount
-                });
             }
         }
+        
+        // Always update dashboard counters regardless of notifications
+        this.updateDashboardCounters({
+            newRequests: newRequestCount || 0,
+            notifications: unreadNotificationCount || 0
+        });
     }
 
     handleAdminNotifications(data) {
         const { newRequestsToday, pendingSuppliersCount, pendingOffersCount, hasNewContent } = data;
         
-        if (hasNewContent) {
+        // Only proceed if there's actually new content worth notifying about
+        if (hasNewContent && (newRequestsToday > 0 || pendingSuppliersCount > 0 || pendingOffersCount > 0)) {
             let messages = [];
             
             if (newRequestsToday > 0) {
@@ -158,9 +161,10 @@ class NotificationChecker {
                 messages.push(`${pendingOffersCount} bekleyen teklif`);
             }
             
+            // Only show notification if we have actual content to notify about
             if (messages.length > 0) {
                 const message = messages.join(', ') + ' bulunuyor.';
-                this.showNotification('Yeni Aktiviteler', message, 'warning', {
+                this.showNotification('Yeni Bildirim', message, 'success', {
                     onClick: () => {
                         if (newRequestsToday > 0) {
                             window.location.href = '/Admin/Requests';
@@ -171,21 +175,21 @@ class NotificationChecker {
                         }
                     }
                 });
-                
-                // Update dashboard counters if elements exist
-                this.updateDashboardCounters({
-                    newRequests: newRequestsToday,
-                    pendingSuppliers: pendingSuppliersCount,
-                    pendingOffers: pendingOffersCount
-                });
             }
         }
+        
+        // Always update dashboard counters regardless of notifications
+        this.updateDashboardCounters({
+            newRequests: newRequestsToday || 0,
+            pendingSuppliers: pendingSuppliersCount || 0,
+            pendingOffers: pendingOffersCount || 0
+        });
     }
 
     showNotification(title, message, type = 'info', options = {}) {
         // Avoid spam notifications - don't show more than once per minute
         const now = Date.now();
-        if (now - this.lastNotificationTime < 60000) {
+        if (now - this.lastNotificationTime < 30000) {
             return;
         }
         this.lastNotificationTime = now;

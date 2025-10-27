@@ -45,6 +45,9 @@ namespace SantiyeTalepWebUI.Models.DTOs
         [Required(ErrorMessage = "En az bir marka seçilmelidir")]
         public List<int> BrandIds { get; set; } = new List<int>();
         
+        // Çalýþan seçimi (zorunlu deðil)
+        public List<int> EmployeeIds { get; set; } = new List<int>();
+        
         public bool IsActive { get; set; } = true;
     }
 

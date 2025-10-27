@@ -7,6 +7,166 @@
 <!-- Add notification checker styles -->
 @section Styles {
     <link href="~/css/notification-checker.css" rel="stylesheet" />
+    <style>
+        /* Notification Panel Styles */
+        .notification-panel {
+            display: none;
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+            .notification-panel.show {
+                display: block;
+                animation: slideDown 0.3s ease;
+            }
+
+        @@keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notification-panel-header {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .notification-panel-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f8f9fa;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+            .notification-item:hover {
+                background-color: #f8f9fa;
+            }
+
+            .notification-item:last-child {
+                border-bottom: none;
+            }
+
+            .notification-item.unread {
+                border-left: 4px solid #ffc107;
+            }
+
+                .notification-item.unread:hover {
+                    background-color: #ffeaa7;
+                }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .notification-type-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .notification-panel-footer {
+            padding: 1rem 1.5rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .notification-empty {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .notification-title-link {
+            color: #2385ba;
+            text-decoration: none;
+        }
+
+            .notification-title-link:hover {
+                color: #1d6fa3;
+                text-decoration: underline;
+            }
+
+        /* Product Search Modal Styles */
+        .product-search-results {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .product-search-loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .product-search-error {
+            text-align: center;
+            padding: 2rem;
+            color: #dc3545;
+        }
+
+        .product-search-empty {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .product-table {
+            margin-bottom: 0;
+        }
+
+            .product-table th {
+                background-color: #f8f9fa;
+                font-weight: 600;
+                border-bottom: 2px solid #dee2e6;
+            }
+
+            .product-table td {
+                vertical-align: middle;
+            }
+
+        .product-code {
+            font-weight: 600;
+            color: #556ee6;
+        }
+
+        .product-price {
+            font-weight: 600;
+        }
+    </style>
 }
 
 <div class="main-content" data-enable-notifications="true">
@@ -29,29 +189,78 @@
                 </div>
             </div>
             <!-- end page title -->
-            <!-- Bildirimler Kartı -->
-            <div class="row mb-3">
+            <!-- Notification Alert -->
+            <div class="row mb-4" id="notificationAlertRow" style="display: none;">
                 <div class="col-12">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-3">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-sm me-3">
-                                        <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
-                                            <i class="ri-notification-3-line fs-16"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-1">Son Bildirimler</h6>
-                                        <p class="text-muted mb-0">
-                                            <span id="unread-count" class="badge bg-danger me-2">0</span>
-                                            okunmamış bildirim
-                                        </p>
+                    <div class="alert alert-info alert-dismissible fade show" role="alert" id="notificationAlert">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="ri-notification-3-line fs-24 text-info"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="alert-heading mb-1">Yeni Bildirimleriniz Var!</h6>
+                                <p class="mb-0">
+                                    <span class="notifications-count" id="unread-count">0</span> adet okunmamış bildiriminiz bulunuyor.
+                                    <a href="javascript:void(0)" onclick="loadNotifications()" class="alert-link fw-semibold">Bildirimleri görüntülemek için tıklayın</a>.
+                                </p>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Panel (Initially Hidden) -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="notification-panel" id="notification-panel">
+                        <div class="notification-panel-header">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <i class="ri-notification-3-line fs-20 text-primary me-2"></i>
+                                <h5 class="mb-0">Bildirimlerim</h5>
+                                <span class="badge bg-danger ms-2 notifications-count" id="panel-unread-count" style="display: none;">0</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" id="markAllReadBtn" onclick="markAllAsRead()" style="display: none;">
+                                    <i class="ri-check-double-line"></i> Tümünü Okundu İşaretle
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleNotifications()">
+                                    <i class="ri-close-line"></i> Kapat
+                                </button>
+                            </div>
+                        </div>
+                        <div class="notification-panel-body">
+                            <div id="notifications-list">
+                                <!-- Bildirimler buraya yüklenecek -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Search Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-lg-10 col-md-9">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-primary text-white">
+                                            <i class="ri-search-line"></i>
+                                        </span>
+                                        <input type="text"
+                                               class="form-control"
+                                               id="productSearchInput"
+                                               placeholder="Ürün adı veya kodu ile arama yapın (ör: nya, vida, boya...)"
+                                               onkeypress="handleProductSearchKeyPress(event)" />
                                     </div>
                                 </div>
-                                <div>
-                                    <button type="button" class="btn btn-sm btn-primary" onclick="loadNotifications()">
-                                        <i class="ri-eye-line me-1"></i>Tümünü Gör
+                                <div class="col-lg-2 col-md-3 mt-2 mt-md-0">
+                                    <button type="button"
+                                            class="btn btn-primary w-100"
+                                            onclick="searchProducts()">
+                                        <i class="ri-search-2-line me-1"></i> Ara
                                     </button>
                                 </div>
                             </div>
@@ -60,22 +269,65 @@
                 </div>
             </div>
 
-            <!-- Bildirim Listesi (Gizli) -->
-            <div class="row" id="notification-panel" style="display: none;">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="ri-notification-3-line me-2"></i>Bildirimler
-                                <button type="button" class="btn btn-sm btn-ghost-secondary float-end" onclick="toggleNotifications()">
-                                    <i class="ri-close-line"></i>
-                                </button>
+            <!-- Product Search Results Modal -->
+            <div class="modal fade" id="productSearchModal" tabindex="-1" aria-labelledby="productSearchModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="productSearchModalLabel" style="color:white">
+                                <i class="ri-search-line me-2"></i>Ürün Arama Sonuçları
                             </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="card-body p-0">
-                            <div id="notifications-list" class="list-group list-group-flush">
-                                <!-- Bildirimler buraya yüklenecek -->
+                        <div class="modal-body">
+                            <!-- Loading State -->
+                            <div id="productSearchLoading" class="product-search-loading" style="display: none;">
+                                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                                <p class="mt-3 text-muted">Ürünler aranıyor...</p>
                             </div>
+
+                            <!-- Error State -->
+                            <div id="productSearchError" class="product-search-error" style="display: none;">
+                                <i class="ri-error-warning-line display-4"></i>
+                                <h5 class="mt-3">Bir Hata Oluştu</h5>
+                                <p id="productSearchErrorMessage" class="text-muted"></p>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div id="productSearchEmpty" class="product-search-empty" style="display: none;">
+                                <i class="ri-inbox-line display-4"></i>
+                                <h5 class="mt-3">Ürün Bulunamadı</h5>
+                                <p class="text-muted">Aradığınız kriterlere uygun ürün bulunamadı. Lütfen farklı bir arama terimi deneyin.</p>
+                            </div>
+
+                            <!-- Results State -->
+                            <div id="productSearchResults" class="product-search-results" style="display: none;">
+                                <div class="alert alert-info mb-3">
+                                    <i class="ri-information-line me-2"></i>
+                                    <strong id="productResultCount">0</strong> ürün bulundu
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover product-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 25%;">Ürün Kodu</th>
+                                                <th style="width: 60%;">Ürün Açıklaması</th>
+                                                <th style="width: 15%;" class="text-end">Liste Fiyatı</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="productSearchTableBody">
+                                            <!-- Results will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="ri-close-line me-1"></i> Kapat
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -108,7 +360,7 @@
                                                 <i class="ri-timer-line display-6 text-muted"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <h2 class="mb-0"><span class="counter-value" data-target="@Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)">@Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open)</span></h2>
+                                                <h2 class="mb-0"><span class="counter-value" data-target="@(Model.RecentRequests?.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open) ?? 0)">@(Model.RecentRequests?.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open) ?? 0)</span></h2>
                                             </div>
                                         </div>
                                     </div>
@@ -121,7 +373,7 @@
                                                 <i class="ri-checkbox-circle-line display-6 text-muted"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <h2 class="mb-0"><span class="counter-value" data-target="@Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed)">@Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed)</span></h2>
+                                                <h2 class="mb-0"><span class="counter-value" data-target="@(Model.RecentRequests?.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed) ?? 0)">@(Model.RecentRequests?.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed) ?? 0)</span></h2>
                                             </div>
                                         </div>
                                     </div>
@@ -134,7 +386,7 @@
                                                 <i class="ri-building-2-line display-6 text-muted"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <h2 class="mb-0"><span class="counter-value" data-target="@Model.Sites.Count(s => s.IsActive)">@Model.Sites.Count(s => s.IsActive)</span></h2>
+                                                <h2 class="mb-0"><span class="counter-value" data-target="@(Model.Sites?.Count(s => s.IsActive) ?? 0)">@(Model.Sites?.Count(s => s.IsActive) ?? 0)</span></h2>
                                             </div>
                                         </div>
                                     </div>
@@ -159,99 +411,175 @@
             </div><!-- end row -->
             <!-- Charts Row -->
             <div class="row">
-                <div class="col-xxl-4 col-md-12">
-                <div class="row">
-                    <div class="col-xxl-12 col-md-12">
-                        <div class="card">
-                            <div class="card-header align-items-center d-flex">
-                                <h4 class="card-title mb-0 flex-grow-1">Talep Durumu Dağılımı</h4>
-                                <div class="flex-shrink-0">
-                                    <div class="dropdown card-header-dropdown">
-                                        <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span class="fw-semibold text-uppercase fs-12">Filtre: </span><span class="text-muted">Bu Ay<i class="mdi mdi-chevron-down ms-1"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Bu Hafta</a>
-                                            <a class="dropdown-item" href="#">Bu Ay</a>
-                                            <a class="dropdown-item" href="#">Son 3 Ay</a>
-                                            <a class="dropdown-item" href="#">Bu Yıl</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div><!-- end card header -->
-                            <div class="card-body pb-0">
-                                <div id="request-status-chart" data-colors='["--vz-warning", "--vz-success", "--vz-danger", "--vz-info"]' class="apex-charts" dir="ltr"></div>
-                            </div>
-                        </div><!-- end card -->
-                    </div><!-- end col -->
-                    <div class="col-xxl-12 col-md-12">
-                        <div class="card card-height-100">
-                            <div class="card-header align-items-center d-flex">
-                                <h4 class="card-title mb-0 flex-grow-1">Maliyet Analizi</h4>
-                                <div class="flex-shrink-0">
-                                    <div class="dropdown card-header-dropdown">
-                                        <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span class="fw-semibold text-uppercase fs-12">Dönem: </span><span class="text-muted">Bu Yıl<i class="mdi mdi-chevron-down ms-1"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Bu Ay</a>
-                                            <a class="dropdown-item" href="#">Son 3 Ay</a>
-                                            <a class="dropdown-item" href="#">Son 6 Ay</a>
-                                            <a class="dropdown-item" href="#">Bu Yıl</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div><!-- end card header -->
-                            <div class="card-body px-0">
-                                <ul class="list-inline main-chart text-center mb-0">
-                                    <li class="list-inline-item chart-border-left me-0 border-0">
-                                        <h4 class="text-primary">₺@(Model.RecentRequests.Where(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed).Sum(r => (decimal?)r.EstimatedCost ?? 0).ToString("N0")) <span class="text-muted d-inline-block fs-13 align-middle ms-2">Toplam Maliyet</span></h4>
-                                    </li>
-                                    <li class="list-inline-item chart-border-left me-0">
-                                        <h4>
-                                            ₺@(Model.RecentRequests.Where(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed).Sum(r => (decimal?)r.EstimatedCost ?? 0).ToString("N0"))<span class="text-muted d-inline-block fs-13 align-middle ms-2">Onaylanan</span>
-                                        </h4>
-                                    </li>
-                                    <li class="list-inline-item chart-border-left me-0">
-                                        <h4><span data-plugin="counterup">@(Model.Stats.TotalRequests > 0 ? Math.Round((double)Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed) / Model.Stats.TotalRequests * 100, 0) : 0)</span>%<span class="text-muted d-inline-block fs-13 align-middle ms-2">Verimlilik</span></h4>
-                                    </li>
-                                </ul>
-
-                                <div id="cost-analysis-chart" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
-                            </div>
-                        </div><!-- end card -->
-                    </div><!-- end col -->
-                </div>
-                </div>
-                <div class="col-xxl-8 col-md-12">
-                    <div class="card card-height-100">
-                        <div class="card-header align-items-center d-flex">
+                <div class="col-xxl-12 col-md-12">
+                    <div class="card">
+                        <div class="card-header border-0 align-items-center d-flex">
                             <h4 class="card-title mb-0 flex-grow-1">Şantiye Performansı</h4>
-                            <div class="flex-shrink-0">
-                                <div class="dropdown card-header-dropdown">
-                                    <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <span class="fw-semibold text-uppercase fs-12">Sıralama: </span><span class="text-muted">Aylık<i class="mdi mdi-chevron-down ms-1"></i></span>
-                                    </a>
-                                    <div class="dropdown-menu dropdown-menu-end">
-                                        <a class="dropdown-item" href="#">Günlük</a>
-                                        <a class="dropdown-item" href="#">Haftalık</a>
-                                        <a class="dropdown-item" href="#">Aylık</a>
-                                        <a class="dropdown-item" href="#">Yıllık</a>
-                                    </div>
-                                </div>
+                            <div>
+                                <button type="button" class="btn btn-soft-primary btn-sm" onclick="updateSitePerformancePeriod('1month')" id="btn-period-1month">
+                                    1 AY
+                                </button>
+                                <button type="button" class="btn btn-soft-secondary btn-sm" onclick="updateSitePerformancePeriod('3months')" id="btn-period-3months">
+                                    3 AY
+                                </button>
+                                <button type="button" class="btn btn-soft-secondary btn-sm" onclick="updateSitePerformancePeriod('6months')" id="btn-period-6months">
+                                    6 AY
+                                </button>
+                                <button type="button" class="btn btn-soft-secondary btn-sm" onclick="updateSitePerformancePeriod('12months')" id="btn-period-12months">
+                                    1 YIL
+                                </button>
                             </div>
                         </div><!-- end card header -->
-                        <div class="card-body pb-0">
-                            <div id="site-performance-chart" data-colors='["--vz-primary", "--vz-success", "--vz-warning"]' class="apex-charts" dir="ltr"></div>
+
+                        <div class="card-header p-0 border-0 bg-light-subtle">
+                            <div class="row g-0 text-center">
+                                <div class="col-6 col-sm-3">
+                                    <div class="p-3 border border-dashed border-start-0">
+                                        <h5 class="mb-1"><span class="counter-value" data-target="0" id="stat-total-sites">0</span></h5>
+                                        <p class="text-muted mb-0">Toplam Şantiye</p>
+                                    </div>
+                                </div>
+                                <!--end col-->
+                                <div class="col-6 col-sm-3">
+                                    <div class="p-3 border border-dashed border-start-0">
+                                        <h5 class="mb-1"><span class="counter-value" data-target="0" id="stat-total-requests">0</span></h5>
+                                        <p class="text-muted mb-0">Toplam Talep</p>
+                                    </div>
+                                </div>
+                                <!--end col-->
+                                <div class="col-6 col-sm-3">
+                                    <div class="p-3 border border-dashed border-start-0">
+                                        <h5 class="mb-1"><span class="counter-value" data-target="0" id="stat-total-employees">0</span></h5>
+                                        <p class="text-muted mb-0">Toplam Çalışan</p>
+                                    </div>
+                                </div>
+                                <!--end col-->
+                                <div class="col-6 col-sm-3">
+                                    <div class="p-3 border border-dashed border-start-0 border-end-0">
+                                        <h5 class="mb-1 text-success"><span class="counter-value" data-target="0" id="stat-completed-requests">0</span></h5>
+                                        <p class="text-muted mb-0">Tamamlanan Talep</p>
+                                    </div>
+                                </div>
+                                <!--end col-->
+                            </div>
+                        </div><!-- end card header -->
+
+                        <div class="card-body p-0 pb-2">
+                            <div class="d-flex justify-content-between align-items-center px-3 pt-3 pb-2">
+                                <div>
+                                    <button type="button" class="btn btn-soft-secondary btn-sm" onclick="updateSitePerformanceView('requests')" id="btn-requests">
+                                        <i class="ri-file-list-line me-1"></i>Talepler
+                                    </button>
+                                    <button type="button" class="btn btn-soft-secondary btn-sm" onclick="updateSitePerformanceView('employees')" id="btn-employees">
+                                        <i class="ri-team-line me-1"></i>Çalışanlar
+                                    </button>
+                                    <button type="button" class="btn btn-soft-primary btn-sm" onclick="updateSitePerformanceView('comparison')" id="btn-comparison">
+                                        <i class="ri-bar-chart-grouped-line me-1"></i>Karşılaştırma
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <div id="site-performance-chart" data-colors='["--vz-primary", "--vz-success", "--vz-warning"]' dir="ltr" class="apex-charts"></div>
+                            </div>
                         </div><!-- end card body -->
                     </div><!-- end card -->
                 </div><!-- end col -->
-
-
             </div><!-- end row -->
             <!-- Data Tables Row -->
             <div class="row">
-                <div class="col-xl-7">
+                <div class="col-6">
+                    <div class="row">
+                        <div class="col-xxl-12 col-md-12">
+                            <div class="card">
+                                <div class="card-header align-items-center d-flex">
+                                    <h4 class="card-title mb-0 flex-grow-1">Talep Durumu Dağılımı</h4>
+                                    <div class="flex-shrink-0">
+                                        <div class="dropdown card-header-dropdown">
+                                            <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <span class="fw-semibold text-uppercase fs-12">Filtre: </span><span class="text-muted" id="statusChartFilterText">Bu Ay<i class="mdi mdi-chevron-down ms-1"></i></span>
+                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-end">
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="updateRequestStatusChart('today')">Bugün</a>
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="updateRequestStatusChart('week')">Bu Hafta</a>
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="updateRequestStatusChart('month')">Bu Ay</a>
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="updateRequestStatusChart('3months')">Son 3 Ay</a>
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="updateRequestStatusChart('year')">Bu Yıl</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div><!-- end card header -->
+                                <div class="card-body pb-0">
+                                    <div id="request-status-chart" data-colors='["--vz-warning", "--vz-primary", "--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
+                                </div>
+                            </div><!-- end card -->
+                        </div><!-- end col -->
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="card card-height-100">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Aktif Şantiyeler</h4>
+                            <div class="flex-shrink-0">
+                                <select class="form-select form-select-sm" aria-label="Şantiye Filtresi">
+                                    <option selected="">Tüm Şantiyeler</option>
+                                    <option value="1">Aktif Projeler</option>
+                                    <option value="2">Tamamlanan Projeler</option>
+                                    <option value="3">Bekleyen Projeler</option>
+                                </select>
+                            </div>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-nowrap align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" style="width: 50%;">Şantiye Adı</th>
+                                            <th scope="col" style="width: 30%;">Çalışan Sayısı</th>
+                                            <th scope="col" style="width: 20%;">Durum</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @if (Model.Sites?.Any() == true)
+                                        {
+                                            @foreach (var site in Model.Sites.Take(5))
+                                            {
+                                                <tr>
+                                                    <td>@site.Name</td>
+                                                    <td>
+                                                        <span class="badge bg-primary">@(site.Employees?.Count ?? 0) çalışan</span>
+                                                    </td>
+                                                    <td>
+                                                        @if (site.IsActive)
+                                                        {
+                                                            <span class="badge bg-success">Aktif</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-secondary">Pasif</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted">Henüz şantiye bulunmuyor</td>
+                                            </tr>
+                                        }
+                                    </tbody><!-- end tbody -->
+                                </table><!-- end table -->
+                            </div><!-- end table responsive -->
+                        </div><!-- end card body -->
+                    </div><!-- end card -->
+                </div><!-- end col -->
+            </div><!-- end row -->
+            <!-- Employee List Row -->
+            <div class="row">
+                <div class="col-6">
                     <div class="card">
                         <div class="card-header align-items-center d-flex">
                             <h4 class="card-title mb-0 flex-grow-1">Son Talepler</h4>
@@ -332,71 +660,7 @@
                         </div><!-- end card body -->
                     </div><!-- end card -->
                 </div><!-- end col -->
-
-                <div class="col-xl-5">
-                    <div class="card card-height-100">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Aktif Şantiyeler</h4>
-                            <div class="flex-shrink-0">
-                                <select class="form-select form-select-sm" aria-label="Şantiye Filtresi">
-                                    <option selected="">Tüm Şantiyeler</option>
-                                    <option value="1">Aktif Projeler</option>
-                                    <option value="2">Tamamlanan Projeler</option>
-                                    <option value="3">Bekleyen Projeler</option>
-                                </select>
-                            </div>
-                        </div><!-- end card header -->
-
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-nowrap align-middle mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" style="width: 50%;">Şantiye Adı</th>
-                                            <th scope="col" style="width: 30%;">Çalışan Sayısı</th>
-                                            <th scope="col" style="width: 20%;">Durum</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        @if (Model.Sites?.Any() == true)
-                                        {
-                                            @foreach (var site in Model.Sites.Take(5))
-                                            {
-                                                <tr>
-                                                    <td>@site.Name</td>
-                                                    <td>
-                                                        <span class="badge bg-primary">@(site.Employees?.Count ?? 0) çalışan</span>
-                                                    </td>
-                                                    <td>
-                                                        @if (site.IsActive)
-                                                        {
-                                                            <span class="badge bg-success">Aktif</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="badge bg-secondary">Pasif</span>
-                                                        }
-                                                    </td>
-                                                </tr>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <tr>
-                                                <td colspan="3" class="text-center text-muted">Henüz şantiye bulunmuyor</td>
-                                            </tr>
-                                        }
-                                    </tbody><!-- end tbody -->
-                                </table><!-- end table -->
-                            </div><!-- end table responsive -->
-                        </div><!-- end card body -->
-                    </div><!-- end card -->
-                </div><!-- end col -->
-            </div><!-- end row -->
-            <!-- Employee List Row -->
-            <div class="row">
-                <div class="col-12">
+                <div class="col-6">
                     <div class="card">
                         <div class="card-header align-items-center d-flex">
                             <h4 class="card-title mb-0 flex-grow-1">Son Eklenen Çalışanlar</h4>
@@ -483,313 +747,705 @@
     </footer>
 </div>
 <!-- end main content-->
+<!-- Real-time status indicator -->
+<div class="realtime-status" id="realtimeStatus">
+    <div class="status-dot"></div>
+    <span>Canlı takip aktif</span>
+</div>
+
 <!-- Bildirim JavaScript'leri -->
 <script>
     let notifications = [];
+    let requestStatusChart = null; // Global değişken olarak tanımlayalım
+
+    // ========================================
+    // PRODUCT SEARCH FUNCTIONS
+    // ========================================
+
+    // Handle Enter key press in search input
+    function handleProductSearchKeyPress(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            searchProducts();
+        }
+    }
+
+    // Search products from external API
+       async function searchProducts() {
+        const searchInput = document.getElementById('productSearchInput');
+        const searchQuery = searchInput.value.trim();
+
+        // Validate input
+        if (!searchQuery || searchQuery.length < 2) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Geçersiz Arama',
+                text: 'Lütfen en az 2 karakter uzunluğunda bir arama terimi girin.',
+                confirmButtonText: 'Tamam'
+            });
+            return;
+        }
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('productSearchModal'));
+        modal.show();
+
+        // Show loading state
+        showProductSearchState('loading');
+
+        try {
+            // Call external API
+            const apiUrl = `https://www.teklifalani.com/api/searchapi?query=${encodeURIComponent(searchQuery)}`;
+            console.log('Searching products:', apiUrl);
+
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // ✅ DÜZELTME: Önce JSON'u parse et, sonra data'ya eriş
+            const result = await response.json();
+            console.log('API Response:', result);
+
+            // ✅ DÜZELTME: result.data'yı kontrol et
+            const data = result.data;
+
+            // Check if data is valid
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                showProductSearchState('empty');
+                return;
+            }
+
+            // Display results
+            displayProductResults(data);
+
+        } catch (error) {
+            console.error('Product search error:', error);
+            showProductSearchState('error', error.message);
+        }
+    }
+
+    // Show different states of product search
+    function showProductSearchState(state, errorMessage = '') {
+        const loading = document.getElementById('productSearchLoading');
+        const error = document.getElementById('productSearchError');
+        const empty = document.getElementById('productSearchEmpty');
+        const results = document.getElementById('productSearchResults');
+
+        // Hide all states
+        loading.style.display = 'none';
+        error.style.display = 'none';
+        empty.style.display = 'none';
+        results.style.display = 'none';
+
+        // Show requested state
+        switch(state) {
+            case 'loading':
+                loading.style.display = 'block';
+                break;
+            case 'error':
+                error.style.display = 'block';
+                document.getElementById('productSearchErrorMessage').textContent =
+                    errorMessage || 'Ürün arama sırasında bir hata oluştu. Lütfen tekrar deneyin.';
+                break;
+            case 'empty':
+                empty.style.display = 'block';
+                break;
+            case 'results':
+                results.style.display = 'block';
+                break;
+        }
+    }
+
+    // Display product search results
+        // Display product search results
+    function displayProductResults(products) {
+        const tableBody = document.getElementById('productSearchTableBody');
+        const resultCount = document.getElementById('productResultCount');
+
+        // Update result count
+        resultCount.textContent = products.length;
+
+        // Clear existing results
+        tableBody.innerHTML = '';
+
+        // Populate table with results
+        products.forEach((product, index) => {
+            const row = document.createElement('tr');
+
+            // Extract product data with fallbacks
+            const productCode = product.productCode || product.code || product.id || '-';
+            const productDescription = product.description || product.name || product.productName || 'Açıklama yok';
+            const listPrice = product.listPrice || product.price || product.unitPrice || 0;
+            const currency = product.currency || '₺'; // API'den gelen currency
+            const brandName = product.brand?.name || '-';
+
+            // ✅ Format price with currency from API
+            let formattedPrice;
+
+            // Eğer currency TL/TRY sembolleri içeriyorsa
+            if (currency === '₺' || currency === 'TRY' || currency === 'TL') {
+                formattedPrice = new Intl.NumberFormat('tr-TR', {
+                    style: 'currency',
+                    currency: 'TRY',
+                    minimumFractionDigits: 2
+                }).format(listPrice);
+            }
+            // Eğer USD ise
+            else if (currency === '$' || currency === 'USD') {
+                formattedPrice = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2
+                }).format(listPrice);
+            }
+            // Eğer EUR ise
+            else if (currency === '€' || currency === 'EUR') {
+                formattedPrice = new Intl.NumberFormat('de-DE', {
+                    style: 'currency',
+                    currency: 'EUR',
+                    minimumFractionDigits: 2
+                }).format(listPrice);
+            }
+            // Diğer durumlar için currency sembolünü direkt kullan
+            else {
+                formattedPrice = `${listPrice.toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })} ${currency}`;
+            }
+
+            // ✅ Old price formatting (eğer varsa)
+           
+            if (product.oldPrice && product.oldPrice > listPrice) {
+                let formattedOldPrice;
+
+                if (currency === '₺' || currency === 'TRY' || currency === 'TL') {
+                    formattedOldPrice = new Intl.NumberFormat('tr-TR', {
+                        style: 'currency',
+                        currency: 'TRY',
+                        minimumFractionDigits: 2
+                    }).format(product.oldPrice);
+                } else if (currency === '$' || currency === 'USD') {
+                    formattedOldPrice = new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                        minimumFractionDigits: 2
+                    }).format(product.oldPrice);
+                } else if (currency === '€' || currency === 'EUR') {
+                    formattedOldPrice = new Intl.NumberFormat('de-DE', {
+                        style: 'currency',
+                        currency: 'EUR',
+                        minimumFractionDigits: 2
+                    }).format(product.oldPrice);
+                } else if (currency === '£' || currency === 'GBP') {
+                formattedOldPrice = new Intl.NumberFormat('en-GB', {
+                    style: 'currency',
+                    currency: 'GBP',
+                    minimumFractionDigits: 2
+                }).format(product.oldPrice);
+                } else {
+                    formattedOldPrice = `${product.oldPrice.toLocaleString('tr-TR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })} ${currency}`;
+                }                
+            }
+
+            // ✅ JSON.stringify için özel karakterleri escape et
+            const productJson = JSON.stringify(product).replace(/'/g, "\\'");
+
+            row.innerHTML = `
+                <td>
+                    <div>
+                        <span class="product-code fw-semibold">${productCode}</span>
+                        ${brandName !== '-' ? `<br><small class="text-muted"><i class="ri-building-line me-1"></i>${brandName}</small>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="text-truncate" style="max-width: 500px;" title="${productDescription}">
+                        ${productDescription}
+                    </div>                   
+                </td>
+                <td class="text-end">                   
+                    <div class="product-price fw-semibold fs-15">${formattedPrice}</div>
+                </td>             
+            `;
+
+            tableBody.appendChild(row);
+        });
+
+        // Show results state
+        showProductSearchState('results');
+    }
+
+    // ========================================
+    // EXISTING FUNCTIONS
+    // ========================================
 
     // Sayfa yüklendiğinde bildirimleri kontrol et
     document.addEventListener('DOMContentLoaded', function() {
+        // Counter animation
+        const counters = document.querySelectorAll('.counter-value');
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            if (!isNaN(target)) {
+                const start = 0;
+                const duration = 1000;
+                const step = (target - start) / (duration / 16);
+
+                let current = start;
+                const timer = setInterval(() => {
+                    current += step;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    counter.textContent = Math.floor(current);
+                }, 16);
+            }
+        });
+
+        // Initialize notifications
         loadNotificationSummary();
         // Her 30 saniyede bir bildirim özetini güncelle
         setInterval(loadNotificationSummary, 30000);
+
+        // Initialize charts with safety checks
+        initializeCharts();
+
+        // Show real-time status indicator after page load
+        setTimeout(() => {
+            const statusIndicator = document.getElementById('realtimeStatus');
+            if (statusIndicator) {
+                statusIndicator.classList.add('active');
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    statusIndicator.classList.remove('active');
+                }, 3000);
+            }
+        }, 2000);
     });
 
-    // Bildirim özetini yükle
-    function loadNotificationSummary() {
-        fetch('/Admin/GetNotificationSummary')
+    // Initialize charts with error handling
+    function initializeCharts() {
+        try {
+            // Request Status Chart
+            const requestStatusElement = document.querySelector("#request-status-chart");
+            if (requestStatusElement) {
+                var openCount = @(Model.RecentRequests?.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open) ?? 0);
+                var inProgressCount = @(Model.RecentRequests?.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.InProgress) ?? 0);
+                var completedCount = @(Model.RecentRequests?.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed) ?? 0);
+                var cancelledCount = @(Model.RecentRequests?.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Cancelled) ?? 0);
+
+                var requestStatusOptions = {
+                    series: [openCount, inProgressCount, completedCount, cancelledCount],
+                    chart: {
+                        type: 'donut',
+                        height: 230
+                    },
+                    labels: ['Açık', 'İşlemde', 'Tamamlanan', 'İptal'],
+                    colors: ['#f1b44c', '#556ee6', '#34c38f', '#f46a6a'],
+                    legend: {
+                        position: 'bottom'
+                    }
+                };
+                requestStatusChart = new ApexCharts(requestStatusElement, requestStatusOptions);
+                requestStatusChart.render();
+            }
+
+            // Site Performance Chart - Load with default period
+            loadSitePerformanceChart('1month');
+        } catch (error) {
+            console.error('Chart initialization error:', error);
+        }
+    }
+
+    // Talep Durumu grafiğini güncelle
+    function updateRequestStatusChart(period) {
+        // Filtre metnini güncelle
+        const filterTextMap = {
+            'today': 'Bugün',
+            'week': 'Bu Hafta',
+            'month': 'Bu Ay',
+            '3months': 'Son 3 Ay',
+            'year': 'Bu Yıl'
+        };
+
+        const filterTextElement = document.getElementById('statusChartFilterText');
+        if (filterTextElement) {
+            filterTextElement.innerHTML = filterTextMap[period] + '<i class="mdi mdi-chevron-down ms-1"></i>';
+        }
+
+        // API'den filtrelenmiş veriyi çek
+        fetch(`/Admin/GetRequestStatusData?period=${period}`)
             .then(response => response.json())
             .then(data => {
-                if (data.success && data.summary) {
-                    document.getElementById('unread-count').textContent = data.summary.unreadCount;
+                if (data.success && requestStatusChart) {
+                    // Grafiği güncelle (4 durum: Açık, İşlemde, Tamamlanan, İptal)
+                    requestStatusChart.updateSeries([
 
-                    // Eğer okunmamış bildirim varsa renk değiştir
-                    const badge = document.getElementById('unread-count');
-                    if (data.summary.unreadCount > 0) {
-                        badge.className = 'badge bg-danger me-2';
-                        badge.style.display = 'inline';
-                    } else {
-                        badge.className = 'badge bg-success me-2';
-                        badge.textContent = '0';
-                        badge.style.display = 'inline';
-                    }
+                        data.openCount || 0,
+                        data.inProgressCount || 0,
+                        data.completedCount || 0,
+                        data.cancelledCount || 0
+                    ]);
+                } else if (!data.success) {
+                    console.error('Grafik verileri alınamadı:', data.message);
                 }
             })
             .catch(error => {
-                console.error('Bildirim özeti yüklenirken hata:', error);
+                console.error('Grafik güncellenirken hata:', error);
             });
     }
 
-    // Bildirimleri yükle ve göster
-    function loadNotifications() {
-        fetch('/Admin/GetNotifications')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    notifications = data.notifications;
-                    displayNotifications();
+    // ========================================
+    // SITE PERFORMANCE CHART FUNCTIONS
+    // ========================================
 
-                    // Eğer hiç okunmamış bildirim yoksa paneli kapalı tut
-                    const unreadCount = notifications.filter(n => !n.isRead).length;
-                    if (unreadCount > 0) {
-                        toggleNotifications();
-                    } else {
-                        // Panel zaten açıksa kapat
-                        const panel = document.getElementById('notification-panel');
-                        if (panel.style.display === 'block') {
-                            toggleNotifications();
-                        }
-
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'Bilgi',
-                            text: 'Yeni bildirim bulunmuyor',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Bildirimler yüklenirken hata:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Hata!',
-                    text: 'Bildirimler yüklenirken bir hata oluştu',
-                    timer: 3000
-                });
-            });
-    }
-
-    // Bildirimleri listele
-    function displayNotifications() {
-        const container = document.getElementById('notifications-list');
-        container.innerHTML = '';
-
-        // Sadece okunmamış bildirimleri göster
-        const unreadNotifications = notifications.filter(n => !n.isRead);
-
-        if (unreadNotifications.length === 0) {
-            container.innerHTML = `
-                <div class="list-group-item text-center py-4">
-                    <i class="ri-notification-off-line display-4 text-muted mb-2"></i>
-                    <p class="text-muted mb-0">Yeni bildirim bulunmuyor</p>
-                    <small class="text-muted">Tüm bildirimler okundu</small>
-                </div>
-            `;
+    // Load Site Performance Chart Data
+    function loadSitePerformanceChart(period = '1month') {
+        const chartElement = document.querySelector("#site-performance-chart");
+        if (!chartElement) {
+            console.error('Chart element not found');
             return;
         }
 
-        // Okunmamış bildirimleri göster
-        unreadNotifications.forEach(notification => {
-            const notificationHtml = createNotificationHtml(notification);
-            container.appendChild(notificationHtml);
-        });
+        // Show loading state
+        chartElement.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Yükleniyor...</p></div>';
 
-        // Eğer okunmuş bildirimler de varsa, alt kısımda bilgi ver
-        const readCount = notifications.length - unreadNotifications.length;
-        if (readCount > 0) {
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'list-group-item text-center py-2 bg-light border-top';
-            infoDiv.innerHTML = `
-                <small class="text-muted">
-                    <i class="ri-check-double-line me-1"></i>
-                    ${readCount} bildirim okundu olarak işaretlendi
-                </small>
-            `;
-            container.appendChild(infoDiv);
-        }
-    }
+        fetch(`/Admin/GetSitePerformanceData?period=${period}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data && result.data.data) {
+                    const performanceData = result.data.data;
 
-    // Bildirim HTML'i oluştur
-    function createNotificationHtml(notification) {
-        const div = document.createElement('div');
-        div.className = `list-group-item list-group-item-action ${!notification.isRead ? 'bg-light' : ''}`;
+                    // Store data globally
+                    window.sitePerformanceData = performanceData;
+                    window.currentPeriod = period;
 
-        const typeIcon = getNotificationIcon(notification.type);
-        const typeColor = getNotificationColor(notification.type);
-        const timeAgo = getTimeAgo(notification.createdDate);
+                    // Update statistics
+                    updateSitePerformanceStats(performanceData);
 
-        div.innerHTML = `
-            <div class="d-flex w-100 justify-content-between align-items-start">
-                <div class="d-flex">
-                    <div class="avatar-xs me-3">
-                        <div class="avatar-title ${typeColor} rounded-circle">
-                            <i class="${typeIcon} fs-14"></i>
+                    // Render chart
+                    renderSitePerformanceChart(performanceData);
+
+                    // Set active buttons
+                    setActivePeriodButton(period);
+                    setActiveViewButton('comparison');
+                } else {
+                    chartElement.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="ri-building-2-line display-4 text-muted"></i>
+                            <p class="text-muted mt-2">Şantiye performans verisi bulunamadı</p>
                         </div>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1 ${!notification.isRead ? 'fw-bold' : ''}">${notification.title}</h6>
-                        <p class="mb-1 text-muted">${notification.message}</p>
-                        <small class="text-muted">${timeAgo}</small>
-                        ${!notification.isRead ? '<span class="badge bg-primary ms-2">Yeni</span>' : ''}}
-                    </div>
-                </div>
-                <div class="d-flex gap-1">
-                    ${!notification.isRead ? `
-                        <button class="btn btn-sm btn-outline-success" onclick="markAsRead(${notification.id})" title="Okundu İşaretle">
-                            <i class="ri-check-line"></i> Okundu
-                        </button>` : ''}
-                    <button class="btn btn-sm btn-outline-primary" onclick="goToRelatedPage(${notification.type}, ${notification.requestId}, ${notification.offerId}, ${notification.supplierId}, ${notification.id})" title="İlgili Sayfaya Git">
-                        <i class="ri-external-link-line"></i> İlgili Sayfaya Git
-                    </button>
-                </div>
-            </div>
-        `;
-
-        // Bildirime tıklandığında okundu işaretle
-        div.addEventListener('click', function(e) {
-            if (!e.target.closest('.dropdown')) {
-                if (!notification.isRead) {
-                    markAsRead(notification.id);
+                    `;
                 }
-            }
-        });
-
-        return div;
+            })
+            .catch(error => {
+                console.error('Site performance chart error:', error);
+                chartElement.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="ri-error-warning-line display-4 text-danger"></i>
+                        <p class="text-muted mt-2">Grafik yüklenirken hata oluştu</p>
+                    </div>
+                `;
+            });
     }
 
-    // Bildirim tipine göre ikon döndür
-    function getNotificationIcon(type) {
-        switch(type) {
-            case 1: return 'ri-user-add-line'; // SupplierRegistration
-            case 2: return 'ri-file-add-line'; // NewRequest
-            case 3: return 'ri-price-tag-3-line'; // NewOffer
-            default: return 'ri-notification-3-line';
+    // Render Site Performance Chart
+    function renderSitePerformanceChart(data) {
+        const chartElement = document.querySelector("#site-performance-chart");
+        if (!chartElement) return;
+
+        // Clear element
+        chartElement.innerHTML = '';
+
+        // Destroy existing chart
+        if (window.sitePerformanceChart) {
+            window.sitePerformanceChart.destroy();
         }
-    }
 
-    // Bildirim tipine göre renk döndür
-    function getNotificationColor(type) {
-        switch(type) {
-            case 1: return 'bg-info-subtle text-info'; // SupplierRegistration
-            case 2: return 'bg-primary-subtle text-primary'; // NewRequest
-            case 3: return 'bg-success-subtle text-success'; // NewOffer
-            default: return 'bg-secondary-subtle text-secondary';
-        }
-    }
+        // Prepare data
+        const siteNames = data.map(site => site.siteName);
+        const totalRequests = data.map(site => site.totalRequests);
+        const completedRequests = data.map(site => site.completedRequests);
+        const openRequests = data.map(site => site.openRequests);
+        const cancelledRequests = data.map(site => site.cancelledRequests);
 
-    // Zaman farkını hesapla
-    function getTimeAgo(dateString) {
-        const now = new Date();
-        const date = new Date(dateString);
-        const diffInSeconds = Math.floor((now - date) / 1000);
-
-        if (diffInSeconds < 60) return 'Az önce';
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} dakika önce`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} saat önce`;
-        if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} gün önce`;
-        return date.toLocaleDateString('tr-TR');
-    }
-
-    // Bildirimi okundu işaretle
-    function markAsRead(notificationId) {
-        fetch(`/Admin/MarkNotificationAsRead`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+        // Chart options - Default: Comparison view
+        const chartOptions = {
+            series: [
+                {
+                    name: 'Toplam Talep',
+                    data: totalRequests
+                },
+                {
+                    name: 'Tamamlanan',
+                    data: completedRequests
+                },
+                {
+                    name: 'Açık',
+                    data: openRequests
+                },
+                {
+                    name: 'İptal',
+                    data: cancelledRequests
+                }
+            ],
+            chart: {
+                type: 'bar',
+                height: 350,
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: false,
+                        zoom: false,
+                        zoomin: false,
+                        zoomout: false,
+                        pan: false,
+                        reset: false
+                    }
+                }
             },
-            body: JSON.stringify({ id: notificationId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Bildirimi güncelle
-                const notification = notifications.find(n => n.id === notificationId);
-                if (notification) {
-                    notification.isRead = true;
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '55%',
+                    endingShape: 'rounded',
+                    borderRadius: 4
                 }
-
-                // Görünümü güncelle
-                displayNotifications();
-                loadNotificationSummary();
-
-                // Başarı mesajı göster
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true
-                });
-
-                Toast.fire({
-                    icon: 'success',
-                    title: 'Bildirim okundu olarak işaretlendi'
-                });
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                show: true,
+                width: 2,
+                colors: ['transparent']
+            },
+            xaxis: {
+                categories: siteNames,
+                labels: {
+                    rotate: -45,
+                    rotateAlways: siteNames.length > 5,
+                    trim: true,
+                    maxHeight: 120,
+                    style: {
+                        fontSize: '12px'
+                    }
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Talep Sayısı',
+                    style: {
+                        fontSize: '13px',
+                        fontWeight: 500
+                    }
+                }
+            },
+            fill: {
+                opacity: 1
+            },
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val + " talep"
+                    }
+                }
+            },
+            colors: ['#556ee6', '#34c38f', '#f1b44c', '#f46a6a'],
+            legend: {
+                position: 'top',
+                horizontalAlign: 'left',
+                offsetY: 0
+            },
+            grid: {
+                borderColor: '#f1f1f1'
             }
-        })
-        .catch(error => {
-            console.error('Bildirim güncellenirken hata:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Hata!',
-                text: 'Bildirim güncellenirken bir hata oluştu',
-                timer: 3000
-            });
-        });
+        };
+
+        // Create and render chart
+        window.sitePerformanceChart = new ApexCharts(chartElement, chartOptions);
+        window.sitePerformanceChart.render();
     }
 
-    // Tüm bildirimleri okundu işaretle
-    function markAllAsRead() {
-        const unreadNotifications = notifications.filter(n => !n.isRead);
+    // Update Site Performance Period
+    function updateSitePerformancePeriod(period) {
+        setActivePeriodButton(period);
+        loadSitePerformanceChart(period);
+    }
 
-        if (unreadNotifications.length === 0) {
-            Swal.fire({
-                icon: 'info',
-                title: 'Bilgi',
-                text: 'Zaten tüm bildirimler okunmuş durumda',
-                timer: 2000,
-                showConfirmButton: false
-            });
+    // Set Active Period Button
+    function setActivePeriodButton(period) {
+        document.querySelectorAll('[id^="btn-period-"]').forEach(btn => {
+            btn.classList.remove('btn-soft-primary');
+            btn.classList.add('btn-soft-secondary');
+        });
+
+        const activeBtn = document.getElementById(`btn-period-${period}`);
+        if (activeBtn) {
+            activeBtn.classList.remove('btn-soft-secondary');
+            activeBtn.classList.add('btn-soft-primary');
+        }
+    }
+
+    // Set Active View Button
+    function setActiveViewButton(viewType) {
+        document.querySelectorAll('#btn-requests, #btn-employees, #btn-comparison').forEach(btn => {
+            btn.classList.remove('btn-soft-primary');
+            btn.classList.add('btn-soft-secondary');
+        });
+
+        const activeBtn = document.getElementById(`btn-${viewType}`);
+        if (activeBtn) {
+            activeBtn.classList.remove('btn-soft-secondary');
+            activeBtn.classList.add('btn-soft-primary');
+        }
+    }
+
+    // Update Site Performance View
+    function updateSitePerformanceView(viewType) {
+        if (!window.sitePerformanceChart || !window.sitePerformanceData) {
+            console.error('Chart or data not available');
             return;
         }
 
-        fetch('/Admin/MarkAllNotificationsAsRead', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Tüm bildirimleri okundu olarak işaretle
-                notifications.forEach(n => n.isRead = true);
+        const data = window.sitePerformanceData;
+        let series = [];
+        let yAxisTitle = '';
+        let tooltipFormatter = null;
 
-                // Görünümü güncelle
-                displayNotifications();
-                loadNotificationSummary();
+        switch(viewType) {
+            case 'requests':
+                // Talep Görünümü - Tüm talep durumları
+                series = [
+                    {
+                        name: 'Toplam Talep',
+                        data: data.map(site => site.totalRequests)
+                    },
+                    {
+                        name: 'Tamamlanan',
+                        data: data.map(site => site.completedRequests)
+                    },
+                    {
+                        name: 'Açık',
+                        data: data.map(site => site.openRequests)
+                    },
+                    {
+                        name: 'İptal',
+                        data: data.map(site => site.cancelledRequests)
+                    }
+                ];
+                yAxisTitle = 'Talep Sayısı';
+                tooltipFormatter = function(val) { return val + " talep"; };
+                break;
 
-                // Başarı mesajı göster
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Başarılı!',
-                    text: `${unreadNotifications.length} bildirim okundu olarak işaretlendi`,
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+            case 'employees':
+                // Çalışan Görünümü
+                series = [
+                    {
+                        name: 'Çalışan Sayısı',
+                        data: data.map(site => site.employeeCount)
+                    }
+                ];
+                yAxisTitle = 'Çalışan Sayısı';
+                tooltipFormatter = function(val) { return val + " çalışan"; };
+                break;
+
+            case 'comparison':
+            default:
+                // Karşılaştırma Görünümü
+                series = [
+                    {
+                        name: 'Toplam Talep',
+                        data: data.map(site => site.totalRequests)
+                    },
+                    {
+                        name: 'Çalışan Sayısı',
+                        data: data.map(site => site.employeeCount)
+                    },
+                    {
+                        name: 'Çalışan Başına Talep',
+                        data: data.map(site => {
+                            return site.employeeCount > 0 ?
+                                parseFloat((site.totalRequests / site.employeeCount).toFixed(2)) : 0;
+                        })
+                    }
+                ];
+                yAxisTitle = 'Sayı';
+                tooltipFormatter = function(val, opts) {
+                    const seriesName = opts.w.config.series[opts.seriesIndex].name;
+                    if (seriesName === 'Çalışan Başına Talep') {
+                        return val.toFixed(2) + " talep/çalışan";
+                    } else if (seriesName === 'Çalışan Sayısı') {
+                        return val + " çalışan";
+                    }
+                    return val + " talep";
+                };
+                break;
+        }
+
+        // Update button state
+        setActiveViewButton(viewType);
+
+        // Update chart
+        window.sitePerformanceChart.updateOptions({
+            series: series,
+            yaxis: {
+                title: {
+                    text: yAxisTitle,
+                    style: {
+                        fontSize: '13px',
+                        fontWeight: 500
+                    }
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: tooltipFormatter
+                }
             }
-        })
-        .catch(error => {
-            console.error('Bildirimler güncellenirken hata:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Hata!',
-                text: 'Bildirimler güncellenirken bir hata oluştu',
-                timer: 3000
-            });
         });
     }
 
-    // Bildirim panelini aç/kapat
-    function toggleNotifications() {
-        const panel = document.getElementById('notification-panel');
-        if (panel.style.display === 'none' || panel.style.display === '') {
-            panel.style.display = 'block';
-           /*  panel.scrollIntoView({ behavior: 'smooth' }) */;
-        } else {
-            panel.style.display = 'none';
-        }
+    // Update Site Performance Statistics
+    function updateSitePerformanceStats(data) {
+        if (!data || data.length === 0) return;
+
+        const totalSites = data.length;
+        const totalRequests = data.reduce((sum, site) => sum + site.totalRequests, 0);
+        const totalEmployees = data.reduce((sum, site) => sum + site.employeeCount, 0);
+        const completedRequests = data.reduce((sum, site) => sum + site.completedRequests, 0);
+
+        // Animate counters
+        animateCounter('stat-total-sites', totalSites);
+        animateCounter('stat-total-requests', totalRequests);
+        animateCounter('stat-total-employees', totalEmployees);
+        animateCounter('stat-completed-requests', completedRequests);
+    }
+
+    // Animate Counter Helper
+    function animateCounter(elementId, targetValue) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+
+        const duration = 1000;
+        const start = 0;
+        const increment = targetValue / (duration / 16);
+
+        let current = start;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= targetValue) {
+                current = targetValue;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current);
+        }, 16);
     }
 
     // İlgili sayfaya git
@@ -826,11 +1482,20 @@
             case 1: // SupplierRegistration
                 targetUrl = '/Admin/Suppliers';
                 break;
-            case 2: // NewRequest
+            case 2: // NewRequest - Talep bildirimi ise Requests sayfasına git
                 targetUrl = '/Admin/Requests';
+                if (requestId && requestId !== 'null') {
+                    targetUrl += `?requestId=${requestId}`;
+                }
                 break;
-            case 3: // NewOffer
+            case 3: // NewOffer - Teklif bildirimi ise Offers sayfasına git
                 targetUrl = '/Admin/Offers';
+                if (offerId && offerId !== 'null') {
+                    targetUrl += `?offerId=${offerId}`;
+                }
+                break;
+            default:
+                targetUrl = '/Admin/Dashboard';
                 break;
         }
 
@@ -840,85 +1505,256 @@
         }, 100);
     }
 
-    // Existing dashboard chart initialization code...
-    // (keeping all existing chart code unchanged)
+    // ========================================
+    // NOTIFICATION FUNCTIONS
+    // ========================================
 
-    // Initialize charts with real data
-    document.addEventListener('DOMContentLoaded', function() {
-        // Request Status Chart
-        var openCount = @Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Open);
-        var completedCount = @Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Completed);
-        var cancelledCount = @Model.RecentRequests.Count(r => r.Status == SantiyeTalepWebUI.Models.RequestStatus.Cancelled);
+    // Bildirim özetini yükle
+    function loadNotificationSummary() {
+        fetch('/Admin/GetNotificationSummary')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.summary) {
+                    updateNotificationCounts(data.summary.unreadCount);
 
-        var requestStatusOptions = {
-            series: [openCount, completedCount, cancelledCount],
-            chart: {
-                type: 'donut',
-                height: 230
-            },
-            labels: ['Açık', 'Tamamlanan', 'İptal'],
-            colors: ['#f1b44c', '#34c38f', '#f46a6a'],
-            legend: {
-                position: 'bottom'
+                    // Show/hide notification alert based on unread count
+                    const alertRow = document.getElementById('notificationAlertRow');
+                    if (alertRow) {
+                        if (data.summary.unreadCount > 0) {
+                            alertRow.style.display = 'block';
+                        } else {
+                            alertRow.style.display = 'none';
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Bildirim özeti yüklenirken hata:', error);
+            });
+    }
+
+        // ========================================
+    // NOTIFICATION FUNCTIONS - EKSİK FONKSİYONLAR
+    // ========================================
+
+    // Bildirim sayılarını güncelle
+    function updateNotificationCounts(unreadCount) {
+        // Alert içindeki sayıyı güncelle
+        const unreadCountElement = document.getElementById('unread-count');
+        if (unreadCountElement) {
+            unreadCountElement.textContent = unreadCount;
+        }
+
+        // Panel başlığındaki sayıyı güncelle
+        const panelUnreadCount = document.getElementById('panel-unread-count');
+        if (panelUnreadCount) {
+            if (unreadCount > 0) {
+                panelUnreadCount.textContent = unreadCount;
+                panelUnreadCount.style.display = 'inline-block';
+            } else {
+                panelUnreadCount.style.display = 'none';
             }
-        };
-        var requestStatusChart = new ApexCharts(document.querySelector("#request-status-chart"), requestStatusOptions);
-        requestStatusChart.render();
+        }
 
-        // Site Performance Chart (dummy data for now)
-        var sitePerformanceOptions = {
-            series: [{
-                name: 'Talep Sayısı',
-                data: [44, 55, 41, 67, 22, 43]
-            }],
-            chart: {
-                type: 'bar',
-                height: 200
-            },
-            xaxis: {
-                categories: [@Html.Raw(string.Join(",", Model.Sites.Take(6).Select(s => "'" + s.Name + "'")))]
-            },
-            colors: ['#556ee6']
-        };
-        var sitePerformanceChart = new ApexCharts(document.querySelector("#site-performance-chart"), sitePerformanceOptions);
-        sitePerformanceChart.render();
-
-        // Cost Analysis Chart (dummy data for now)
-        var costAnalysisOptions = {
-            series: [{
-                name: 'Onaylanan',
-                data: [44, 55, 41, 67, 22, 43, 21, 49]
-            }, {
-                name: 'Bekleyen',
-                data: [13, 23, 20, 8, 13, 27, 33, 12]
-            }],
-            chart: {
-                type: 'area',
-                height: 150
-            },
-            colors: ['#34c38f', '#f46a6a']
-        };
-        var costAnalysisChart = new ApexCharts(document.querySelector("#cost-analysis-chart"), costAnalysisOptions);
-        costAnalysisChart.render();
-    });
-
-    // Show real-time status indicator after page load
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(() => {
-            const statusIndicator = document.getElementById('realtimeStatus');
-            if (statusIndicator) {
-                statusIndicator.classList.add('active');
-                // Hide after 3 seconds
-                setTimeout(() => {
-                    statusIndicator.classList.remove('active');
-                }, 3000);
+        // "Tümünü Okundu İşaretle" butonunu göster/gizle
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        if (markAllReadBtn) {
+            if (unreadCount > 0) {
+                markAllReadBtn.style.display = 'inline-block';
+            } else {
+                markAllReadBtn.style.display = 'none';
             }
-        }, 2000);
-    });
+        }
+    }
+
+    // Bildirimleri yükle ve göster
+    function loadNotifications() {
+        fetch('/Admin/GetNotifications')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.notifications) {
+                    notifications = data.notifications;
+                    displayNotifications();
+
+                    // Panel'i göster
+                    const notificationPanel = document.getElementById('notification-panel');
+                    if (notificationPanel) {
+                        notificationPanel.classList.add('show');
+                    }
+
+                    // Alert'i gizle
+                    const alertRow = document.getElementById('notificationAlertRow');
+                    if (alertRow) {
+                        alertRow.style.display = 'none';
+                    }
+                } else {
+                    console.error('Bildirimler yüklenemedi:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Bildirimler yüklenirken hata:', error);
+            });
+    }
+
+    // Bildirimleri göster
+    function displayNotifications() {
+        const notificationsList = document.getElementById('notifications-list');
+        if (!notificationsList) return;
+
+        if (notifications.length === 0) {
+            notificationsList.innerHTML = `
+
+                <div class="notification-empty">
+                    <i class="ri-notification-off-line fs-48 text-muted mb-3"></i>
+                    <h6>Henüz bildirim yok</h6>
+                    <p class="mb-0">Yeni bildirimler burada görünecek</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        notifications.forEach(notification => {
+            const isUnread = !notification.isRead;
+            const timeAgo = getTimeAgo(notification.createdDate);
+            const typeIcon = getNotificationTypeIcon(notification.type);
+            const typeColor = getNotificationTypeColor(notification.type);
+
+            html += `
+                <div class="notification-item ${isUnread ? 'unread' : ''}"
+                     onclick="handleNotificationClick(${notification.id}, ${notification.type}, '${notification.requestId || ''}', '${notification.offerId || ''}', '${notification.supplierId || ''}')">
+                    <div class="notification-content">
+                        <div class="notification-meta">
+                            <div class="notification-type-icon" style="background-color: ${typeColor}; color: white;">
+                                <i class="${typeIcon}"></i>
+                            </div>
+                            <small class="text-muted">${timeAgo}</small>
+                            ${isUnread ? '<span class="badge bg-warning ms-2">Yeni</span>' : ''}
+                        </div>
+                        <h6 class="notification-title-link mb-1">${notification.title}</h6>
+                        <p class="text-muted mb-0">${notification.message}</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        notificationsList.innerHTML = html;
+
+        // Okunmamış bildirim sayısını güncelle
+        const unreadCount = notifications.filter(n => !n.isRead).length;
+        updateNotificationCounts(unreadCount);
+    }
+
+    // Bildirim panelini aç/kapat
+    function toggleNotifications() {
+        const notificationPanel = document.getElementById('notification-panel');
+        if (notificationPanel) {
+            if (notificationPanel.classList.contains('show')) {
+                notificationPanel.classList.remove('show');
+            } else {
+                // Bildirimleri yükle ve paneli göster
+                loadNotifications();
+            }
+        }
+    }
+
+    // Bildirim tıklama işlemi
+    function handleNotificationClick(notificationId, type, requestId, offerId, supplierId) {
+        // Önce bildirimi okundu olarak işaretle
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification && !notification.isRead) {
+            markNotificationAsRead(notificationId);
+        }
+
+        // İlgili sayfaya yönlendir
+        goToRelatedPage(type, requestId, offerId, supplierId);
+    }
+
+    // Bildirimi okundu olarak işaretle
+    function markNotificationAsRead(notificationId) {
+        fetch('/Admin/MarkNotificationAsRead', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: notificationId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Lokal olarak güncelle
+                const notification = notifications.find(n => n.id === notificationId);
+                if (notification) {
+                    notification.isRead = true;
+                    displayNotifications();
+                    loadNotificationSummary();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Bildirim güncellenirken hata:', error);
+        });
+    }
+
+    // Tüm bildirimleri okundu olarak işaretle
+    function markAllAsRead() {
+        const unreadNotifications = notifications.filter(n => !n.isRead);
+        if (unreadNotifications.length === 0) return;
+
+        fetch('/Admin/MarkAllNotificationsAsRead', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Tüm bildirimleri okundu olarak işaretle
+                notifications.forEach(n => n.isRead = true);
+                displayNotifications();
+                loadNotificationSummary();
+            }
+        })
+        .catch(error => {
+            console.error('Bildirimler güncellenirken hata:', error);
+        });
+    }
+
+    // ========================================
+    // HELPER FUNCTIONS
+    // ========================================
+
+    // Yardımcı fonksiyonlar
+    function getTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return 'Az önce';
+        if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + ' dakika önce';
+        if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + ' saat önce';
+        if (diffInSeconds < 2592000) return Math.floor(diffInSeconds / 86400) + ' gün önce';
+
+        return date.toLocaleDateString('tr-TR');
+    }
+
+    function getNotificationTypeIcon(type) {
+        switch(type) {
+            case 1: return 'ri-user-add-line'; // Supplier Registration
+            case 2: return 'ri-file-add-line'; // New Request
+            case 3: return 'ri-price-tag-3-line'; // New Offer
+            default: return 'ri-notification-3-line';
+        }
+    }
+
+    function getNotificationTypeColor(type) {
+        switch(type) {
+            case 1: return '#34c38f'; // Yeşil - Supplier Registration
+            case 2: return '#556ee6'; // Mavi - New Request
+            case 3: return '#f1b44c'; // Turuncu - New Offer
+            default: return '#6c757d'; // Gri
+        }
+    }
+
 </script>
-
-<!-- Real-time status indicator -->
-<div class="realtime-status" id="realtimeStatus">
-    <div class="status-dot"></div>
-    <span>Canlı takip aktif</span>
-</div>

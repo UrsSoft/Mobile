@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Þantiye Düzenle";
     var brands = ViewBag.Brands as List<BrandDto> ?? new List<BrandDto>();
+    var availableEmployees = ViewBag.AvailableEmployees as List<EmployeeDto> ?? new List<EmployeeDto>();
 }
 
 <div class="main-content">
@@ -150,6 +151,8 @@
                                     </div>
                                 </div>
 
+                                
+
                                 <!-- Preview Card -->
                                 <div class="row">
                                     <div class="col-lg-12">
@@ -206,6 +209,17 @@
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <div class="col-12" id="previewEmployeesContainer">
+                                                        <div class="d-flex align-items-start">
+                                                            <i class="ri-team-line text-success me-2 fs-16 mt-1"></i>
+                                                            <div class="flex-grow-1">
+                                                                <h6 class="mb-1">Seçili Çalýþanlar</h6>
+                                                                <div id="previewEmployees" class="d-flex flex-wrap gap-1">
+                                                                    <!-- Employees will be populated by JavaScript -->
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -248,6 +262,7 @@
                                         <li>Þantiye adýný deðiþtirmek mevcut talepleri etkilemez</li>
                                         <li>Adres deðiþikliði tüm çalýþanlara bildirilir</li>
                                         <li>Marka deðiþiklikleri yeni taleplerde geçerli olur</li>
+                                        <li><strong>Çalýþan deðiþiklikleri</strong> anýnda aktif olur</li>
                                         <li><strong>Þantiyeyi pasif yapmak</strong> yeni talep oluþturulmasýný engeller</li>
                                         <li>Pasif þantiyedeki mevcut talepler devam eder ancak yeni talepler alýnmaz</li>
                                         <li>Deðiþiklikler anýnda aktif olur ve sistem genelinde güncellenir</li>
@@ -286,9 +301,10 @@
         const originalValues = {
             name: '@Html.Raw(Model.Name)',
             address: '@Html.Raw(Model.Address.Replace("\r\n", "\\n").Replace("\n", "\\n"))',
-            description: '@Html.Raw(Model.Description.Replace("\r\n", "\\n").Replace("\n", "\\n"))',
+            description: '@Html.Raw(Model.Description?.Replace("\r\n", "\\n").Replace("\n", "\\n") ?? "")',
             isActive: @Model.IsActive.ToString().ToLower(),
-            brandIds: [@Html.Raw(string.Join(",", Model.BrandIds ?? new List<int>()))]
+            brandIds: [@Html.Raw(string.Join(",", Model.BrandIds ?? new List<int>()))],
+            employeeIds: [@Html.Raw(string.Join(",", Model.EmployeeIds ?? new List<int>()))]
         };
 
         // Form change tracking
@@ -408,6 +424,58 @@
             }
         }
 
+        // Employee selection functions
+        function selectAllEmployees() {
+            document.querySelectorAll('.employee-checkbox').forEach(function(checkbox) {
+                checkbox.checked = true;
+            });
+            updateEmployeePreview();
+            updateEmployeeCount();
+            formChanged = true;
+        }
+
+        function clearAllEmployees() {
+            document.querySelectorAll('.employee-checkbox').forEach(function(checkbox) {
+                checkbox.checked = false;
+            });
+            updateEmployeePreview();
+            updateEmployeeCount();
+            formChanged = true;
+        }
+
+        function updateEmployeeCount() {
+            const selectedCount = document.querySelectorAll('.employee-checkbox:checked').length;
+            const countElement = document.getElementById('selectedEmployeeCount');
+            const infoElement = document.getElementById('employeeSelectionInfo');
+            
+            // Check if elements exist before accessing their properties
+            if (countElement && infoElement) {
+                if (selectedCount > 0) {
+                    countElement.textContent = selectedCount;
+                    infoElement.classList.remove('d-none');
+                } else {
+                    infoElement.classList.add('d-none');
+                }
+            }
+        }
+
+        function updateEmployeePreview() {
+            const selectedEmployees = document.querySelectorAll('.employee-checkbox:checked');
+            const previewContainer = document.getElementById('previewEmployees');
+            
+            if (selectedEmployees.length === 0) {
+                previewContainer.innerHTML = '<span class="badge bg-light text-muted">Henüz çalýþan seçilmedi</span>';
+            } else {
+                let employeesHtml = '';
+                selectedEmployees.forEach(function(checkbox) {
+                    const label = document.querySelector('label[for="' + checkbox.id + '"] .fw-medium');
+                    const employeeName = label ? label.textContent : checkbox.value;
+                    employeesHtml += `<span class="badge bg-success me-1 mb-1">${employeeName}</span>`;
+                });
+                previewContainer.innerHTML = employeesHtml;
+            }
+        }
+
         // Real-time preview
         function updatePreview() {
             const name = document.getElementById('Name').value || 'Þantiye Adý';
@@ -444,6 +512,11 @@
                     checkbox.checked = originalValues.brandIds.includes(parseInt(checkbox.value));
                 });
                 
+                // Reset employee selections
+                document.querySelectorAll('.employee-checkbox').forEach(function(checkbox) {
+                    checkbox.checked = originalValues.employeeIds.includes(parseInt(checkbox.value));
+                });
+                
                 // Remove validation classes and errors
                 document.querySelector('form').classList.remove('was-validated');
                 const existingError = document.querySelector('.brand-validation-error');
@@ -455,6 +528,8 @@
                 updatePreview();
                 updateBrandPreview();
                 updateBrandCount();
+                updateEmployeePreview();
+                updateEmployeeCount();
                 updateStatusPreview();
                 
                 // Reset form change tracking
@@ -499,6 +574,15 @@
                 });
             });
 
+            // Employee checkbox event listeners
+            document.querySelectorAll('.employee-checkbox').forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    updateEmployeePreview();
+                    updateEmployeeCount();
+                    formChanged = true;
+                });
+            });
+
             // Character counter for description
             const maxLength = 500;
             const counter = document.createElement('div');
@@ -527,6 +611,8 @@
             updatePreview();
             updateBrandPreview();
             updateBrandCount();
+            updateEmployeePreview();
+            updateEmployeeCount();
             updateStatusPreview();
         });
 
@@ -534,14 +620,5 @@
         document.querySelector('form').addEventListener('submit', function() {
             formChanged = false; // Don't warn when form is being submitted
         });
-
-        // // Warn user about unsaved changes when leaving the page
-        // window.addEventListener('beforeunload', function(e) {
-        //     if (formChanged) {
-        //         e.preventDefault();
-        //         e.returnValue = '';
-        //         return '';
-        //     }
-        // });
     </script>
 }

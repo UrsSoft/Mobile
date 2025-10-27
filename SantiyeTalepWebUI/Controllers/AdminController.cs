@@ -37,10 +37,13 @@ namespace SantiyeTalepWebUI.Controllers
             {
                 // API'den gerçek istatistikleri çek
                 var stats = await _apiService.GetAsync<dynamic>("api/Admin/stats", token);
-                var pendingSuppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers/pending", token) ?? new List<SupplierDto>();
+                var allSuppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers", token) ?? new List<SupplierDto>();
                 var recentRequests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
                 var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
                 var employees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees", token) ?? new List<EmployeeDto>();
+
+                // Filter pending suppliers from all suppliers
+                var pendingSuppliers = allSuppliers.Where(s => s.Status == SupplierStatus.Pending).ToList();
 
                 // Eğer stats null ise varsayılan değerler kullan
                 var dashboardStats = new DashboardStats();
@@ -53,10 +56,18 @@ namespace SantiyeTalepWebUI.Controllers
                     {
                         dashboardStats.TotalRequests = GetIntValue(statsDict, "totalRequests");
                         dashboardStats.TotalSites = GetIntValue(statsDict, "activeSites");
-                        dashboardStats.PendingSuppliers = GetIntValue(statsDict, "pendingSuppliers");
+                        dashboardStats.PendingSuppliers = pendingSuppliers.Count;
                         // Employee count from actual employees list
                         dashboardStats.TotalUsers = employees.Count;
                     }
+                }
+                else
+                {
+                    // If stats API fails, use local counts
+                    dashboardStats.TotalRequests = recentRequests.Count;
+                    dashboardStats.TotalSites = sites.Count;
+                    dashboardStats.PendingSuppliers = pendingSuppliers.Count;
+                    dashboardStats.TotalUsers = employees.Count;
                 }
 
                 var model = new AdminDashboardViewModel
@@ -115,14 +126,14 @@ namespace SantiyeTalepWebUI.Controllers
             {
                 // Get brands for selection
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
-                ViewBag.Brands = brands;
+                ViewBag.Brands = brands;               
 
                 return View(new Models.DTOs.CreateSiteDto());
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading brands for site creation");
-                TempData["ErrorMessage"] = "Markalar yüklenirken bir hata oluştu";
+                _logger.LogError(ex, "Error loading data for site creation");
+                TempData["ErrorMessage"] = "Sayfa yüklenirken bir hata oluştu";
                 ViewBag.Brands = new List<BrandDto>();
                 return View(new Models.DTOs.CreateSiteDto());
             }
@@ -146,7 +157,7 @@ namespace SantiyeTalepWebUI.Controllers
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error loading brands for validation error case");
+                    _logger.LogError(ex, "Error loading data for validation error case");
                     ViewBag.Brands = new List<BrandDto>();
                 }
                 return View(model);
@@ -166,16 +177,48 @@ namespace SantiyeTalepWebUI.Controllers
                 // Reload brands for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
+                
+                return View(model);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error creating site");
+                
+                // Parse error message from API
+                string errorMessage = "Şantiye oluşturulurken bir hata oluştu";
+                
+                if (httpEx.Message.Contains("400:"))
+                {
+                    // Extract the actual error message from "400: message"
+                    var parts = httpEx.Message.Split(new[] { "400:" }, 2, StringSplitOptions.None);
+                    if (parts.Length > 1)
+                    {
+                        errorMessage = parts[1].Trim();
+                    }
+                }
+                else if (httpEx.Message.Contains("markalardan bir kısmı bulunamadı") || httpEx.Message.Contains("aktif değil"))
+                {
+                    errorMessage = "Seçilen markalardan bir kısmı bulunamadı veya aktif değil. Lütfen geçerli markalar seçin.";
+                    ModelState.AddModelError("BrandIds", "Geçersiz marka seçimi");
+                }
+                
+                TempData["ErrorMessage"] = errorMessage;
+
+                // Reload brands for error case
+                var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
+                ViewBag.Brands = brands;
+                
                 return View(model);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating site");
-                TempData["ErrorMessage"] = "Şantiye oluşturulurken bir hata oluştu";
+                TempData["ErrorMessage"] = "Şantiye oluşturulurken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.";
 
                 // Reload brands for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
+                
                 return View(model);
             }
         }
@@ -351,7 +394,7 @@ namespace SantiyeTalepWebUI.Controllers
                         <thead class='table-light'>
                             <tr>
                                 <th><i class='ri-user-line me-1'></i>Ad Soyad</th>
-                                <th><i class='ri-briefcase-line me-1'></i>Pozisyon</th>
+                                <th><i class='ri-briefcase-line me-1'></i>Pozison</th>
                                 <th><i class='ri-mail-line me-1'></i>E-posta</th>
                                 <th><i class='ri-phone-line me-1'></i>Telefon</th>
                                 <th><i class='ri-calendar-line me-1'></i>Kayıt Tarihi</th>
@@ -522,6 +565,19 @@ namespace SantiyeTalepWebUI.Controllers
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
 
+                // Get available employees (employees without assigned site) + current site employees
+                var availableEmployees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees/available", token) ?? new List<EmployeeDto>();
+                var currentSiteEmployees = site.Employees ?? new List<EmployeeDto>();
+                
+                // Combine and remove duplicates
+                var allSelectableEmployees = availableEmployees
+                    .Concat(currentSiteEmployees)
+                    .GroupBy(e => e.Id)
+                    .Select(g => g.First())
+                    .ToList();
+                    
+                ViewBag.AvailableEmployees = allSelectableEmployees;
+
                 var model = new UpdateSiteDto
                 {
                     Id = site.Id,
@@ -529,7 +585,8 @@ namespace SantiyeTalepWebUI.Controllers
                     Address = site.Address,
                     Description = site.Description,
                     IsActive = site.IsActive,
-                    BrandIds = site.Brands?.Select(b => b.Id).ToList() ?? new List<int>()
+                    BrandIds = site.Brands?.Select(b => b.Id).ToList() ?? new List<int>(),
+                    EmployeeIds = site.Employees?.Select(e => e.Id).ToList() ?? new List<int>()
                 };
 
                 return View(model);
@@ -552,16 +609,30 @@ namespace SantiyeTalepWebUI.Controllers
 
             if (!ModelState.IsValid)
             {
-                // Reload brands for validation error case
+                // Reload brands and employees for validation error case
                 try
                 {
                     var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                     ViewBag.Brands = brands;
+                    
+                    // Get current site info for employee loading
+                    var currentSite = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{model.Id}", token);
+                    var availableEmployees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees/available", token) ?? new List<EmployeeDto>();
+                    var currentSiteEmployees = currentSite?.Employees ?? new List<EmployeeDto>();
+                    
+                    var allSelectableEmployees = availableEmployees
+                        .Concat(currentSiteEmployees)
+                        .GroupBy(e => e.Id)
+                        .Select(g => g.First())
+                        .ToList();
+                        
+                    ViewBag.AvailableEmployees = allSelectableEmployees;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error loading brands for validation error case");
+                    _logger.LogError(ex, "Error loading data for validation error case");
                     ViewBag.Brands = new List<BrandDto>();
+                    ViewBag.AvailableEmployees = new List<EmployeeDto>();
                 }
                 return View(model);
             }
@@ -577,9 +648,22 @@ namespace SantiyeTalepWebUI.Controllers
 
                 TempData["ErrorMessage"] = "Şantiye güncellenirken bir hata oluştu";
 
-                // Reload brands for error case
+                // Reload brands and employees for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
+                
+                var currentSite = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{model.Id}", token);
+                var availableEmployees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees/available", token) ?? new List<EmployeeDto>();
+                var currentSiteEmployees = currentSite?.Employees ?? new List<EmployeeDto>();
+                
+                var allSelectableEmployees = availableEmployees
+                    .Concat(currentSiteEmployees)
+                    .GroupBy(e => e.Id)
+                    .Select(g => g.First())
+                    .ToList();
+                    
+                ViewBag.AvailableEmployees = allSelectableEmployees;
+                
                 return View(model);
             }
             catch (Exception ex)
@@ -587,9 +671,22 @@ namespace SantiyeTalepWebUI.Controllers
                 _logger.LogError(ex, "Error updating site");
                 TempData["ErrorMessage"] = "Şantiye güncellenirken bir hata oluştu";
 
-                // Reload brands for error case
+                // Reload brands and employees for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
+                
+                var currentSite = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{model.Id}", token);
+                var availableEmployees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees/available", token) ?? new List<EmployeeDto>();
+                var currentSiteEmployees = currentSite?.Employees ?? new List<EmployeeDto>();
+                
+                var allSelectableEmployees = availableEmployees
+                    .Concat(currentSiteEmployees)
+                    .GroupBy(e => e.Id)
+                    .Select(g => g.First())
+                    .ToList();
+                    
+                ViewBag.AvailableEmployees = allSelectableEmployees;
+                
                 return View(model);
             }
         }
@@ -652,10 +749,47 @@ namespace SantiyeTalepWebUI.Controllers
                 ViewBag.Sites = sitesForError;
                 return View(model);
             }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error creating employee");
+                
+                // Parse error message from API
+                string errorMessage = "Çalışan oluşturulurken bir hata oluştu";
+                
+                if (httpEx.Message.Contains("400:"))
+                {
+                    // Extract the actual error message from "400: message"
+                    var parts = httpEx.Message.Split(new[] { "400:" }, 2, StringSplitOptions.None);
+                    if (parts.Length > 1)
+                    {
+                        errorMessage = parts[1].Trim();
+                    }
+                }
+                else if (httpEx.Message.Contains("Bu e-posta adresi zaten kullanılıyor"))
+                {
+                    errorMessage = "Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta adresi kullanın.";
+                    ModelState.AddModelError("Email", "Bu e-posta adresi zaten kullanılıyor");
+                }
+                else if (httpEx.Message.Contains("Bu telefon numarası zaten kullanılıyor"))
+                {
+                    errorMessage = "Bu telefon numarası zaten kullanılıyor. Lütfen farklı bir telefon numarası kullanın.";
+                    ModelState.AddModelError("Phone", "Bu telefon numarası zaten kullanılıyor");
+                }
+                else if (httpEx.Message.Contains("Seçilen şantiye bulunamadı"))
+                {
+                    errorMessage = "Seçilen şantiye bulunamadı. Lütfen geçerli bir şantiye seçin.";
+                    ModelState.AddModelError("SiteId", "Geçersiz şantiye seçimi");
+                }
+                
+                TempData["ErrorMessage"] = errorMessage;
+                var sitesForError = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
+                ViewBag.Sites = sitesForError;
+                return View(model);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating employee");
-                TempData["ErrorMessage"] = "Çalışan oluşturulurken bir hata oluştu";
+                TempData["ErrorMessage"] = "Çalışan oluşturulurken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.";
                 var sitesForError = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
                 ViewBag.Sites = sitesForError;
                 return View(model);
@@ -682,7 +816,7 @@ namespace SantiyeTalepWebUI.Controllers
                             <p><strong>Ad Soyad:</strong> {employee.FullName}</p>
                             <p><strong>E-posta:</strong> {employee.Email}</p>
                             <p><strong>Telefon:</strong> {employee.Phone}</p>
-                            <p><strong>Pozisyon:</strong> {employee.Position}</p>
+                            <p><strong>Pozison:</strong> {employee.Position}</p>
                         </div>
                         <div class='col-md-6'>
                             <h6>İş Bilgileri</h6>
@@ -701,23 +835,132 @@ namespace SantiyeTalepWebUI.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> ToggleEmployeeStatus(int id, bool isActive)
+        [HttpGet]
+        public async Task<IActionResult> EditEmployee(int id)
         {
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
-                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+                return RedirectToAction("Login", "Account");
 
             try
             {
-                var payload = new { isActive = isActive };
-                var result = await _apiService.PutAsync<object>($"api/Admin/employees/{id}/status", payload, token);
-                return Json(new { success = true, message = "Durum başarıyla güncellendi" });
+                var employee = await _apiService.GetAsync<EmployeeDto>($"api/Admin/employees/{id}", token);
+                if (employee == null)
+                {
+                    TempData["ErrorMessage"] = "Çalışan bulunamadı";
+                    return RedirectToAction("Employees");
+                }
+
+                // Get sites for dropdown
+                var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
+                ViewBag.Sites = sites;
+
+                var model = new UpdateEmployeeDto
+                {
+                    Id = employee.Id,
+                    Email=employee.Email,
+                    FullName = employee.FullName,
+                    Phone = employee.Phone,
+                    Position = employee.Position,
+                    SiteId = employee.SiteId,
+                    IsActive = employee.IsActive
+                };
+
+                return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error toggling employee status");
-                return Json(new { success = false, message = "Durum güncellenirken hata oluştu" });
+                _logger.LogError(ex, "Error loading employee for edit");
+                TempData["ErrorMessage"] = "Çalışan yüklenirken bir hata oluştu";
+                return RedirectToAction("Employees");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditEmployee(UpdateEmployeeDto model)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Account");
+
+            if (!ModelState.IsValid)
+            {
+                // Reload sites for validation error case
+                try
+                {
+                    var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
+                    ViewBag.Sites = sites;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error loading sites for validation error case");
+                    ViewBag.Sites = new List<Models.DTOs.SiteDto>();
+                }
+                return View(model);
+            }
+
+            try
+            {
+                // Clean phone number
+                if (!string.IsNullOrEmpty(model.Phone))
+                {
+                    model.Phone = model.Phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+                }
+
+                var result = await _apiService.PutAsync<object>($"api/Admin/employees/{model.Id}", model, token);
+                if (result != null)
+                {
+                    TempData["SuccessMessage"] = "Çalışan başarıyla güncellendi";
+                    return RedirectToAction("Employees");
+                }
+
+                TempData["ErrorMessage"] = "Çalışan güncellenirken bir hata oluştu";
+
+                // Reload sites for error case
+                var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
+                ViewBag.Sites = sites;
+                
+                return View(model);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error updating employee");
+                
+                // Parse error message from API
+                string errorMessage = "Çalışan güncellenirken bir hata oluştu";
+                
+                if (httpEx.Message.Contains("400:"))
+                {
+                    var parts = httpEx.Message.Split(new[] { "400:" }, 2, StringSplitOptions.None);
+                    if (parts.Length > 1)
+                    {
+                        errorMessage = parts[1].Trim();
+                    }
+                }
+                else if (httpEx.Message.Contains("Bu telefon numarası"))
+                {
+                    errorMessage = "Bu telefon numarası başka bir kullanıcı tarafından kullanılıyor.";
+                    ModelState.AddModelError("Phone", "Bu telefon numarası zaten kullanılıyor");
+                }
+                else if (httpEx.Message.Contains("Seçilen şantiye bulunamadı"))
+                {
+                    errorMessage = "Seçilen şantiye bulunamadı. Lütfen geçerli bir şantiye seçin.";
+                    ModelState.AddModelError("SiteId", "Geçersiz şantiye seçimi");
+                }
+                
+                TempData["ErrorMessage"] = errorMessage;
+                var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
+                ViewBag.Sites = sites;
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating employee");
+                TempData["ErrorMessage"] = "Çalışan güncellenirken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.";
+                var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
+                ViewBag.Sites = sites;
+                return View(model);
             }
         }
 
@@ -733,10 +976,36 @@ namespace SantiyeTalepWebUI.Controllers
                 var result = await _apiService.DeleteAsync($"api/Admin/employees/{id}", token);
                 return Json(new { success = true, message = "Çalışan başarıyla silindi" });
             }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error deleting employee");
+
+                // API'den gelen hata mesajını parse et
+                string errorMessage = "Çalışan silinirken bir hata oluştu";
+                
+                if (httpEx.Message.Contains("400:"))
+                {
+                    var parts = httpEx.Message.Split(new[] { "400:" }, 2, StringSplitOptions.None);
+                    if (parts.Length > 1)
+                    {
+                        errorMessage = parts[1].Trim();
+                    }
+                }
+                else if (httpEx.Message.Contains("404") || httpEx.Message.Contains("Not Found"))
+                {
+                    errorMessage = "Çalışan bulunamadı";
+                }
+                else if (httpEx.Message.Contains("aktif talepleri"))
+                {
+                    errorMessage = "Bu çalışanın aktif talepleri bulunduğu için silinemez. Önce tüm taleplerini tamamlayın veya iptal edin.";
+                }
+
+                return Json(new { success = false, message = errorMessage });
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting employee");
-                return Json(new { success = false, message = "Çalışan silinirken hata oluştu" });
+                return Json(new { success = false, message = "Çalışan silinirken beklenmeyen bir hata oluştu" });
             }
         }
 
@@ -751,28 +1020,87 @@ namespace SantiyeTalepWebUI.Controllers
             return View(suppliers);
         }
 
-        public async Task<IActionResult> PendingSuppliers()
+        [HttpGet]
+        public async Task<IActionResult> CreateSupplier()
         {
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Account");
 
-            var suppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers/pending", token) ?? new List<SupplierDto>();
-            return View("Suppliers", suppliers);
+            return View(new CreateSupplierDto());
         }
 
-        public async Task<IActionResult> ApprovedSuppliers()
+        [HttpPost]  
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateSupplier(CreateSupplierDto model)
         {
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Account");
 
-            var suppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers/approved", token) ?? new List<SupplierDto>();
-            return View("Suppliers", suppliers);
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                // Clean phone number - remove spaces and format to clean number for database storage
+                if (!string.IsNullOrEmpty(model.Phone))
+                {
+                    model.Phone = model.Phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+                }
+
+                var result = await _apiService.PostAsync<object>("api/Admin/suppliers", model, token);
+                if (result != null)
+                {
+                    TempData["SuccessMessage"] = "Tedarikçi başarıyla oluşturuldu";
+                    return RedirectToAction("Suppliers");
+                }
+
+                TempData["ErrorMessage"] = "Tedarikçi oluşturulurken bir hata oluştu";
+                return View(model);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error creating supplier");
+                
+                // Parse error message from API
+                string errorMessage = "Tedarikçi oluşturulurken bir hata oluştu";
+                
+                if (httpEx.Message.Contains("400:"))
+                {
+                    // Extract the actual error message from "400: message"
+                    var parts = httpEx.Message.Split(new[] { "400:" }, 2, StringSplitOptions.None);
+                    if (parts.Length > 1)
+                    {
+                        errorMessage = parts[1].Trim();
+                    }
+                }
+                else if (httpEx.Message.Contains("Bu e-posta adresi zaten kullanılıyor"))
+                {
+                    errorMessage = "Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta adresi kullanın.";
+                    ModelState.AddModelError("Email", "Bu e-posta adresi zaten kullanılıyor");
+                }
+                else if (httpEx.Message.Contains("Bu telefon numarası zaten kullanılıyor"))
+                {
+                    errorMessage = "Bu telefon numarası zaten kullanılıyor. Lütfen farklı bir telefon numarası kullanın.";
+                    ModelState.AddModelError("Phone", "Bu telefon numarası zaten kullanılıyor");
+                }
+                
+                TempData["ErrorMessage"] = errorMessage;
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating supplier");
+                TempData["ErrorMessage"] = "Tedarikçi oluşturulurken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.";
+                return View(model);
+            }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> ApproveSupplier(int id)
+        [HttpGet]
+        public async Task<IActionResult> EditSupplier(int id)
         {
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
@@ -780,51 +1108,153 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
-                var result = await _apiService.PutAsync<object>($"api/Admin/suppliers/{id}/approve", new { }, token);
-                if (result != null)
+                var supplier = await _apiService.GetAsync<SupplierDto>($"api/Admin/suppliers/{id}", token);
+                if (supplier == null)
                 {
-                    TempData["SuccessMessage"] = "Tedarikçi başarıyla onaylandı";
+                    TempData["ErrorMessage"] = "Tedarikçi bulunamadı";
+                    return RedirectToAction("Suppliers");
                 }
-                else
+
+                var model = new UpdateSupplierDto
                 {
-                    TempData["ErrorMessage"] = "Tedarikçi onaylanırken bir hata oluştu";
-                }
+                    Id = supplier.Id,
+                    FullName = supplier.User?.FullName ?? "",
+                    Email = supplier.User?.Email ?? "",
+                    Phone = supplier.User?.Phone ?? "",
+                    CompanyName = supplier.CompanyName,
+                    TaxNumber = supplier.TaxNumber,
+                    Address = supplier.Address,
+                    IsActive = supplier.User?.IsActive ?? false
+                };
+
+                return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error approving supplier");
-                TempData["ErrorMessage"] = "Tedarikçi onaylanırken bir hata oluştu";
+                _logger.LogError(ex, "Error loading supplier for edit");
+                TempData["ErrorMessage"] = "Tedarikçi yüklenirken bir hata oluştu";
+                return RedirectToAction("Suppliers");
             }
-
-            return RedirectToAction("Suppliers");
         }
 
         [HttpPost]
-        public async Task<IActionResult> RejectSupplier(int id)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditSupplier(UpdateSupplierDto model)
         {
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Account");
 
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
             try
             {
-                var result = await _apiService.PutAsync<object>($"api/Admin/suppliers/{id}/reject", new { }, token);
+                // Clean phone number
+                if (!string.IsNullOrEmpty(model.Phone))
+                {
+                    model.Phone = model.Phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+                }
+
+                var result = await _apiService.PutAsync<object>($"api/Admin/suppliers/{model.Id}", model, token);
                 if (result != null)
                 {
-                    TempData["SuccessMessage"] = "Tedarikçi reddedildi";
+                    TempData["SuccessMessage"] = "Tedarikçi başarıyla güncellendi";
+                    return RedirectToAction("Suppliers");
                 }
-                else
+
+                TempData["ErrorMessage"] = "Tedarikçi güncellenirken bir hata oluştu";
+                return View(model);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error updating supplier");
+
+                string errorMessage = "Tedarikçi güncellenirken bir hata oluştu";
+
+                if (httpEx.Message.Contains("400:"))
                 {
-                    TempData["ErrorMessage"] = "Tedarikçi reddedilirken bir hata oluştu";
+                    var parts = httpEx.Message.Split(new[] { "400:" }, 2, StringSplitOptions.None);
+                    if (parts.Length > 1)
+                    {
+                        errorMessage = parts[1].Trim();
+                    }
                 }
+                else if (httpEx.Message.Contains("Bu telefon numarası"))
+                {
+                    errorMessage = "Bu telefon numarası başka bir kullanıcı tarafından kullanılıyor.";
+                    ModelState.AddModelError("Phone", "Bu telefon numarası zaten kullanılıyor");
+                }
+
+                TempData["ErrorMessage"] = errorMessage;
+                return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error rejecting supplier");
-                TempData["ErrorMessage"] = "Tedarikçi reddedilirken bir hata oluştu";
+                _logger.LogError(ex, "Error updating supplier");
+                TempData["ErrorMessage"] = "Tedarikçi güncellenirken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.";
+                return View(model);
             }
+        }
 
-            return RedirectToAction("Suppliers");
+        [HttpGet]
+        public async Task<IActionResult> GetSupplierDetails(int id)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var supplier = await _apiService.GetAsync<SupplierDto>($"api/Admin/suppliers/{id}", token);
+                if (supplier == null)
+                    return Json(new { success = false, message = "Tedarikçi bulunamadı" });
+
+                var html = $@"
+                    <div class='row'>
+                        <div class='col-md-6'>
+                            <h6>Kişisel Bilgiler</h6>
+                            <p><strong>Ad Soyad:</strong> {supplier.User?.FullName}</p>
+                            <p><strong>E-posta:</strong> {supplier.User?.Email}</p>
+                            <p><strong>Telefon:</strong> {supplier.User?.Phone}</p>
+                        </div>
+                        <div class='col-md-6'>
+                            <h6>Şirket Bilgileri</h6>
+                            <p><strong>Şirket:</strong> {supplier.CompanyName}</p>
+                            <p><strong>Vergi No:</strong> {supplier.TaxNumber}</p>
+                            <p><strong>Adres:</strong> {supplier.Address}</p>
+                            <p><strong>Durum:</strong> {GetSupplierStatusBadge(supplier.Status)}</p>
+                        </div>
+                    </div>";
+
+                return Json(new { success = true, html = html });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting supplier details");
+                return Json(new { success = false, message = "Detaylar yüklenirken hata oluştu" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteSupplier(int id)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var result = await _apiService.DeleteAsync($"api/Admin/suppliers/{id}", token);
+                return Json(new { success = true, message = "Tedarikçi başarıyla silindi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting supplier");
+                return Json(new { success = false, message = "Tedarikçi silinirken hata oluştu" });
+            }
         }
 
         [HttpGet]
@@ -992,6 +1422,38 @@ namespace SantiyeTalepWebUI.Controllers
             }
 
             return RedirectToAction("Offers");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BulkOfferAction([FromBody] BulkOfferActionModel model)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var apiModel = new
+                {
+                    OfferIds = model.OfferIds,
+                    Action = model.Action
+                };
+
+                var result = await _apiService.PostAsync<object>("api/Admin/offers/bulk", apiModel, token);
+                
+                if (result != null)
+                {
+                    var actionText = model.Action.ToLower() == "approve" ? "onayandı" : "reddedildi";
+                    return Json(new { success = true, message = $"{model.OfferIds.Count} teklif başarıyla {actionText}" });
+                }
+
+                return Json(new { success = false, message = "Toplu işlem sırasında bir hata oluştu" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in bulk offer action");
+                return Json(new { success = false, message = "Toplu işlem sırasında bir hata oluştu: " + ex.Message });
+            }
         }
 
         // Export Actions
@@ -1177,22 +1639,44 @@ namespace SantiyeTalepWebUI.Controllers
                                         <div class='list-group list-group-flush'>
                                             {string.Join("", request.Offers.Take(3).Select(offer => $@"
                                             <div class='list-group-item px-0'>
-                                                <div class='d-flex justify-content-between align-items-center'>
-                                                    <div>
+                                                <div class='d-flex justify-content-between align-items-start'>
+                                                    <div class='flex-grow-1'>
                                                         <h6 class='mb-1'>{offer.SupplierName}</h6>
                                                         <small class='text-muted'>{offer.CompanyName}</small>
+                                                        <div class='mt-1'>
+                                                            <span class='badge bg-info-subtle text-info'>{offer.Brand}</span>
+                                                        </div>
                                                     </div>
                                                     <div class='text-end'>
-                                                        <span class='fw-bold'>{offer.Price:C}</span>
-                                                        <div><small class='text-muted'>{offer.DeliveryDays} gün</small></div>
+                                                        <div class='mb-1'>
+                                                            <span class='fw-bold'>{offer.CurrencySymbol}{offer.FinalPrice:N2}</span>
+                                                            <div><small class='text-muted'>{offer.CurrencyName}</small></div>
+                                                        </div>
+                                                        <div><small class='text-muted'>{offer.DeliveryDays} gün teslimat</small></div>
+                                                        <div class='mt-1'>
+                                                            {GetOfferStatusBadge(offer.Status)}
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                {(offer.Discount > 0 ? $@"
+                                                <div class='mt-2 pt-2 border-top'>
+                                                    <small class='text-muted'>
+                                                        Liste: {offer.CurrencySymbol}{offer.Price:N2} | 
+                                                        İskonto: %{offer.Discount} | 
+                                                        Net: {offer.CurrencySymbol}{offer.FinalPrice:N2}
+                                                    </small>
+                                                </div>" : "")}
                                             </div>"))}
                                         </div>
                                         {(request.Offers.Count > 3 ? $@"
                                         <div class='text-center mt-2'>
                                             <small class='text-muted'>ve {request.Offers.Count - 3} teklif daha...</small>
                                         </div>" : "")}
+                                        <div class='text-center mt-3'>
+                                            <a href='/Admin/Offers?offerId={request.Offers.First().Id}' class='btn btn-sm btn-outline-primary'>
+                                                <i class='ri-eye-line me-1'></i>Tüm Teklifleri Görüntüle
+                                            </a>
+                                        </div>
                                     </div>" : @"
                                     <div class='text-center py-3'>
                                         <i class='ri-price-tag-line display-6 text-muted mb-2'></i>
@@ -1370,6 +1854,28 @@ namespace SantiyeTalepWebUI.Controllers
             };
         }
 
+        private string GetOfferStatusBadge(OfferStatus status)
+        {
+            return status switch
+            {
+                OfferStatus.Pending => "<span class='badge bg-warning'>Bekleyen</span>",
+                OfferStatus.Approved => "<span class='badge bg-success'>Onaylandı</span>",
+                OfferStatus.Rejected => "<span class='badge bg-danger'>Reddedildi</span>",
+                _ => "<span class='badge bg-secondary'>Bilinmeyen</span>"
+            };
+        }
+
+        private string GetSupplierStatusBadge(SupplierStatus status)
+        {
+            return status switch
+            {
+                SupplierStatus.Pending => "<span class='badge bg-warning'>Onay Bekliyor</span>",
+                SupplierStatus.Approved => "<span class='badge bg-success'>Onaylı</span>",
+                SupplierStatus.Rejected => "<span class='badge bg-danger'>Redd edildi</span>",
+                _ => "<span class='badge bg-secondary'>Bilinmeyen</span>"
+            };
+        }
+
         [HttpGet]
         public async Task<IActionResult> CheckNewRequests()
         {
@@ -1380,8 +1886,11 @@ namespace SantiyeTalepWebUI.Controllers
             try
             {
                 var recentRequests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
-                var pendingSuppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers/pending", token) ?? new List<SupplierDto>();
+                var allSuppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers", token) ?? new List<SupplierDto>();
                 var pendingOffers = await _apiService.GetAsync<List<OfferDto>>("api/Admin/offers/pending", token) ?? new List<OfferDto>();
+                
+                // Filter pending suppliers from all suppliers
+                var pendingSuppliers = allSuppliers.Where(s => s.Status == SupplierStatus.Pending).ToList();
                 
                 // Count new requests from today
                 var today = DateTime.Today;
@@ -1403,6 +1912,389 @@ namespace SantiyeTalepWebUI.Controllers
                 return Json(new { success = false, message = "Yeni talepler kontrol edilirken hata oluştu" });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRequestStatusData(string period = "month")
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi doldu" });
+
+            try
+            {
+                var allRequests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
+                
+                // Filtre tarih aralığını hesapla
+                DateTime startDate;
+                var now = DateTime.Now;
+
+                switch (period.ToLower())
+                {
+                    case "today":
+                        startDate = DateTime.Today;
+                        break;
+                    case "week":
+                        startDate = now.AddDays(-7);
+                        break;
+                    case "month":
+                        startDate = now.AddMonths(-1);
+                        break;
+                    case "3months":
+                        startDate = now.AddMonths(-3);
+                        break;
+                    case "year":
+                        startDate = now.AddYears(-1);
+                        break;
+                    default:
+                        startDate = now.AddMonths(-1);
+                        break;
+                }
+
+                // Tarih aralığına göre filtrele
+                var filteredRequests = allRequests.Where(r => r.RequestDate >= startDate).ToList();
+
+                // Duruma göre say
+                var openCount = filteredRequests.Count(r => r.Status == RequestStatus.Open);
+                var inProgressCount = filteredRequests.Count(r => r.Status == RequestStatus.InProgress);
+                var completedCount = filteredRequests.Count(r => r.Status == RequestStatus.Completed);
+                var cancelledCount = filteredRequests.Count(r => r.Status == RequestStatus.Cancelled);
+
+                return Json(new { 
+                    success = true, 
+                    openCount = openCount,
+                    inProgressCount = inProgressCount,
+                    completedCount = completedCount,
+                    cancelledCount = cancelledCount,
+                    total = filteredRequests.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting request status data");
+                return Json(new { success = false, message = "Grafik verileri yüklenirken hata oluştu" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSitePerformanceData(string period = "1month")
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi doldu" });
+
+            try
+            {
+                var performanceData = await _apiService.GetAsync<dynamic>($"api/Admin/site-performance?period={period}", token);
+                
+                if (performanceData != null)
+                {
+                    return Json(new { success = true, data = performanceData });
+                }
+
+                return Json(new { success = false, message = "Şantiye performans verileri alınamadı" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting site performance data");
+                return Json(new { success = false, message = "Şantiye performans verileri yüklenirken hata oluştu" });
+            }
+        }
+
+        // CreateRequest Actions
+        [HttpGet]
+        public async Task<IActionResult> CreateRequest()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Account");
+
+            return View(new CreateRequestViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateRequest(CreateRequestViewModel model)
+        {
+            _logger.LogInformation("CreateRequest POST called");
+            _logger.LogInformation("Model - SiteId: {SiteId}, EmployeeId: {EmployeeId}, Product: {Product}, Quantity: {Quantity}",
+                model.SiteId, model.EmployeeId, model.ProductDescription, model.Quantity);
+
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+            {
+                _logger.LogWarning("No token found for CreateRequest");
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Validate Admin-specific fields
+            if (!model.SiteId.HasValue || model.SiteId.Value <= 0)
+            {
+                ModelState.AddModelError("SiteId", "Lütfen bir şantiye seçin");
+                _logger.LogWarning("SiteId is missing or invalid: {SiteId}", model.SiteId);
+            }
+
+            if (!model.EmployeeId.HasValue || model.EmployeeId.Value <= 0)
+            {
+                ModelState.AddModelError("EmployeeId", "Lütfen bir çalışan seçin");
+                _logger.LogWarning("EmployeeId is missing or invalid: {EmployeeId}", model.EmployeeId);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("ModelState is invalid");
+                foreach (var error in ModelState)
+                {
+                    _logger.LogWarning("ModelState Error - Key: {Key}, Errors: {Errors}",
+                        error.Key, string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage)));
+                }
+                return View(model);
+            }
+
+            try
+            {
+                // Admin için özel DTO oluştur
+                var createDto = new
+                {
+                    SiteId = model.SiteId.Value,
+                    EmployeeId = model.EmployeeId.Value,
+                    ProductDescription = model.ProductDescription?.Trim(),
+                    Quantity = model.Quantity,
+                    DeliveryType = model.DeliveryType,
+                    Description = model.Description?.Trim()
+                };
+
+                _logger.LogInformation("Sending request to API: {Request}",
+                    System.Text.Json.JsonSerializer.Serialize(createDto));
+
+                // Admin endpoint'ini kullan
+                var result = await _apiService.PostAsync<object>("api/Request", createDto, token);
+
+                _logger.LogInformation("API response received: {Result}",
+                    result != null ? "Success" : "Null");
+
+                if (result != null)
+                {
+                    TempData["SuccessMessage"] = "Talep başarıyla oluşturuldu";
+                    return RedirectToAction("Requests");
+                }
+
+                TempData["ErrorMessage"] = "Talep oluşturulurken bir hata oluştu";
+                _logger.LogWarning("API returned null result");
+                return View(model);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "HTTP error creating request");
+                _logger.LogError("Full HTTP exception message: {Message}", httpEx.Message);
+
+                string errorMessage = "Talep oluşturulurken bir hata oluştu";
+
+                if (httpEx.Message.Contains("400"))
+                {
+                    // API'den gelen detaylı hata mesajını almaya çalış
+                    try
+                    {
+                        // HttpRequestException'dan response body'yi alamayız, 
+                        // bu yüzden genel bir mesaj gösterelim
+                        errorMessage = "Gönderilen veriler geçersiz. Lütfen tüm alanları kontrol edin.";
+
+                        // Log'da daha detaylı bilgi olsun
+                        _logger.LogError("400 Bad Request details: {Details}", httpEx.Message);
+                    }
+                    catch
+                    {
+                        // Ignore parsing errors
+                    }
+                }
+                else if (httpEx.Message.Contains("403") || httpEx.Message.Contains("Forbidden"))
+                {
+                    errorMessage = "Bu işlem için yetkiniz bulunmuyor";
+                }
+                else if (httpEx.Message.Contains("401") || httpEx.Message.Contains("Unauthorized"))
+                {
+                    errorMessage = "Oturum süreniz dolmuş, lütfen tekrar giriş yapın";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                TempData["ErrorMessage"] = errorMessage;
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating request");
+                TempData["ErrorMessage"] = "Talep oluşturulurken beklenmeyen bir hata oluştu: " + ex.Message;
+                return View(model);
+            }
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> CreateRequestFromExcel()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+
+            try
+            {
+                var form = await Request.ReadFormAsync();
+                var excelFile = form.Files["ExcelFile"];
+                var siteId = form["SiteId"].ToString();
+                var employeeId = form["EmployeeId"].ToString();
+                var supplierIds = form["SupplierIds"].ToList();
+
+                if (excelFile == null || excelFile.Length == 0)
+                    return Json(new { success = false, message = "Excel dosyası seçilmedi" });
+
+                if (string.IsNullOrEmpty(siteId) || string.IsNullOrEmpty(employeeId))
+                    return Json(new { success = false, message = "Şantiye ve çalışan seçimi zorunludur" });
+
+                if (!supplierIds.Any())
+                    return Json(new { success = false, message = "En az bir tedarikçi seçmelisiniz" });
+
+                // Excel dosyasını multipart form data olarak gönder
+                using var content = new MultipartFormDataContent();
+                using var fileContent = new StreamContent(excelFile.OpenReadStream());
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(excelFile.ContentType);
+                content.Add(fileContent, "ExcelFile", excelFile.FileName);
+                content.Add(new StringContent(siteId), "SiteId");
+                content.Add(new StringContent(employeeId), "EmployeeId");
+                
+                foreach (var supplierId in supplierIds)
+                {
+                    content.Add(new StringContent(supplierId), "SupplierIds");
+                }
+
+                // API'ye gönder
+                var result = await _apiService.PostMultipartAsync<object>("api/Admin/requests/create-from-excel", content, token);
+                
+                if (result != null)
+                {
+                    return Json(new { success = true, message = "Excel dosyası başarıyla yuedlendi ve tedarikçilere gönderildi" });
+                }
+
+                return Json(new { success = false, message = "Excel yüklenirken bir hata oluştu" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating request from Excel");
+                return Json(new { success = false, message = "Excel yüklenirken bir hata oluştu: " + ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSites()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new List<object>());
+
+            try
+            {
+                var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
+                var result = sites.Select(s => new { id = s.Id, name = s.Name }).ToList();
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting sites");
+                return Json(new List<object>());
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetEmployeesBySite(int siteId)
+        {
+            _logger.LogInformation("GetEmployeesBySite called with siteId: {SiteId}", siteId);
+            
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+            {
+                _logger.LogWarning("No token found for GetEmployeesBySite request");
+                return Json(new List<object>());
+            }
+
+            try
+            {
+                _logger.LogInformation("Fetching employees from API for site: {SiteId}", siteId);
+                
+                // Backend API endpoint: /api/Admin/sites/{id}/employees
+                var employees = await _apiService.GetAsync<List<EmployeeDto>>($"api/Admin/sites/{siteId}/employees", token) ?? new List<EmployeeDto>();
+                
+                _logger.LogInformation("Received {Count} employees from API for site {SiteId}", employees.Count, siteId);
+                
+                var result = employees.Select(e => new { 
+                    id = e.Id, 
+                    fullName = e.FullName, 
+                    position = e.Position 
+                }).ToList();
+                
+                _logger.LogInformation("Returning {Count} employees to frontend", result.Count);
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting employees by site {SiteId}", siteId);
+                return Json(new List<object>());
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchProducts(string query, int? siteId)
+        {
+            _logger.LogInformation("SearchProducts called - Query: {Query}, SiteId: {SiteId}", query, siteId);
+            
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+            {
+                _logger.LogWarning("No token found for SearchProducts");
+                return Json(new { success = false, message = "Oturum süresi dolmuş" });
+            }
+
+            if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+            {
+                return Json(new { success = false, message = "Arama terimi en az 2 karakter olmalıdır" });
+            }
+
+            try
+            {
+                // Build search URL with brand filtering based on selected site
+                var searchUrl = $"api/searchapi?query={Uri.EscapeDataString(query)}";
+                
+                // If a site is selected, get its brands for filtering
+                if (siteId.HasValue && siteId.Value > 0)
+                {
+                    _logger.LogInformation("Fetching brands for site: {SiteId}", siteId.Value);
+                    
+                    var site = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{siteId.Value}", token);
+                    
+                    if (site?.Brands != null && site.Brands.Any())
+                    {
+                        var brandIds = string.Join(",", site.Brands.Select(b => b.Id));
+                        searchUrl += $"&brandIds={brandIds}";
+                        
+                        _logger.LogInformation("Applying brand filter for site {SiteName}: {BrandNames}", 
+                            site.Name, string.Join(", ", site.Brands.Select(b => b.Name)));
+                    }
+                }
+                
+                _logger.LogInformation("Calling search API: {Url}", searchUrl);
+                
+                var products = await _apiService.GetAsync<List<Models.ViewModels.ProductDto>>(searchUrl, token) ?? new List<Models.ViewModels.ProductDto>();
+                
+                _logger.LogInformation("Search returned {Count} products", products.Count);
+                
+                return Json(new { 
+                    success = true, 
+                    data = products
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching products");
+                return Json(new { success = false, message = "Ürün arama sırasında hata oluştu: " + ex.Message });
+            }
+        }
     }
 
     public class BulkRequestActionDto
@@ -1414,12 +2306,18 @@ namespace SantiyeTalepWebUI.Controllers
     public class SendRequestsToSuppliersModel
     {
         public List<int> RequestIds { get; set; } = new();
-        public List<int> SupplierIds { get; set; } = new();
+        public List<int> SupplierIds { get; } = new();
     }
 
     public class ChangeRequestStatusDto
     {
         public int RequestId { get; set; }
         public int NewStatus { get; set; }
+    }
+
+    public class BulkOfferActionModel
+    {
+        public List<int> OfferIds { get; set; } = new();
+        public string Action { get; set; } = string.Empty;
     }
 }

@@ -52,36 +52,7 @@
                             </div>
                         </div><!-- end card header -->
 
-                        <div class="card-body">
-                            <div class="row g-3 mb-3">
-                                <div class="col-lg-4">
-                                    <div class="search-box">
-                                        <input type="text" class="form-control search" placeholder="Þantiye ara..." id="searchInput">
-                                        <i class="ri-search-line search-icon"></i>
-                                    </div>
-                                </div>
-                                <div class="col-lg-8">
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <button class="btn btn-soft-secondary" onclick="exportToExcel()">
-                                            <i class="ri-file-excel-2-line align-bottom me-1"></i> Excel
-                                        </button>
-                                        <button class="btn btn-soft-secondary" onclick="exportToPDF()">
-                                            <i class="ri-file-pdf-line align-bottom me-1"></i> PDF
-                                        </button>
-                                        <div class="dropdown">
-                                            <button class="btn btn-soft-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <i class="ri-more-2-fill align-bottom me-1"></i> Daha Fazla
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="#" onclick="bulkAction('activate')"><i class="ri-checkbox-circle-line me-2"></i>Toplu Aktifleþtir</a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="bulkAction('deactivate')"><i class="ri-close-circle-line me-2"></i>Toplu Pasifleþtir</a></li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item text-danger" href="#" onclick="bulkAction('delete')"><i class="ri-delete-bin-line me-2"></i>Seçilenleri Sil</a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="card-body">                           
 
                             @if (Model != null && Model.Any())
                             {
@@ -278,16 +249,19 @@
     <script>
         let currentSiteId = null;
 
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const siteCards = document.querySelectorAll('.site-card');
-            
-            siteCards.forEach(card => {
-                const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(searchTerm) ? '' : 'none';
+        // Search functionality - only if search input exists
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const siteCards = document.querySelectorAll('.site-card');
+                
+                siteCards.forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    card.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
             });
-        });
+        }
 
         // View site details
         function viewSite(id) {
@@ -472,20 +446,20 @@
 
         // Select all checkbox functionality
         function setupSelectAll() {
-            const selectAllBtn = document.createElement('button');
-            selectAllBtn.className = 'btn btn-sm btn-outline-secondary me-2';
-            selectAllBtn.innerHTML = '<i class="ri-checkbox-multiple-line me-1"></i>Tümünü Seç';
-            selectAllBtn.onclick = function() {
-                const checkboxes = document.querySelectorAll('.site-checkbox');
-                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-                checkboxes.forEach(cb => cb.checked = !allChecked);
-                this.innerHTML = allChecked ? 
-                    '<i class="ri-checkbox-multiple-line me-1"></i>Tümünü Seç' : 
-                    '<i class="ri-checkbox-line me-1"></i>Seçimi Kaldýr';
-            };
-            
             const buttonContainer = document.querySelector('.col-lg-8 .d-flex');
             if (buttonContainer) {
+                const selectAllBtn = document.createElement('button');
+                selectAllBtn.className = 'btn btn-sm btn-outline-secondary me-2';
+                selectAllBtn.innerHTML = '<i class="ri-checkbox-multiple-line me-1"></i>Tümünü Seç';
+                selectAllBtn.onclick = function() {
+                    const checkboxes = document.querySelectorAll('.site-checkbox');
+                    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                    checkboxes.forEach(cb => cb.checked = !allChecked);
+                    this.innerHTML = allChecked ? 
+                        '<i class="ri-checkbox-multiple-line me-1"></i>Tümünü Seç' : 
+                        '<i class="ri-checkbox-line me-1"></i>Seçimi Kaldýr';
+                };
+                
                 buttonContainer.insertBefore(selectAllBtn, buttonContainer.firstChild);
             }
         }

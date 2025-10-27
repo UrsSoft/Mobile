@@ -84,12 +84,15 @@ namespace SantiyeTalepApi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Position")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("SiteId")
+                    b.Property<int?>("SiteId")
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")
@@ -232,6 +235,9 @@ namespace SantiyeTalepApi.Migrations
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
                     b.Property<string>("ProductDescription")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -370,6 +376,9 @@ namespace SantiyeTalepApi.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("FcmToken")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -381,6 +390,12 @@ namespace SantiyeTalepApi.Migrations
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiry")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Phone")
                         .IsRequired()
@@ -395,6 +410,9 @@ namespace SantiyeTalepApi.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
                     b.ToTable("Users");
 
                     b.HasData(
@@ -402,7 +420,7 @@ namespace SantiyeTalepApi.Migrations
                         {
                             Id = 1,
                             CreatedDate = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "admin@santiye.com",
+                            Email = "altanemre1989@gmail.com",
                             FullName = "Sistem Yöneticisi",
                             IsActive = true,
                             Password = "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.",
@@ -435,8 +453,7 @@ namespace SantiyeTalepApi.Migrations
                     b.HasOne("SantiyeTalepApi.Models.Site", "Site")
                         .WithMany("Employees")
                         .HasForeignKey("SiteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("SantiyeTalepApi.Models.User", "User")
                         .WithOne("Employee")

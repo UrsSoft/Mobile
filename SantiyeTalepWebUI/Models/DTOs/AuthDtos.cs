@@ -78,4 +78,25 @@ namespace SantiyeTalepWebUI.Models.DTOs
         [Compare("NewPassword", ErrorMessage = "Şifreler eşleşmiyor")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
+
+    public class ForgotPasswordDto
+    {
+        [Required(ErrorMessage = "E-posta adresi gereklidir")]
+        [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz")]
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class ResetPasswordDto
+    {
+        [Required(ErrorMessage = "Token gereklidir")]
+        public string Token { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Yeni şifre gereklidir")]
+        [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır")]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Şifre tekrarı gereklidir")]
+        [Compare("NewPassword", ErrorMessage = "Şifreler eşleşmiyor")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
 }

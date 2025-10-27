@@ -135,14 +135,14 @@
                                         <table class="table table-hover align-middle table-nowrap mb-0" id="requestsTable">
                                             <thead class="table-light">
                                                 <tr class="text-center">
-                                                    <th style="width: 5%">
+                                                    <th style="width: 1%">
                                                         <input type="checkbox" class="form-check-input" id="selectAll">
                                                     </th>
                                                     <th style="width: 20%">Ürün Bilgisi</th>
                                                     <th style="width: 7%">Miktar</th>
-                                                    <th style="width: 5%">Talep Tarihi</th>
+                                                    <th style="width: 4%">Talep Tarihi</th>
                                                     <th style="width: 7%">Teslimat</th>
-                                                    <th style="width: 60%">Teklif Bilgileri</th>
+                                                    <th style="width: 61%">Teklif Bilgileri</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -157,39 +157,7 @@
                                                             <div class="d-flex flex-column align-items-center">
                                                                 <input type="checkbox" class="form-check-input row-select" value="@request.Id">
                                                                 
-                                                                @if (request.Offers != null && request.Offers.Any())
-                                                                {
-                                                                    var myOffer = request.Offers.FirstOrDefault();
-                                                                    if (myOffer != null)
-                                                                    {
-                                                                        <small class="mt-1">
-                                                                            @switch (myOffer.Status)
-                                                                            {
-                                                                                case OfferStatus.Pending:
-                                                                                    <span class="badge bg-warning-subtle text-warning" style="font-size: 0.7rem;">
-                                                                                        <i class="ri-time-line"></i> Bekliyor
-                                                                                    </span>
-                                                                                    break;
-                                                                                case OfferStatus.Approved:
-                                                                                    <span class="badge bg-success-subtle text-success" style="font-size: 0.7rem;">
-                                                                                        <i class="ri-check-line"></i> Onaylandı
-                                                                                    </span>
-                                                                                    break;
-                                                                                case OfferStatus.Rejected:
-                                                                                    <span class="badge bg-danger-subtle text-danger" style="font-size: 0.7rem;">
-                                                                                        <i class="ri-close-line"></i> Reddedildi
-                                                                                    </span>
-                                                                                    break;
-                                                                            }
-                                                                        </small>
-                                                                    }
-                                                                }
-                                                                else
-                                                                {
-                                                                    <small class="text-muted mt-1" style="font-size: 0.7rem;">
-                                                                        <i class="ri-price-tag-line"></i> Teklif verilebilir
-                                                                    </small>
-                                                                }
+                                                              
                                                             </div>
                                                         </td>
                                                         <td>
@@ -197,37 +165,9 @@
                                                                 <div class="flex-grow-1">
                                                                     <div class="d-flex align-items-center mb-2">
                                                                         <h6 class="mb-0 me-2">@request.ProductDescription</h6>
-                                                                        @if (request.Offers != null && request.Offers.Any())
-                                                                        {
-                                                                            var myOffer = request.Offers.FirstOrDefault();
-                                                                            if (myOffer != null)
-                                                                            {
-                                                                                @switch (myOffer.Status)
-                                                                                {
-                                                                                    case OfferStatus.Pending:
-                                                                                        <span class="badge bg-warning-subtle text-warning">
-                                                                                            <i class="ri-time-line me-1"></i>Teklif Verildi - Bekliyor
-                                                                                        </span>
-                                                                                        break;
-                                                                                    case OfferStatus.Approved:
-                                                                                        <span class="badge bg-success-subtle text-success">
-                                                                                            <i class="ri-check-double-line me-1"></i>Teklif Onaylandı
-                                                                                        </span>
-                                                                                        break;
-                                                                                    case OfferStatus.Rejected:
-                                                                                        <span class="badge bg-danger-subtle text-danger">
-                                                                                            <i class="ri-close-circle-line me-1"></i>Teklif Reddedildi
-                                                                                        </span>
-                                                                                        break;
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            <span class="badge bg-info-subtle text-info">
-                                                                                <i class="ri-add-circle-line me-1"></i>Teklif Verilebilir
-                                                                            </span>
-                                                                        }
+                                                                        <span class="badge bg-info-subtle text-info">
+                                                                            <i class="ri-add-circle-line me-1"></i>Teklif Verilebilir
+                                                                        </span>
                                                                     </div>
                                                                     @if (!string.IsNullOrEmpty(request.Description))
                                                                     {
@@ -235,24 +175,15 @@
                                                                             @request.Description
                                                                         </p>
                                                                     }
-                                                                    
-                                                                    @* Eğer teklif verilmişse, teklif detaylarını göster *@
-                                                                    @if (request.Offers != null && request.Offers.Any())
-                                                                    {
-                                                                        var myOffer = request.Offers.FirstOrDefault();
-                                                                        if (myOffer != null)
-                                                                        {
-                                                                            <div class="mt-2 p-2 bg-light rounded">
-                                                                                <small class="text-muted d-block">
-                                                                                    <strong>Verilen Teklif:</strong> @myOffer.CurrencySymbol@myOffer.FinalPrice.ToString("N2") 
-                                                                                    (@myOffer.Quantity adet - @myOffer.Brand)
-                                                                                </small>
-                                                                                <small class="text-muted">
-                                                                                    <i class="ri-calendar-line me-1"></i>@myOffer.OfferDate.ToString("dd.MM.yyyy HH:mm")
-                                                                                </small>
-                                                                            </div>
-                                                                        }
-                                                                    }
+                                                                    <div class="mt-2">
+                                                                        <small class="text-muted">
+                                                                            <i class="ri-building-line me-1"></i>Şantiye: @request.SiteName
+                                                                        </small>
+                                                                        <br>
+                                                                        <small class="text-muted">
+                                                                            <i class="ri-user-line me-1"></i>Talep Eden: @request.EmployeeName
+                                                                        </small>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -296,16 +227,23 @@
                                                                             <span class="brand-status">Markalar yükleniyor...</span>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="col-md-6">
+                                                                    <div class="col-md-7">
                                                                         <label class="form-label">Açıklama</label>
                                                                         <input type="text" class="form-control form-control-sm offer-description" value="@request.ProductDescription" required>
                                                                     </div>
-                                                                                                                                  
+                                                                    <div class="col-md-2">
+                                                                        <label class="form-label">Miktar</label>
+                                                                        <input type="number" class="form-control form-control-sm offer-quantity" value="@request.Quantity" min="1" required>
+                                                                    </div>
+                                                                   
+                                                                    
+                                                                </div>
+                                                                <div class="row g-2 mt-1">
                                                                     <div class="col-md-2">
                                                                         <label class="form-label">Liste Fiyatı</label>
                                                                         <input type="number" class="form-control form-control-sm offer-price" placeholder="0.00" step="0.01" min="0.01" required>
                                                                     </div>
-                                                                    <div class="col-md-1">
+                                                                    <div class="col-md-2">
                                                                         <label class="form-label">Para Birimi</label>
                                                                         <select class="form-select form-select-sm offer-currency" required>
                                                                             <option value="@((int)Currency.TRY)" selected>₺</option>
@@ -313,18 +251,12 @@
                                                                             <option value="@((int)Currency.EUR)">€</option>
                                                                             <option value="@((int)Currency.GBP)">£</option>
                                                                         </select>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="row g-2 mt-1">
-                                                                    <div class="col-md-1">
-                                                                        <label class="form-label">Miktar</label>
-                                                                        <input type="number" class="form-control form-control-sm offer-quantity" value="@request.Quantity" min="1" required>
-                                                                    </div>
+                                                                    </div>                                                                   
                                                                     <div class="col-md-1">
                                                                         <label class="form-label">İskonto (%)</label>
                                                                         <input type="number" class="form-control form-control-sm offer-discount" placeholder="0" min="0" max="100" value="0">
                                                                     </div>
-                                                                    <div class="col-md-4">
+                                                                    <div class="col-md-3">
                                                                         <label class="form-label">Teslimat Tipi</label>
                                                                         <select class="form-select form-select-sm offer-delivery-type" required>
                                                                             <option value="@((int)DeliveryType.TodayPickup)">Bugün araç gönderip aldıracağım</option>
@@ -333,14 +265,14 @@
                                                                             <option value="@((int)DeliveryType.BusinessDays1to2)" selected>1-2 iş günü</option>
                                                                         </select>
                                                                     </div>
-                                                                    <div class="col-md-3">
+                                                                    <div class="col-md-2">
                                                                         <label class="form-label">Birim Net Fiyat</label>
                                                                         <div class="input-group input-group-sm">
                                                                             <span class="input-group-text currency-symbol">₺</span>
                                                                             <input type="text" class="form-control net-price" readonly>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="col-md-3">
+                                                                    <div class="col-md-2">
                                                                         <label class="form-label">Toplam Tutar</label>
                                                                         <div class="input-group input-group-sm">
                                                                             <span class="input-group-text currency-symbol">₺</span>
@@ -350,28 +282,10 @@
                                                                 </div>
                                                             </div>
                                                             <div class="no-offer-message text-center py-3">
-                                                                @if (request.Offers != null && request.Offers.Any())
-                                                                {
-                                                                    var myOffer = request.Offers.FirstOrDefault();
-                                                                    if (myOffer != null)
-                                                                    {
-                                                                        <small class="text-muted">
-                                                                            <i class="ri-check-circle-line me-1"></i>
-                                                                            Bu talep için teklif zaten verilmiş
-                                                                            <br>
-                                                                            <a href="@Url.Action("Offers")" class="text-primary">
-                                                                                Tekliflerim sayfasından görüntüle
-                                                                            </a>
-                                                                        </small>
-                                                                    }
-                                                                }
-                                                                else
-                                                                {
-                                                                    <small class="text-muted">
-                                                                        <i class="ri-checkbox-blank-circle-line"></i>
-                                                                        Teklif vermek için satırı seçin
-                                                                    </small>
-                                                                }
+                                                                <small class="text-muted">
+                                                                    <i class="ri-checkbox-blank-circle-line"></i>
+                                                                    Teklif vermek için satırı seçin
+                                                                </small>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -473,19 +387,8 @@
                 const offerInputs = row.querySelector('.offer-inputs');
                 const noOfferMessage = row.querySelector('.no-offer-message');
                 const requestId = row.dataset.requestId;
-                const requestDescription = row.dataset.requestDescription || '';
-                
-                // Check if this request already has an offer
-                const hasOffer = row.querySelector('.badge.bg-warning-subtle, .badge.bg-success-subtle, .badge.bg-danger-subtle');
                 
                 if (checkbox.checked) {
-                    if (hasOffer && !hasOffer.textContent.includes('Teklif Verilebilir')) {
-                        // Request already has an offer, show message and uncheck
-                        alert('Bu talep için zaten teklif verilmiş. Mevcut teklifinizi Tekliflerim sayfasından görüntüleyebilirsiniz.');
-                        checkbox.checked = false;
-                        return;
-                    }
-                    
                     offerInputs.style.display = 'block';
                     noOfferMessage.style.display = 'none';
                     row.classList.add('table-active');

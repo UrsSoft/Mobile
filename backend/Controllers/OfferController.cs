@@ -95,11 +95,10 @@ namespace SantiyeTalepApi.Controllers
             await _context.SaveChangesAsync();
 
             // Admin'e bildirim gönder
-            await _notificationService.CreateNotificationAsync(
+            await _notificationService.CreateAdminNotificationAsync(
                 "Yeni Teklif Alındı",
                 $"{supplier.CompanyName} ({supplier.User.FullName}) {request.ProductDescription} talebi için {offer.FinalPrice:C} tutarında teklif verdi.",
                 NotificationType.NewOffer,
-                null, // admin notification, userId null
                 request.Id,
                 offer.Id,
                 supplier.Id

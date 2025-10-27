@@ -1,6 +1,6 @@
 @model SantiyeTalepWebUI.Models.ViewModels.EmployeeDashboardViewModel
 @{
-    ViewData["Title"] = "Çalýþan Dashboard";
+    ViewData["Title"] = "Ã‡alÄ±ÅŸan Dashboard";
     Layout = "~/Views/Shared/_EmployeeLayout.cshtml";
 }
 
@@ -30,12 +30,12 @@
                             <div class="col-12">
                                 <div class="d-flex align-items-lg-center flex-lg-row flex-column">
                                     <div class="flex-grow-1">
-                                        <h4 class="fs-16 mb-1">Hoþgeldiniz, @ViewBag.CurrentUser?.FullName!</h4>
-                                        <p class="text-muted mb-0">Ýþte bugünkü talep durumunuz.</p>
+                                        <h4 class="fs-16 mb-1">HoÅŸgeldiniz, @ViewBag.CurrentUser?.FullName!</h4>
+                                        <p class="text-muted mb-0">Ä°ÅŸte bugÃ¼nkÃ¼ talep durumunuz.</p>
                                     </div>
                                     <div class="mt-3 mt-lg-0">
                                         <a href="@Url.Action("CreateRequest", "Employee")" class="btn btn-success">
-                                            <i class="ri-add-circle-line align-middle me-1"></i> Yeni Talep Oluþtur
+                                            <i class="ri-add-circle-line align-middle me-1"></i> Yeni Talep OluÅŸtur
                                         </a>
                                     </div>
                                 </div>
@@ -72,7 +72,7 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-center">
                                             <div class="flex-grow-1 overflow-hidden">
-                                                <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Açýk Talepler</p>
+                                                <p class="text-uppercase fw-medium text-muted text-truncate mb-0">AÃ§Ä±k Talepler</p>
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-end justify-content-between mt-4">
@@ -120,13 +120,13 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-center">
                                             <div class="flex-grow-1 overflow-hidden">
-                                                <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Þantiyem</p>
+                                                <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Åžantiyem</p>
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-end justify-content-between mt-4">
                                             <div>
                                                 <h6 class="fs-16 fw-semibold ff-secondary mb-4">
-                                                    @(Model?.MySite?.Name ?? "Atanmamýþ")
+                                                    @(Model?.MySite?.Name ?? "AtanmamÄ±ÅŸ")
                                                 </h6>
                                             </div>
                                             <div class="avatar-sm flex-shrink-0">
@@ -148,7 +148,7 @@
                                         <h4 class="card-title mb-0 flex-grow-1">Son Taleplerim</h4>
                                         <div class="flex-shrink-0">
                                             <a href="@Url.Action("Requests", "Employee")" class="btn btn-soft-primary">
-                                                Tümünü Görüntüle <i class="ri-arrow-right-line align-bottom"></i>
+                                                TÃ¼mÃ¼nÃ¼ GÃ¶rÃ¼ntÃ¼le <i class="ri-arrow-right-line align-bottom"></i>
                                             </a>
                                         </div>
                                     </div>
@@ -163,7 +163,7 @@
                                                         <th scope="col">Miktar</th>
                                                         <th scope="col">Durum</th>
                                                         <th scope="col">Tarih</th>
-                                                     @*    <th scope="col">Ýþlem</th> *@
+                                                     @*    <th scope="col">Ä°ÅŸlem</th> *@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -184,16 +184,16 @@
                                                                     @switch (request.DeliveryType)
                                                                     {
                                                                         case SantiyeTalepWebUI.Models.DeliveryType.TodayPickup:
-                                                                            <span class="badge bg-danger-subtle text-danger">Bugün araç gönderip aldýracaðým</span>
+                                                                            <span class="badge bg-danger-subtle text-danger">BugÃ¼n araÃ§ gÃ¶nderip aldÄ±racaÄŸÄ±m</span>
                                                                             break;
                                                                         case SantiyeTalepWebUI.Models.DeliveryType.SameDayDelivery:
-                                                                            <span class="badge bg-warning-subtle text-warning">Gün içi siz sevk edin</span>
+                                                                            <span class="badge bg-warning-subtle text-warning">GÃ¼n iÃ§i siz sevk edin</span>
                                                                             break;
                                                                         case SantiyeTalepWebUI.Models.DeliveryType.NextDayDelivery:
-                                                                            <span class="badge bg-info-subtle text-info">Yarýn siz sevk edin</span>
+                                                                            <span class="badge bg-info-subtle text-info">YarÄ±n siz sevk edin</span>
                                                                             break;
                                                                         case SantiyeTalepWebUI.Models.DeliveryType.BusinessDays1to2:
-                                                                            <span class="badge bg-primary-subtle text-primary">1-2 iþ günü</span>
+                                                                            <span class="badge bg-primary-subtle text-primary">1-2 iÅŸ gÃ¼nÃ¼</span>
                                                                             break;
                                                                     }
                                                                 </td>
@@ -204,13 +204,16 @@
                                                                     @switch (request.Status)
                                                                     {
                                                                         case SantiyeTalepWebUI.Models.RequestStatus.Open:
-                                                                            <span class="badge bg-warning-subtle text-warning">Açýk</span>
+                                                                            <span class="badge bg-warning-subtle text-warning">AÃ§Ä±k</span>
                                                                             break;
                                                                         case SantiyeTalepWebUI.Models.RequestStatus.Completed:
-                                                                            <span class="badge bg-success-subtle text-success">Tamamlandý</span>
+                                                                            <span class="badge bg-success-subtle text-success">TamamlandÄ±</span>
+                                                                            break;
+                                                                        case SantiyeTalepWebUI.Models.RequestStatus.InProgress:
+                                                                            <span class="badge bg-primary-subtle text-secondary">Ä°ÅŸlemde</span>
                                                                             break;
                                                                         case SantiyeTalepWebUI.Models.RequestStatus.Cancelled:
-                                                                            <span class="badge bg-danger-subtle text-danger">Ýptal</span>
+                                                                            <span class="badge bg-danger-subtle text-danger">Ä°ptal</span>
                                                                             break;
                                                                     }
                                                                 </td>
@@ -231,10 +234,10 @@
                                                                     <div class="mb-3">
                                                                         <i class="ri-file-list-3-line display-4 text-muted"></i>
                                                                     </div>
-                                                                    <h5>Henüz talep oluþturmadýnýz</h5>
-                                                                    <p class="text-muted">Ýlk talebinizi oluþturmak için butona týklayýn.</p>
+                                                                    <h5>HenÃ¼z talep oluÅŸturmadÄ±nÄ±z</h5>
+                                                                    <p class="text-muted">Ä°lk talebinizi oluÅŸturmak iÃ§in butona tÄ±klayÄ±n.</p>
                                                                     <a href="@Url.Action("CreateRequest", "Employee")" class="btn btn-primary">
-                                                                        <i class="ri-add-line me-1"></i> Ýlk Talebi Oluþtur
+                                                                        <i class="ri-add-line me-1"></i> Ä°lk Talebi OluÅŸtur
                                                                     </a>
                                                                 </div>
                                                             </td>

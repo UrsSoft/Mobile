@@ -144,22 +144,19 @@
                                             <i class="ri-send-plane-line align-bottom me-1"></i> Tedarikçilere Gönder
                                         </button>
                                         <div class="vr" id="actionsDivider" style="display: none;"></div>
-                                        <button class="btn btn-success btn-sm" id="bulkApproveBtn" style="display: none;" onclick="bulkAction('approve')">
-                                            <i class="ri-check-line align-bottom me-1"></i> Seçilenleri Onayla
+                                        <button class="btn btn-warning btn-sm" id="bulkOpenBtn" style="display: none;" onclick="bulkAction('open')">
+                                            <i class="ri-file-open-line align-bottom me-1"></i> Seçilenleri Açık Hale Getir
                                         </button>
-                                        <button class="btn btn-warning btn-sm" id="bulkInProgressBtn" style="display: none;" onclick="bulkAction('inprogress')">
+                                        <button class="btn btn-info btn-sm" id="bulkInProgressBtn" style="display: none;" onclick="bulkAction('inprogress')">
                                             <i class="ri-loader-line align-bottom me-1"></i> Seçilenleri İşleme Al
                                         </button>
+                                        <button class="btn btn-success btn-sm" id="bulkApproveBtn" style="display: none;" onclick="bulkAction('approve')">
+                                            <i class="ri-check-line align-bottom me-1"></i> Seçilenleri Onayla
+                                        </button>                                       
                                         <button class="btn btn-danger btn-sm" id="bulkDeleteBtn" style="display: none;" onclick="bulkAction('delete')">
                                             <i class="ri-delete-bin-line align-bottom me-1"></i> Seçilenleri Sil
                                         </button>
-                                        <div class="vr"></div>
-                                        <button class="btn btn-primary btn-sm" onclick="exportToExcel()">
-                                            <i class="ri-file-excel-line align-bottom me-1"></i> Excel
-                                        </button>
-                                        <button class="btn btn-secondary btn-sm" onclick="exportToPDF()">
-                                            <i class="ri-file-pdf-line align-bottom me-1"></i> PDF
-                                        </button>
+                                        <div class="vr"></div>                                       
                                         <button class="btn btn-info btn-sm" onclick="window.location.reload()">
                                             <i class="ri-refresh-line align-bottom me-1"></i> Yenile
                                         </button>
@@ -275,15 +272,33 @@
                                                     <input class="form-check-input" type="checkbox" id="checkAll">
                                                 </div>
                                             </th>
-                                            <th class="sort" data-sort="id">ID</th>
-                                            <th class="sort" data-sort="product">Ürün</th>
-                                            <th class="sort" data-sort="quantity">Miktar</th>
-                                            <th class="sort" data-sort="employee">Çalışan</th>
-                                            <th class="sort" data-sort="site">Şantiye</th>
-                                            <th class="sort" data-sort="delivery">Teslim</th>
-                                            <th class="sort" data-sort="status">Durum</th>
-                                            <th class="sort" data-sort="date">Tarih</th>
-                                            <th class="sort" data-sort="offers">Teklifler</th>
+                                            <th class="sort sortable" data-sort="id" style="cursor: pointer;">
+                                                ID <i class="ri-arrow-up-down-line ms-1"></i>
+                                            </th>
+                                            <th class="sort sortable" data-sort="product" style="cursor: pointer;">
+                                                Ürün <i class="ri-arrow-up-down-line ms-1"></i>
+                                            </th>
+                                            <th class="sort sortable" data-sort="quantity" style="cursor: pointer;">
+                                                Miktar <i class="ri-arrow-up-down-line ms-1"></i>
+                                            </th>
+                                            <th class="sort sortable" data-sort="employee" style="cursor: pointer;">
+                                                Çalışan <i class="ri-arrow-up-down-line ms-1"></i>
+                                            </th>
+                                            <th class="sort sortable" data-sort="site" style="cursor: pointer;">
+                                                Şantiye <i class="ri-arrow-up-down-line ms-1"></i>
+                                            </th>
+                                            <th class="sort sortable" data-sort="delivery" style="cursor: pointer;">
+                                                Teslim <i class="ri-arrow-up-down-line ms-1"></i>
+                                            </th>
+                                            <th class="sort sortable" data-sort="status" style="cursor: pointer;">
+                                                Durum <i class="ri-arrow-up-down-line ms-1"></i>
+                                            </th>
+                                            <th class="sort sortable" data-sort="date" style="cursor: pointer;">
+                                                Tarih <i class="ri-arrow-up-down-line ms-1"></i>
+                                            </th>
+                                            <th class="sort sortable" data-sort="offers" style="cursor: pointer;">
+                                                Teklifler <i class="ri-arrow-up-down-line ms-1"></i>
+                                            </th>
                                             <th>İşlemler</th>
                                         </tr>
                                     </thead>
@@ -292,7 +307,18 @@
                                         {
                                             @foreach (var request in Model.Requests.OrderByDescending(r => r.RequestDate))
                                             {
-                                                <tr class="request-row" data-id="@request.Id" data-status="@((int)request.Status)" data-site="@request.SiteId" data-date="@request.RequestDate.ToString("yyyy-MM-dd")">
+                                                <tr class="request-row" 
+                                                    data-id="@request.Id" 
+                                                    data-status="@((int)request.Status)" 
+                                                    data-site="@request.SiteId" 
+                                                    data-date="@request.RequestDate.ToString("yyyy-MM-dd")"
+                                                    data-product="@request.ProductDescription"
+                                                    data-quantity="@request.Quantity"
+                                                    data-employee="@request.EmployeeName"
+                                                    data-sitename="@request.SiteName"
+                                                    data-delivery="@((int)request.DeliveryType)"
+                                                    data-offers="@request.Offers.Count"
+                                                    data-datetime="@request.RequestDate.ToString("yyyyMMddHHmmss")">
                                                     <td>
                                                         <div class="form-check">
                                                             <input class="form-check-input request-checkbox" type="checkbox" value="@request.Id">
@@ -394,6 +420,8 @@
                                                                     @if (request.Status == SantiyeTalepWebUI.Models.RequestStatus.InProgress)
                                                                     {
                                                                         <li><a class="dropdown-item" href="javascript:void(0);" onclick="changeRequestStatus(@request.Id, 3)"><i class="ri-check-line align-bottom me-2 text-muted"></i> Tamamla</a></li>
+                                                                        <li><a class="dropdown-item" href="javascript:void(0);" onclick="changeRequestStatus(@request.Id, 1)"><i class="ri-time-line align-bottom me-2 text-muted"></i> Açık Hale Getir</a></li>
+
                                                                     }
                                                                     @if (request.Status != SantiyeTalepWebUI.Models.RequestStatus.Completed && request.Status != SantiyeTalepWebUI.Models.RequestStatus.Cancelled)
                                                                     {
@@ -479,6 +507,105 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
+        // Sorting functionality
+        let currentSort = { column: 'date', order: 'desc' };
+
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.addEventListener('click', function() {
+                const sortColumn = this.dataset.sort;
+                
+                // Toggle sort order
+                if (currentSort.column === sortColumn) {
+                    currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = sortColumn;
+                    currentSort.order = 'asc';
+                }
+                
+                // Update sort icons
+                updateSortIcons(sortColumn, currentSort.order);
+                
+                // Sort the table
+                sortTable(sortColumn, currentSort.order);
+            });
+        });
+
+        function updateSortIcons(activeColumn, order) {
+            document.querySelectorAll('.sortable i').forEach(icon => {
+                const column = icon.parentElement.dataset.sort;
+                if (column === activeColumn) {
+                    if (order === 'asc') {
+                        icon.className = 'ri-arrow-up-line ms-1';
+                    } else {
+                        icon.className = 'ri-arrow-down-line ms-1';
+                    }
+                } else {
+                    icon.className = 'ri-arrow-up-down-line ms-1';
+                }
+            });
+        }
+
+        function sortTable(column, order) {
+            const tbody = document.querySelector('#requestsTable tbody');
+            const rows = Array.from(tbody.querySelectorAll('.request-row'));
+            
+            rows.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch(column) {
+                    case 'id':
+                        aValue = parseInt(a.dataset.id);
+                        bValue = parseInt(b.dataset.id);
+                        break;
+                    case 'product':
+                        aValue = a.dataset.product.toLowerCase();
+                        bValue = b.dataset.product.toLowerCase();
+                        break;
+                    case 'quantity':
+                        aValue = parseInt(a.dataset.quantity);
+                        bValue = parseInt(b.dataset.quantity);
+                        break;
+                    case 'employee':
+                        aValue = a.dataset.employee.toLowerCase();
+                        bValue = b.dataset.employee.toLowerCase();
+                        break;
+                    case 'site':
+                        aValue = a.dataset.sitename.toLowerCase();
+                        bValue = b.dataset.sitename.toLowerCase();
+                        break;
+                    case 'delivery':
+                        aValue = parseInt(a.dataset.delivery);
+                        bValue = parseInt(b.dataset.delivery);
+                        break;
+                    case 'status':
+                        aValue = parseInt(a.dataset.status);
+                        bValue = parseInt(b.dataset.status);
+                        break;
+                    case 'date':
+                        aValue = a.dataset.datetime;
+                        bValue = b.dataset.datetime;
+                        break;
+                    case 'offers':
+                        aValue = parseInt(a.dataset.offers);
+                        bValue = parseInt(b.dataset.offers);
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (aValue < bValue) return order === 'asc' ? -1 : 1;
+                if (aValue > bValue) return order === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            // Re-append rows in sorted order
+            rows.forEach(row => tbody.appendChild(row));
+            
+            // Re-append empty rows if they exist
+            const emptyRows = Array.from(tbody.querySelectorAll('.empty-row'));
+            emptyRows.forEach(row => tbody.appendChild(row));
+        }
+
         // Check all functionality
         document.getElementById('checkAll').addEventListener('change', function() {
             const checkboxes = document.querySelectorAll('.request-checkbox');
@@ -513,7 +640,7 @@
 
         function updateBulkActionButtons() {
             const checkedBoxes = document.querySelectorAll('.request-checkbox:checked');
-            const bulkButtons = ['sendToSuppliersBtn', 'bulkApproveBtn', 'bulkInProgressBtn', 'bulkDeleteBtn'];
+            const bulkButtons = ['sendToSuppliersBtn', 'bulkOpenBtn', 'bulkApproveBtn', 'bulkInProgressBtn', 'bulkDeleteBtn'];
             const actionsDivider = document.getElementById('actionsDivider');
             
             bulkButtons.forEach(btnId => {
@@ -733,6 +860,7 @@
             }
 
             const actionMessages = {
+                open: { title: 'Toplu Açık Hale Getirme', text: 'Seçilen talepleri açık duruma getirmek istediğinizden emin misiniz?', action: 'Açık Hale Getir' },
                 approve: { title: 'Toplu Onaylama', text: 'Seçilen talepleri onaylamak istediğinizden emin misiniz?', action: 'Onayla' },
                 inprogress: { title: 'Toplu İşleme Alma', text: 'Seçilen talepleri işleme almak istediğinizden emin misiniz?', action: 'İşleme Al' },
                 delete: { title: 'Toplu Silme', text: 'Seçilen talepleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.', action: 'Sil' }

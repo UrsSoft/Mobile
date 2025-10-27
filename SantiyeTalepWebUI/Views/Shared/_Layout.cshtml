@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Şantiye Talep Yönetim Sistemi | Velzon - Admin Dashboard</title>
+    <title>Şantiye Talep Yönetim Sistemi | Element Elektrik Prj. Taah. Tic. Ltd. Şti.</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="Şantiye Talep Yönetim Sistemi" name="description" />
     <meta content="Velzon" name="author" />
@@ -197,10 +197,7 @@
                                         <a href="@Url.Action("Suppliers", "Admin")" class="nav-link">Tüm Tedarikçiler</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="@Url.Action("PendingSuppliers", "Admin")" class="nav-link">Onay Bekleyenler</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="@Url.Action("ApprovedSuppliers", "Admin")" class="nav-link">Onaylı Tedarikçiler</a>
+                                        <a href="@Url.Action("CreateSupplier", "Admin")" class="nav-link">Tedarikçi Ekle</a>
                                     </li>
                                 </ul>
                             </div>
@@ -217,10 +214,7 @@
                                         <a href="@Url.Action("Requests", "Admin")" class="nav-link">Tüm Talepler</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="@Url.Action("PendingRequests", "Admin")" class="nav-link">Bekleyen Talepler</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="@Url.Action("CompletedRequests", "Admin")" class="nav-link">Tamamlanan Talepler</a>
+                                        <a href="@Url.Action("CreateRequest", "Admin")" class="nav-link">Yeni Talep Ekle</a>
                                     </li>
                                 </ul>
                             </div>
@@ -245,49 +239,6 @@
                                 </ul>
                             </div>
                         </li>
-
-                        <li class="menu-title"><i class="ri-more-fill"></i> <span>Raporlar ve Ayarlar</span></li>
-
-                        <!-- Raporlar -->
-                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="#sidebarReports" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarReports">
-                                <i class="ri-bar-chart-2-line"></i> <span>Raporlar</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarReports">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="@Url.Action("RequestReports", "Admin")" class="nav-link">Talep Raporları</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="@Url.Action("SupplierReports", "Admin")" class="nav-link">Tedarikçi Raporları</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="@Url.Action("CostReports", "Admin")" class="nav-link">Maliyet Raporları</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-
-                        <!-- Sistem Ayarları -->
-                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="#sidebarSettings" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSettings">
-                                <i class="ri-settings-3-line"></i> <span>Sistem Ayarları</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSettings">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="@Url.Action("Users", "Admin")" class="nav-link">Kullanıcı Yönetimi</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="@Url.Action("SystemSettings", "Admin")" class="nav-link">Sistem Ayarları</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="@Url.Action("BackupRestore", "Admin")" class="nav-link">Yedekleme</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-
                     </ul>
                 </div>
                 <!-- Sidebar -->
@@ -360,7 +311,7 @@
     <script src="~/js/notification-checker.js"></script>
     
     <!-- App js -->
-  @*   <script src="~/assets/js/app.js"></script> *@
+    <script src="~/assets/js/app.js"></script>
 
     @RenderSection("Scripts",false)
 </body>

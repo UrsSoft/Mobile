@@ -77,6 +77,15 @@ namespace SantiyeTalepApi.DTOs
             Currency.GBP => "£",
             _ => "?"
         };
+        
+        public string CurrencyName => Currency switch
+        {
+            Currency.TRY => "Türk Lirası",
+            Currency.USD => "Amerikan Doları",
+            Currency.EUR => "Euro",
+            Currency.GBP => "İngiliz Sterlini",
+            _ => "Bilinmiyor"
+        };
     }
 
     public class OfferListDto

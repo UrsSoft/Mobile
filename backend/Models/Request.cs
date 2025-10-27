@@ -29,6 +29,8 @@ namespace SantiyeTalepApi.Models
         
         public DateTime RequestDate { get; set; } = DateTime.UtcNow;
         
+        public bool IsRead { get; set; } = false; // Talep okundu mu
+        
         // Navigation Properties
         [ForeignKey("EmployeeId")]
         public Employee Employee { get; set; } = null!;

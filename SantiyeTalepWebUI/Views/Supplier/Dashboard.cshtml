@@ -1,6 +1,6 @@
 @model SantiyeTalepWebUI.Models.ViewModels.SupplierDashboardViewModel
 @{
-    ViewData["Title"] = "Tedarikçi Dashboard";
+    ViewData["Title"] = "TedarikÃ§i Dashboard";
     Layout = "~/Views/Shared/_SupplierLayout.cshtml";
 }
 
@@ -55,6 +55,9 @@
             border-bottom: 1px solid #f8f9fa;
             transition: background-color 0.2s ease;
             cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
         }
 
         .notification-item:hover {
@@ -66,12 +69,15 @@
         }
 
         .notification-item.unread {
-            background-color: #fff3cd;
             border-left: 4px solid #ffc107;
         }
 
         .notification-item.unread:hover {
             background-color: #ffeaa7;
+        }
+
+        .notification-content {
+            flex-grow: 1;
         }
 
         .notification-meta {
@@ -94,7 +100,9 @@
         .notification-actions {
             display: flex;
             gap: 0.5rem;
-            margin-top: 0.5rem;
+            align-items: flex-start;
+            margin-left: 1rem;
+            flex-shrink: 0;
         }
 
         .btn-mark-read {
@@ -114,6 +122,16 @@
             padding: 2rem;
             color: #6c757d;
         }
+
+        .notification-title-link {
+            color: #2385ba;
+            text-decoration: none;
+        }
+
+        .notification-title-link:hover {
+            color: #1d6fa3;
+            text-decoration: underline;
+        }
     </style>
 }
 
@@ -125,7 +143,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">Tedarikçi Dashboard</h4>
+                        <h4 class="mb-sm-0">TedarikÃ§i Dashboard</h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
                                 <li class="breadcrumb-item active">Dashboard</li>
@@ -164,8 +182,8 @@
                                 <div class="flex-grow-1">
                                     <h6 class="alert-heading mb-1">Yeni Bildirimleriniz Var!</h6>
                                     <p class="mb-0">
-                                        <span class="notifications-count">@Model.NotificationSummary.UnreadCount</span> adet okunmamýþ bildiriminiz bulunuyor. 
-                                        <a href="javascript:void(0)" onclick="toggleNotifications()" class="alert-link fw-semibold">Bildirimleri görüntülemek için týklayýn</a>.
+                                        <span class="notifications-count">@Model.NotificationSummary.UnreadCount</span> adet okunmamÄ±ÅŸ bildiriminiz bulunuyor.
+                                        <a href="javascript:void(0)" onclick="toggleNotifications()" class="alert-link fw-semibold">Bildirimleri gÃ¶rÃ¼ntÃ¼lemek iÃ§in tÄ±klayÄ±n</a>.
                                     </p>
                                 </div>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -192,7 +210,7 @@
                                 @if (Model.NotificationSummary != null && Model.NotificationSummary.UnreadCount > 0)
                                 {
                                     <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
-                                        <i class="ri-check-double-line"></i> Tümünü Okundu Ýþaretle
+                                        <i class="ri-check-double-line"></i> TÃ¼mÃ¼nÃ¼ Okundu Olarak Ä°ÅŸaretle
                                     </button>
                                 }
                                 <button class="btn btn-sm btn-outline-secondary" onclick="toggleNotifications()">
@@ -203,26 +221,33 @@
                         <div class="notification-panel-body">
                             @if (Model.Notifications.Any())
                             {
-                                @foreach (var notification in Model.Notifications.Take(10))
+                                @foreach (var notification in Model.Notifications.Where(i=>i.IsRead==false).Take(10))
                                 {
                                     <div class="notification-item @(!notification.IsRead ? "unread" : "")" data-id="@notification.Id">
-                                        <div class="notification-meta">
-                                            <div class="notification-type-icon bg-@(GetNotificationColor(notification.Type))-subtle text-@(GetNotificationColor(notification.Type))">
-                                                <i class="@GetNotificationIcon(notification.Type)"></i>
+                                        <div class="notification-content">
+                                            <div class="notification-meta">
+                                                <div class="notification-type-icon bg-@(GetNotificationColor(notification.Type))-subtle text-@(GetNotificationColor(notification.Type))">
+                                                    <i class="@GetNotificationIcon(notification.Type)"></i>
+                                                </div>
+                                                <small class="text-muted">@notification.CreatedDate.ToString("dd.MM.yyyy HH:mm")</small>
+                                                @if (!notification.IsRead)
+                                                {
+                                                    <span class="badge bg-primary">Yeni</span>
+                                                }
                                             </div>
-                                            <small class="text-muted">@notification.CreatedDate.ToString("dd.MM.yyyy HH:mm")</small>
-                                            @if (!notification.IsRead)
-                                            {
-                                                <span class="badge bg-primary">Yeni</span>
+                                            @{
+                                                var notificationUrl = GetNotificationUrl(notification.Type);
                                             }
+                                            <a href="@notificationUrl" class="notification-title-link" onclick="handleNotificationClick(@notification.Id, '@notificationUrl', event)">
+                                                <h6 class="notification-title mb-1" style="color:#2385ba">@notification.Title</h6>
+                                            </a>
+                                            <p class="notification-message mb-2 text-muted">@notification.Message</p>
                                         </div>
-                                        <h6 class="notification-title mb-1">@notification.Title</h6>
-                                        <p class="notification-message mb-2 text-muted">@notification.Message</p>
                                         @if (!notification.IsRead)
                                         {
                                             <div class="notification-actions">
                                                 <button class="btn btn-sm btn-outline-primary btn-mark-read" onclick="markAsRead(@notification.Id)">
-                                                    <i class="ri-check-line"></i> Okundu Ýþaretle
+                                                    <i class="ri-check-line"></i> Okundu olarak iÅŸaretle
                                                 </button>
                                             </div>
                                         }
@@ -237,8 +262,8 @@
                                             <i class="ri-notification-off-line"></i>
                                         </div>
                                     </div>
-                                    <h6>Henüz bildiriminiz bulunmuyor</h6>
-                                    <p class="text-muted">Yeni bildirimler geldiðinde burada görüntülenecektir.</p>
+                                    <h6>HenÃ¼z bildiriminiz bulunmuyor</h6>
+                                    <p class="text-muted">Yeni bildirimler geldiÄŸinde burada gÃ¶rÃ¼ntÃ¼lenecektir.</p>
                                 </div>
                             }
                         </div>
@@ -246,7 +271,7 @@
                         {
                             <div class="notification-panel-footer">
                                 <a href="@Url.Action("Notifications")" class="btn btn-link">
-                                    Tüm Bildirimleri Görüntüle (@Model.Notifications.Count())
+                                    TÃ¼m Bildirimleri GÃ¶rÃ¼ntÃ¼le (@Model.Notifications.Count())
                                 </a>
                             </div>
                         }
@@ -274,7 +299,7 @@
                                     <h4 class="fs-22 fw-semibold ff-secondary mb-4">
                                         <span class="counter-value" data-target="@Model.Stats.MyOffers">@Model.Stats.MyOffers</span>
                                     </h4>
-                                    <a href="@Url.Action("Offers")" class="text-decoration-underline">Tüm Teklifler</a>
+                                    <a href="@Url.Action("Offers")" class="text-decoration-underline">TÃ¼m Teklifler</a>
                                 </div>
                                 <div class="avatar-sm flex-shrink-0">
                                     <span class="avatar-title bg-success-subtle rounded fs-3">
@@ -334,7 +359,7 @@
                                     <h4 class="fs-22 fw-semibold ff-secondary mb-4">
                                         <span class="counter-value" data-target="@Model.Stats.ApprovedOffers">@Model.Stats.ApprovedOffers</span>
                                     </h4>
-                                    <a href="@Url.Action("Offers", new { status = "approved" })" class="text-decoration-underline">Onaylý Teklifler</a>
+                                    <a href="@Url.Action("Offers", new { status = "approved" })" class="text-decoration-underline">OnaylÄ± Teklifler</a>
                                 </div>
                                 <div class="avatar-sm flex-shrink-0">
                                     <span class="avatar-title bg-success-subtle rounded fs-3">
@@ -353,7 +378,7 @@
                     <div class="card">
                         <div class="card-header align-items-center d-flex">
                             <h4 class="card-title mb-0 flex-grow-1">
-                                Açýk Talepler
+                                AÃ§Ä±k Talepler
                                 @if (Model.AvailableRequests.Any())
                                 {
                                     <span class="badge bg-info ms-2">@Model.AvailableRequests.Count</span>
@@ -373,9 +398,9 @@
                                     <table class="table table-hover table-centered align-middle table-nowrap mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Ürün</th>
+                                                <th>ÃœrÃ¼n</th>
                                                 <th>Miktar</th>
-                                                <th>Þantiye</th>
+                                                <th>Åžantiye</th>
                                                 <th>Talep Tarihi</th>
                                                 <th>Teslimat</th>
                                             </tr>
@@ -409,16 +434,16 @@
                                                             @switch (request.DeliveryType)
                                                             {
                                                                 case DeliveryType.TodayPickup:
-                                                                    <text>Bugün Alýnacak</text>
+                                                                    <text>BugÃ¼n AlÄ±nacak</text>
                                                                     break;
                                                                 case DeliveryType.SameDayDelivery:
-                                                                    <text>Gün Ýçi</text>
+                                                                    <text>GÃ¼n Ä°Ã§i</text>
                                                                     break;
                                                                 case DeliveryType.NextDayDelivery:
-                                                                    <text>Yarýn</text>
+                                                                    <text>YarÄ±n</text>
                                                                     break;
                                                                 case DeliveryType.BusinessDays1to2:
-                                                                    <text>1-2 Gün</text>
+                                                                    <text>1-2 GÃ¼n</text>
                                                                     break;
                                                             }
                                                         </span>
@@ -437,8 +462,8 @@
                                             <i class="ri-inbox-line"></i>
                                         </div>
                                     </div>
-                                    <h5>Henüz açýk talep bulunmuyor</h5>
-                                    <p class="text-muted">Yeni talepler geldiðinde burada görüntülenecektir.</p>
+                                    <h5>HenÃ¼z aÃ§Ä±k talep bulunmuyor</h5>
+                                    <p class="text-muted">Yeni talepler geldiÄŸinde burada gÃ¶rÃ¼ntÃ¼lenecektir.</p>
                                 </div>
                             }
                         </div>
@@ -452,7 +477,7 @@
                             <h4 class="card-title mb-0 flex-grow-1">Son Tekliflerim</h4>
                             <div class="flex-shrink-0">
                                 <a href="@Url.Action("Offers")" class="btn btn-soft-info btn-sm">
-                                    <i class="ri-eye-line align-middle"></i> Tümü
+                                    <i class="ri-eye-line align-middle"></i> TÃ¼mÃ¼
                                 </a>
                             </div>
                         </div>
@@ -495,7 +520,7 @@
                                                             <span class="badge bg-warning-subtle text-warning">Bekliyor</span>
                                                             break;
                                                         case OfferStatus.Approved:
-                                                            <span class="badge bg-success-subtle text-success">Onaylandý</span>
+                                                            <span class="badge bg-success-subtle text-success">OnaylandÄ±</span>
                                                             break;
                                                         case OfferStatus.Rejected:
                                                             <span class="badge bg-danger-subtle text-danger">Red</span>
@@ -505,7 +530,7 @@
                                             </div>
                                             <div class="mt-2">
                                                 <a href="@Url.Action("OfferDetails", new { id = offer.Id })" class="btn btn-link btn-sm p-0">
-                                                    Detaylarý Gör <i class="ri-arrow-right-line align-middle"></i>
+                                                    DetaylarÄ± GÃ¶r <i class="ri-arrow-right-line align-middle"></i>
                                                 </a>
                                             </div>
                                         </div>
@@ -520,71 +545,14 @@
                                             <i class="ri-file-list-line"></i>
                                         </div>
                                     </div>
-                                    <h6>Henüz teklif vermediniz</h6>
-                                    <p class="text-muted fs-12">Açýk taleplere teklif verebilirsiniz.</p>
+                                    <h6>HenÃ¼z teklif vermediniz</h6>
+                                    <p class="text-muted fs-12">AÃ§Ä±k taleplere teklif verebilirsiniz.</p>
                                 </div>
                             }
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Recent Notifications Section -->
-            @if (Model.Notifications.Any())
-            {
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header align-items-center d-flex">
-                                <h4 class="card-title mb-0 flex-grow-1">
-                                    Son Bildirimler
-                                    @if (Model.NotificationSummary != null && Model.NotificationSummary.UnreadCount > 0)
-                                    {
-                                        <span class="badge bg-danger ms-2">@Model.NotificationSummary.UnreadCount Yeni</span>
-                                    }
-                                </h4>
-                                <div class="flex-shrink-0">
-                                    <button class="btn btn-soft-info btn-sm" onclick="toggleNotifications()">
-                                        <i class="ri-eye-line align-middle"></i> Tümünü Gör
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    @foreach (var notification in Model.Notifications.Take(3))
-                                    {
-                                        <div class="col-md-4">
-                                            <div class="card border @(notification.IsRead ? "border-light" : "border-info") h-100">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-start">
-                                                        <div class="flex-shrink-0 me-3">
-                                                            <div class="avatar-sm">
-                                                                <div class="avatar-title bg-@(GetNotificationColor(notification.Type))-subtle text-@(GetNotificationColor(notification.Type)) rounded">
-                                                                    <i class="@GetNotificationIcon(notification.Type) fs-16"></i>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="flex-grow-1">
-                                                            <h6 class="mb-1 @(notification.IsRead ? "text-muted" : "")">@notification.Title</h6>
-                                                            <p class="mb-2 text-muted fs-12">@notification.Message</p>
-                                                            <small class="text-muted">@notification.CreatedDate.ToString("dd.MM.yyyy HH:mm")</small>
-                                                            @if (!notification.IsRead)
-                                                            {
-                                                                <span class="badge bg-primary ms-2">Yeni</span>
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-
         </div>
     </div>
 </div>
@@ -592,7 +560,7 @@
 <!-- Real-time status indicator -->
 <div class="realtime-status" id="realtimeStatus">
     <div class="status-dot"></div>
-    <span>Canlý takip aktif</span>
+    <span>CanlÄ± takip aktif</span>
 </div>
 
 @section Scripts {
@@ -630,6 +598,35 @@
                 }
             }, 2000);
         });
+
+        // Handle notification click - mark as read and navigate
+        async function handleNotificationClick(notificationId, url, event) {
+            // Prevent the default link behavior temporarily
+            event.preventDefault();
+            
+            // Check if this notification is unread
+            const notificationItem = document.querySelector(`[data-id="${notificationId}"]`);
+            const isUnread = notificationItem && notificationItem.classList.contains('unread');
+            
+            if (isUnread) {
+                try {
+                    // Mark as read first
+                    await markAsRead(notificationId);
+                    
+                    // Wait a moment for the UI to update, then navigate
+                    setTimeout(() => {
+                        window.location.href = url;
+                    }, 300);
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                    // Navigate anyway even if marking as read fails
+                    window.location.href = url;
+                }
+            } else {
+                // If already read, navigate immediately
+                window.location.href = url;
+            }
+        }
 
         // Notification functions
         function toggleNotifications() {
@@ -684,9 +681,9 @@
                         // Also update in the recent notifications section
                         const recentNotificationCards = document.querySelectorAll('.col-md-4 .card');
                         recentNotificationCards.forEach(card => {
-                            // Check if this card has the same notification
-                            const cardContent = card.textContent;
-                            if (cardContent.includes(notificationId)) {
+                            // Check if this card has the same notification by checking onclick attribute
+                            const onclickAttr = card.getAttribute('onclick');
+                            if (onclickAttr && onclickAttr.includes(notificationId)) {
                                 card.classList.remove('border-info');
                                 card.classList.add('border-light');
                                 const newBadge = card.querySelector('.badge.bg-primary');
@@ -697,24 +694,23 @@
                         // Update counters
                         updateNotificationCounts();
                         
-                        // Show success message
-                        showToast('Bildirim okundu olarak iþaretlendi.', 'success');
-                        
                         // Check if all notifications are read, if so hide the alert
                         checkAndHideAlertIfAllRead();
+                        
+                        return true;
                     } else {
                         console.error('API returned success=false:', result);
-                        showToast(result.message || 'Bildirim iþaretlenirken hata oluþtu.', 'error');
+                        return false;
                     }
                 } else {
                     console.error('API response not ok:', response.status, response.statusText);
                     const errorText = await response.text();
                     console.error('Error response text:', errorText);
-                    showToast('Bildirim iþaretlenirken hata oluþtu.', 'error');
+                    return false;
                 }
             } catch (error) {
                 console.error('Error marking notification as read:', error);
-                showToast('Bir hata oluþtu. Lütfen tekrar deneyin.', 'error');
+                return false;
             }
         }
 
@@ -775,14 +771,13 @@
                         }
                         
                         // Show success message
-                        showToast('Tüm bildirimler okundu olarak iþaretlendi.', 'success');
+                        console.log('TÃ¼m bildirimler okundu olarak iÅŸaretlendi.');
                     }
                 } else {
-                    showToast('Bildirimler iþaretlenirken hata oluþtu.', 'error');
+                    console.error('Bildirimler iÅŸaretlenirken hata oluÅŸtu.');
                 }
             } catch (error) {
                 console.error('Error marking all notifications as read:', error);
-                showToast('Bir hata oluþtu. Lütfen tekrar deneyin.', 'error');
             }
         }
 
@@ -903,6 +898,17 @@
             NotificationType.OfferApproved => "success",
             NotificationType.OfferRejected => "danger",
             _ => "primary"
+        };
+    }
+
+    private string GetNotificationUrl(NotificationType type)
+    {
+        return type switch
+        {
+            NotificationType.NewOffer => Url.Action("Offers", "Supplier"),
+            NotificationType.OfferApproved => Url.Action("Offers", "Supplier"),
+            NotificationType.OfferRejected => Url.Action("Offers", "Supplier"),
+            _ => Url.Action("AvailableRequests", "Supplier")
         };
     }
 }

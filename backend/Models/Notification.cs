@@ -16,7 +16,7 @@ namespace SantiyeTalepApi.Models
         
         public NotificationType Type { get; set; }
         
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
         
         public bool IsRead { get; set; } = false;
         

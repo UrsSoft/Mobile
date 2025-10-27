@@ -4,11 +4,11 @@ namespace SantiyeTalepApi.DTOs
 {
     public class LoginDto
     {
-        [Required(ErrorMessage = "Telefon numarası gereklidir")]
-        [Phone(ErrorMessage = "Geçerli bir telefon numarası giriniz")]
+        [Required(ErrorMessage = "Telefon numarasÄ± gereklidir")]
+        [Phone(ErrorMessage = "GeÃ§erli bir telefon numarasÄ± giriniz")]
         public string Phone { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Şifre gereklidir")]
+        [Required(ErrorMessage = "Åifre gereklidir")]
         public string Password { get; set; } = string.Empty;
     }
 
@@ -21,21 +21,21 @@ namespace SantiyeTalepApi.DTOs
     public class SupplierRegisterDto
     {
         [Required(ErrorMessage = "E-posta adresi gereklidir")]
-        [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz")]
+        [EmailAddress(ErrorMessage = "GeÃ§erli bir e-posta adresi giriniz")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Şifre gereklidir")]
-        [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır")]
+        [Required(ErrorMessage = "Åifre gereklidir")]
+        [MinLength(6, ErrorMessage = "Åifre en az 6 karakter olmalÄ±dÄ±r")]
         public string Password { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ad Soyad gereklidir")]
         public string FullName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Şirket adı gereklidir")]
+        [Required(ErrorMessage = "Åirket adÄ± gereklidir")]
         public string CompanyName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Telefon numarası gereklidir")]
-        [Phone(ErrorMessage = "Geçerli bir telefon numarası giriniz")]
+        [Required(ErrorMessage = "Telefon numarasÄ± gereklidir")]
+        [Phone(ErrorMessage = "GeÃ§erli bir telefon numarasÄ± giriniz")]
         public string Phone { get; set; } = string.Empty;
         
         public string TaxNumber { get; set; } = string.Empty;
@@ -47,21 +47,48 @@ namespace SantiyeTalepApi.DTOs
         [Required(ErrorMessage = "Ad Soyad gereklidir")]
         public string FullName { get; set; } = string.Empty;
 
-        [Phone(ErrorMessage = "Geçerli bir telefon numarası giriniz")]
+        [Phone(ErrorMessage = "GeÃ§erli bir telefon numarasÄ± giriniz")]
         public string Phone { get; set; } = string.Empty;
     }
 
     public class ChangePasswordDto
     {
-        [Required(ErrorMessage = "Mevcut şifre gereklidir")]
+        [Required(ErrorMessage = "Mevcut ÅŸifre gereklidir")]
         public string CurrentPassword { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Yeni şifre gereklidir")]
-        [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır")]
+        [Required(ErrorMessage = "Yeni ÅŸifre gereklidir")]
+        [MinLength(6, ErrorMessage = "Åifre en az 6 karakter olmalÄ±dÄ±r")]
         public string NewPassword { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Şifre tekrarı gereklidir")]
-        [Compare("NewPassword", ErrorMessage = "Şifreler eşleşmiyor")]
+        [Required(ErrorMessage = "Åifre tekrarÄ± gereklidir")]
+        [Compare("NewPassword", ErrorMessage = "Åifreler eÅŸleÅŸmiyor")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    public class FcmTokenDto
+    {
+        [Required(ErrorMessage = "FCM token gereklidir")]
+        public string Token { get; set; } = string.Empty;
+    }
+
+    public class ForgotPasswordDto
+    {
+        [Required(ErrorMessage = "E-posta adresi gereklidir")]
+        [EmailAddress(ErrorMessage = "GeÃ§erli bir e-posta adresi giriniz")]
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class ResetPasswordDto
+    {
+        [Required(ErrorMessage = "Token gereklidir")]
+        public string Token { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Yeni ÅŸifre gereklidir")]
+        [MinLength(6, ErrorMessage = "Åifre en az 6 karakter olmalÄ±dÄ±r")]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Åifre tekrarÄ± gereklidir")]
+        [Compare("NewPassword", ErrorMessage = "Åifreler eÅŸleÅŸmiyor")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

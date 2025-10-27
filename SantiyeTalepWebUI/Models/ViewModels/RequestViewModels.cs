@@ -5,6 +5,13 @@ namespace SantiyeTalepWebUI.Models.ViewModels
 {
     public class CreateRequestViewModel
     {
+        // Admin tarafından oluşturulurken gerekli
+        [Display(Name = "Şantiye")]
+        public int? SiteId { get; set; }
+
+        [Display(Name = "Talep Eden Çalışan")]
+        public int? EmployeeId { get; set; }
+
         [Required(ErrorMessage = "Ürün açıklaması gereklidir")]
         [MinLength(3, ErrorMessage = "Ürün açıklaması en az 3 karakter olmalıdır")]
         [Display(Name = "Ürün Açıklaması")]

@@ -34,22 +34,17 @@ namespace SantiyeTalepApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Employee,Admin")] // Hem Employee hem Admin kabul et
         public async Task<IActionResult> CreateRequest([FromBody] CreateRequestDto model)
         {
             _logger.LogInformation("=== CREATE REQUEST STARTED ===");
             _logger.LogInformation("Request data: {Data}", System.Text.Json.JsonSerializer.Serialize(model));
-            
+
             try
             {
                 if (!ModelState.IsValid)
                 {
                     _logger.LogWarning("Invalid model state for CreateRequest");
-                    foreach (var error in ModelState)
-                    {
-                        _logger.LogWarning("Model error - Key: {Key}, Errors: {Errors}", 
-                            error.Key, string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage)));
-                    }
                     return BadRequest(ModelState);
                 }
 
@@ -61,25 +56,54 @@ namespace SantiyeTalepApi.Controllers
                 }
 
                 var userId = int.Parse(userIdClaim.Value);
-                _logger.LogInformation("Creating request for user ID: {UserId}", userId);
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
-                var employee = await _context.Employees
-                    .Include(e => e.Site)
-                    .Include(e => e.User)
-                    .FirstOrDefaultAsync(e => e.UserId == userId);
+                _logger.LogInformation("Creating request for user ID: {UserId}, Role: {Role}", userId, userRole);
+
+                Employee employee;
+
+                if (userRole == "Admin")
+                {
+                    // Admin ise, model'den gelen EmployeeId'yi kullan
+                    if (model.EmployeeId.HasValue)
+                    {
+                        employee = await _context.Employees
+                            .Include(e => e.Site)
+                            .Include(e => e.User)
+                            .FirstOrDefaultAsync(e => e.Id == model.EmployeeId.Value);
+                    }
+                    else
+                    {
+                        return BadRequest(new { message = "Admin olarak talep oluştururken çalışan seçimi zorunludur" });
+                    }
+                }
+                else
+                {
+                    // Employee ise, kendi bilgilerini kullan
+                    employee = await _context.Employees
+                        .Include(e => e.Site)
+                        .Include(e => e.User)
+                        .FirstOrDefaultAsync(e => e.UserId == userId);
+                }
 
                 if (employee == null)
                 {
-                    _logger.LogError("Employee not found for user ID: {UserId}", userId);
+                    _logger.LogError("Employee not found");
                     return BadRequest(new { message = "Çalışan bilgisi bulunamadı" });
                 }
 
-                _logger.LogInformation("Found employee: {EmployeeId} at site: {SiteId}", employee.Id, employee.SiteId);
+                // Site kontrolü (Admin için)
+                int siteId = userRole == "Admin" && model.SiteId.HasValue ? model.SiteId.Value : employee.SiteId ?? 0;
+
+                if (siteId == 0)
+                {
+                    return BadRequest(new { message = "Şantiye bilgisi bulunamadı" });
+                }
 
                 var request = new Request
                 {
                     EmployeeId = employee.Id,
-                    SiteId = employee.SiteId,
+                    SiteId = siteId,
                     ProductDescription = model.ProductDescription,
                     Quantity = model.Quantity,
                     DeliveryType = model.DeliveryType,
@@ -88,24 +112,25 @@ namespace SantiyeTalepApi.Controllers
                     RequestDate = DateTime.Now
                 };
 
-                _logger.LogInformation("Adding request to database");
                 _context.Requests.Add(request);
                 await _context.SaveChangesAsync();
-                
+
                 _logger.LogInformation("Request created with ID: {RequestId}", request.Id);
 
-                // Admin'e bildirim gönder
-                await _notificationService.CreateNotificationAsync(
+                // Bildirim gönder
+                var notificationMessage = userRole == "Admin"
+                    ? $"Admin tarafından {employee.User.FullName} adına talep oluşturuldu: {model.ProductDescription}"
+                    : $"{employee.User.FullName} yeni bir talep oluşturdu: {model.ProductDescription}";
+
+                await _notificationService.CreateAdminNotificationAsync(
                     "Yeni Talep Oluşturuldu",
-                    $"{employee.User.FullName} ({employee.Site.Name}) yeni bir talep oluşturdu: {model.ProductDescription}",
+                    notificationMessage,
                     NotificationType.NewRequest,
-                    null, // admin notification, userId null
                     request.Id,
                     null,
                     null
                 );
 
-                // Request'i detaylarıyla birlikte geri döndür
                 var createdRequest = await _context.Requests
                     .Include(r => r.Employee)
                         .ThenInclude(e => e.User)
@@ -115,29 +140,23 @@ namespace SantiyeTalepApi.Controllers
                             .ThenInclude(s => s.User)
                     .FirstOrDefaultAsync(r => r.Id == request.Id);
 
-                if (createdRequest == null)
-                {
-                    _logger.LogError("Could not retrieve created request with ID: {RequestId}", request.Id);
-                    return StatusCode(500, new { message = "Talep oluşturuldu ancak detayları alınamadı" });
-                }
-
                 var requestDto = _mapper.Map<RequestDto>(createdRequest);
                 _logger.LogInformation("=== CREATE REQUEST COMPLETED SUCCESSFULLY ===");
-                _logger.LogInformation("Created request DTO: {RequestDto}", System.Text.Json.JsonSerializer.Serialize(requestDto));
 
                 return CreatedAtAction(nameof(GetRequest), new { id = request.Id }, requestDto);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "=== ERROR IN CREATE REQUEST ===");
-                _logger.LogError("Failed to create request for model: {Model}", System.Text.Json.JsonSerializer.Serialize(model));
-                return StatusCode(500, new { 
-                    message = "Talep oluşturulurken bir hata oluştu", 
-                    error = ex.Message,
-                    stackTrace = _logger.IsEnabled(LogLevel.Debug) ? ex.StackTrace : null
+                return StatusCode(500, new
+                {
+                    message = "Talep oluşturulurken bir hata oluştu",
+                    error = ex.Message
                 });
             }
         }
+
+
 
         // Employee-specific endpoints that return EmployeeRequestDto without offers
         [HttpGet("employee")]
@@ -167,7 +186,7 @@ namespace SantiyeTalepApi.Controllers
                 ProductDescription = r.ProductDescription,
                 Quantity = r.Quantity,
                 DeliveryType = r.DeliveryType,
-                Description = r.Description,
+                Description = r.Description ?? "",
                 Status = r.Status,
                 RequestDate = r.RequestDate,
                 EmployeeId = r.EmployeeId,
@@ -207,7 +226,7 @@ namespace SantiyeTalepApi.Controllers
                 ProductDescription = request.ProductDescription,
                 Quantity = request.Quantity,
                 DeliveryType = request.DeliveryType,
-                Description = request.Description,
+                Description = request.Description ?? "",
                 Status = request.Status,
                 RequestDate = request.RequestDate,
                 EmployeeId = request.EmployeeId,
@@ -256,7 +275,7 @@ namespace SantiyeTalepApi.Controllers
                         .Where(n => n.Type == NotificationType.RequestSentToSupplier 
                                    && n.UserId == userId 
                                    && n.RequestId.HasValue)
-                        .Select(n => n.RequestId.Value)
+                        .Select(n => n.RequestId!.Value)
                         .Distinct()
                         .ToListAsync();
 
@@ -403,12 +422,13 @@ namespace SantiyeTalepApi.Controllers
         }
 
         [HttpGet("/api/searchapi")]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Employee,Admin")]
         public async Task<IActionResult> SearchApi([FromQuery] string query, [FromQuery] string brandIds = "")
         {
             _logger.LogInformation("=== SEARCH API CALLED ===");
             _logger.LogInformation("Query parameter: '{Query}'", query);
             _logger.LogInformation("BrandIds parameter: '{BrandIds}'", brandIds);
+            _logger.LogInformation("User Role: '{Role}'", User.FindFirst(ClaimTypes.Role)?.Value);
             
             if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
             {
@@ -421,31 +441,18 @@ namespace SantiyeTalepApi.Controllers
                 _logger.LogInformation("=== STARTING PRODUCT SEARCH ===");
                 _logger.LogInformation("Search query: '{Query}'", query);
                 
-                // Get employee's site and associated brands automatically
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 var userId = int.Parse(userIdClaim?.Value ?? "0");
-
-                var employee = await _context.Employees
-                    .Include(e => e.Site)
-                        .ThenInclude(s => s.SiteBrands)
-                            .ThenInclude(sb => sb.Brand)
-                    .FirstOrDefaultAsync(e => e.UserId == userId);
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
                 List<int> brandIdList = new List<int>();
                 List<string> brandNameList = new List<string>();
 
-                if (employee?.Site?.SiteBrands?.Any() == true)
+                // Admin için brandIds parametresinden marka listesi al
+                if (userRole == "Admin" && !string.IsNullOrEmpty(brandIds))
                 {
-                    // Use employee's site brands automatically
-                    brandIdList = employee.Site.SiteBrands.Select(sb => sb.BrandId).ToList();
-                    brandNameList = employee.Site.SiteBrands.Select(sb => sb.Brand.Name).ToList();
+                    _logger.LogInformation("Admin user - processing brandIds from parameter");
                     
-                    _logger.LogInformation("Employee {UserId} from site {SiteId} ({SiteName}) - using site brands: {BrandNames}", 
-                        userId, employee.SiteId, employee.Site.Name, string.Join(", ", brandNameList));
-                }
-                else if (!string.IsNullOrEmpty(brandIds))
-                {
-                    // Fallback to provided brandIds if no site brands found
                     var brandIdArray = brandIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
                     foreach (var id in brandIdArray)
                     {
@@ -463,13 +470,39 @@ namespace SantiyeTalepApi.Controllers
                             .Select(b => b.Name)
                             .ToListAsync();
                         brandNameList.AddRange(brands);
+                        
+                        _logger.LogInformation("Admin - Using brandIds: {BrandIds}, Brand names: {BrandNames}", 
+                            brandIds, string.Join(", ", brandNameList));
                     }
+                }
+                // Employee için otomatik olarak şantiye markalarını al
+                else if (userRole == "Employee")
+                {
+                    _logger.LogInformation("Employee user - fetching site brands automatically");
                     
-                    _logger.LogInformation("Using provided brandIds as fallback: {BrandIds}", brandIds);
+                    var employee = await _context.Employees
+                        .Include(e => e.Site)
+                            .ThenInclude(s => s.SiteBrands)
+                                .ThenInclude(sb => sb.Brand)
+                        .FirstOrDefaultAsync(e => e.UserId == userId);
+
+                    if (employee?.Site?.SiteBrands?.Any() == true)
+                    {
+                        // Use employee's site brands automatically
+                        brandIdList = employee.Site.SiteBrands.Select(sb => sb.BrandId).ToList();
+                        brandNameList = employee.Site.SiteBrands.Select(sb => sb.Brand.Name).ToList();
+                        
+                        _logger.LogInformation("Employee {UserId} from site {SiteId} ({SiteName}) - using site brands: {BrandNames}", 
+                            userId, employee.SiteId, employee.Site.Name, string.Join(", ", brandNameList));
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No site brands found for employee {UserId}", userId);
+                    }
                 }
                 else
                 {
-                    _logger.LogWarning("No site brands found for employee {UserId} and no brandIds provided", userId);
+                    _logger.LogWarning("No brand filtering applied - userRole: {Role}, brandIds: {BrandIds}", userRole, brandIds);
                 }
                 
                 var products = await GetProductsFromApiWithBrandFilter(query, brandIdList, brandNameList);
@@ -929,7 +962,8 @@ namespace SantiyeTalepApi.Controllers
             try
             {
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-                _logger.LogInformation("User role: {Role}", userRole);
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                _logger.LogInformation("User role: {Role}, UserId: {UserId}", userRole, userId);
 
                 IQueryable<Request> query = _context.Requests
                     .Include(r => r.Employee)
@@ -943,7 +977,6 @@ namespace SantiyeTalepApi.Controllers
                 // Tedarikçi ise sadece kendisine gönderilen talepleri görsün ve daha önce teklif verdiklerini hariç tutsun
                 if (userRole == "Supplier")
                 {
-                    var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
                     var supplier = await _context.Suppliers
                         .FirstOrDefaultAsync(s => s.UserId == userId);
 
@@ -953,12 +986,14 @@ namespace SantiyeTalepApi.Controllers
                         return BadRequest(new { message = "Tedarikçi bilgisi bulunamadı" });
                     }
 
+                    _logger.LogInformation("Found supplier: {SupplierId} for user {UserId}", supplier.Id, userId);
+
                     // Sadece bu tedarikçiye bildirim gönderilen talepleri getir
                     var assignedRequestIds = await _context.Notifications
                         .Where(n => n.Type == NotificationType.RequestSentToSupplier 
                                    && n.UserId == userId 
                                    && n.RequestId.HasValue)
-                        .Select(n => n.RequestId.Value)
+                        .Select(n => n.RequestId!.Value)
                         .Distinct()
                         .ToListAsync();
 
@@ -976,9 +1011,10 @@ namespace SantiyeTalepApi.Controllers
                         requestsWithOffers.Count, supplier.Id, string.Join(", ", requestsWithOffers));
 
                     // Kendisine atanan ama henüz teklif vermediği talepleri getir
+                    // SADECE OPEN durumundaki talepleri göster (InProgress olanları da teklif verilebilir olarak kabul et)
                     query = query.Where(r => assignedRequestIds.Contains(r.Id) && !requestsWithOffers.Contains(r.Id));
 
-                    _logger.LogInformation("Filtering requests: assigned={Count}, with offers={Count}", 
+                    _logger.LogInformation("Final filter - assigned count: {AssignedCount}, with offers count: {OffersCount}", 
                         assignedRequestIds.Count, requestsWithOffers.Count);
                 }
 
@@ -986,7 +1022,14 @@ namespace SantiyeTalepApi.Controllers
                     .OrderByDescending(r => r.RequestDate)
                     .ToListAsync();
 
-                _logger.LogInformation("Found {Count} open/in-progress requests for user role {Role}", requests.Count, userRole);
+                _logger.LogInformation("Found {Count} requests after filtering for user role {Role}", requests.Count, userRole);
+
+                // Her bir sonucu da loglayalım
+                foreach (var req in requests)
+                {
+                    _logger.LogInformation("Final result - Request ID: {Id}, Product: {Product}, Status: {Status}, Date: {Date}", 
+                        req.Id, req.ProductDescription, req.Status, req.RequestDate);
+                }
 
                 var requestDtos = _mapper.Map<List<RequestDto>>(requests);
                 
@@ -1072,5 +1115,79 @@ namespace SantiyeTalepApi.Controllers
                 });
             }
         }
+
+        [HttpPut("{id}/mark-as-read")]
+        [Authorize]
+        public async Task<IActionResult> MarkRequestAsRead(int id)
+        {
+            try
+            {
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = int.Parse(userIdClaim?.Value ?? "0");
+
+                var request = await _context.Requests
+                    .Include(r => r.Employee)
+                    .FirstOrDefaultAsync(r => r.Id == id);
+
+                if (request == null)
+                    return NotFound(new { message = "Talep bulunamadı" });
+
+                // Access control - sadece admin veya talep sahibi işaretleyebilir
+                if (userRole == "Employee" && request.Employee.UserId != userId)
+                    return Forbid("Bu talebe erişim yetkiniz bulunmamaktadır");
+
+                if (userRole == "Supplier")
+                {
+                    // Tedarikçi sadece kendisine gönderilen talepleri işaretleyebilir
+                    var supplier = await _context.Suppliers
+                        .FirstOrDefaultAsync(s => s.UserId == userId);
+                    if (supplier == null)
+                        return BadRequest(new { message = "Tedarikçi bilgisi bulunamadı" });
+
+                    var hasAccess = await _context.Notifications
+                        .AnyAsync(n => n.Type == NotificationType.RequestSentToSupplier 
+                                      && n.UserId == userId 
+                                      && n.RequestId == id);
+
+                    if (!hasAccess)
+                        return Forbid("Bu talebe erişim yetkiniz bulunmamaktadır");
+                }
+
+                // Talebi okundu olarak işaretle
+                request.IsRead = true;
+                await _context.SaveChangesAsync();
+
+                // İlgili bildirimleri de okundu olarak işaretle
+                var relatedNotifications = await _context.Notifications
+                    .Where(n => n.RequestId == id && n.UserId == userId && !n.IsRead)
+                    .ToListAsync();
+
+                foreach (var notification in relatedNotifications)
+                {
+                    notification.IsRead = true;
+                }
+
+                if (relatedNotifications.Count > 0)
+                {
+                    await _context.SaveChangesAsync();
+                }
+
+                return Ok(new { 
+                    message = "Talep okundu olarak işaretlendi",
+                    markedNotifications = relatedNotifications.Count 
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking request {RequestId} as read", id);
+                return StatusCode(500, new { message = "Talep güncellenirken bir hata oluştu" });
+            }
+        }
+
+
+      
+
+
     }
 }
