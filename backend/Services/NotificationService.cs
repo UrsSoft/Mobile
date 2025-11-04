@@ -18,10 +18,12 @@ namespace SantiyeTalepApi.Services
     public class NotificationService : INotificationService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IPushNotificationService _pushNotificationService;
 
-        public NotificationService(ApplicationDbContext context)
+        public NotificationService(ApplicationDbContext context, IPushNotificationService pushNotificationService)
         {
             _context = context;
+            _pushNotificationService = pushNotificationService;
         }
 
         public async Task CreateNotificationAsync(string title, string message, NotificationType type, int? userId = null, int? requestId = null, int? offerId = null, int? supplierId = null)
@@ -41,6 +43,26 @@ namespace SantiyeTalepApi.Services
 
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
+
+            // Push notification gönder
+            if (userId.HasValue)
+            {
+                var notificationData = new
+                {
+                    notificationId = notification.Id,
+                    type = (int)type,
+                    requestId = requestId,
+                    offerId = offerId,
+                    supplierId = supplierId
+                };
+
+                await _pushNotificationService.SendNotificationToUserAsync(
+                    userId.Value,
+                    title,
+                    message,
+                    notificationData
+                );
+            }
         }
 
         public async Task CreateAdminNotificationAsync(string title, string message, NotificationType type, int? requestId = null, int? offerId = null, int? supplierId = null)
@@ -70,12 +92,31 @@ namespace SantiyeTalepApi.Services
             }
 
             await _context.SaveChangesAsync();
+
+            // Push notification gönder (tüm adminlere)
+            var notificationData = new
+            {
+                type = (int)type,
+                requestId = requestId,
+                offerId = offerId,
+                supplierId = supplierId
+            };
+
+            foreach (var admin in adminUsers)
+            {
+                await _pushNotificationService.SendNotificationToUserAsync(
+                    admin.Id,
+                    title,
+                    message,
+                    notificationData
+                );
+            }
         }
 
         public async Task<List<NotificationDto>> GetNotificationsAsync(int? userId = null, bool unreadOnly = false, int daysBack = 7)
         {
             var cutoffDate = DateTime.Now.AddDays(-daysBack);
-            var query = _context.Notifications.Where(n => n.CreatedDate >= cutoffDate && n.IsRead==false).AsQueryable();
+            var query = _context.Notifications.Where(n => n.CreatedDate >= cutoffDate).AsQueryable();
 
             if (userId.HasValue)
             {
@@ -95,7 +136,8 @@ namespace SantiyeTalepApi.Services
                                 NotificationType.OfferRejected, 
                                 NotificationType.SupplierApproved, 
                                 NotificationType.SupplierRejected, 
-                                NotificationType.RequestSentToSupplier 
+                                NotificationType.RequestSentToSupplier,
+                                NotificationType.ExcelRequestAssigned
                             };
                             
                             query = query.Where(n => (n.SupplierId == supplier.Id || 
@@ -180,13 +222,11 @@ namespace SantiyeTalepApi.Services
 
         public async Task<NotificationSummaryDto> GetNotificationSummaryAsync(int? userId = null)
         {
-            var query = _context.Notifications.AsQueryable();
-
             Console.WriteLine($"NotificationService.GetNotificationSummaryAsync - UserId: {userId}");
 
             if (userId.HasValue)
             {
-                // Kullanıcının olünü kontrol et
+                // Kullanıcının rolünü kontrol et
                 var user = await _context.Users.FindAsync(userId.Value);
                 if (user != null)
                 {
@@ -198,43 +238,161 @@ namespace SantiyeTalepApi.Services
                         var supplier = await _context.Suppliers.FirstOrDefaultAsync(s => s.UserId == userId.Value);
                         if (supplier != null)
                         {
-                            // Tedarikçiler için sadece belirli bildirim tiplerini ve sadece okunmamışları göster
+                            // Tedarikçiler için sadece belirli bildirim tiplerini göster
                             var allowedNotificationTypes = new[] { 
                                 NotificationType.OfferApproved, 
                                 NotificationType.OfferRejected, 
                                 NotificationType.SupplierApproved, 
                                 NotificationType.SupplierRejected, 
-                                NotificationType.RequestSentToSupplier 
+                                NotificationType.RequestSentToSupplier,
+                                NotificationType.ExcelRequestAssigned
                             };
                             
-                            query = query.Where(n => (n.SupplierId == supplier.Id || 
-                                                   (n.SupplierId == null && n.UserId == userId.Value)) &&
-                                                   allowedNotificationTypes.Contains(n.Type) &&
-                                                   !n.IsRead); // Sadece okunmamış bildirimler
+                            var supplierQuery = _context.Notifications
+                                .Where(n => (n.SupplierId == supplier.Id || (n.SupplierId == null && n.UserId == userId.Value)) &&
+                                           allowedNotificationTypes.Contains(n.Type));
+                            
+                            var totalCount = await supplierQuery.CountAsync();
+                            var unreadCount = await supplierQuery.Where(n => !n.IsRead).CountAsync();
+                            
+                            var recentNotifications = await supplierQuery
+                                .OrderByDescending(n => n.CreatedDate)
+                                .Take(5)
+                                .Select(n => new NotificationDto
+                                {
+                                    Id = n.Id,
+                                    Title = n.Title,
+                                    Message = n.Message,
+                                    Type = n.Type,
+                                    CreatedDate = n.CreatedDate,
+                                    IsRead = n.IsRead,
+                                    UserId = n.UserId,
+                                    RequestId = n.RequestId,
+                                    OfferId = n.OfferId,
+                                    SupplierId = n.SupplierId
+                                })
+                                .ToListAsync();
+
+                            Console.WriteLine($"NotificationService.GetNotificationSummaryAsync - Supplier TotalCount: {totalCount}, UnreadCount: {unreadCount}");
+
+                            return new NotificationSummaryDto
+                            {
+                                TotalCount = totalCount,
+                                UnreadCount = unreadCount,
+                                RecentNotifications = recentNotifications
+                            };
                         }
                         else
                         {
-                            // Tedarik�i kayd� bulunamad�ysa sadece UserId ile e�le�enleri getir (yine sadece okunmam��)
-                            query = query.Where(n => n.UserId == userId.Value && !n.IsRead);
+                            // Tedarikçi kaydı bulunamadıysa sadece UserId ile eşleşenleri getir
+                            var userQuery = _context.Notifications.Where(n => n.UserId == userId.Value);
+                            
+                            var totalCount = await userQuery.CountAsync();
+                            var unreadCount = await userQuery.Where(n => !n.IsRead).CountAsync();
+                            
+                            var recentNotifications = await userQuery
+                                .OrderByDescending(n => n.CreatedDate)
+                                .Take(5)
+                                .Select(n => new NotificationDto
+                                {
+                                    Id = n.Id,
+                                    Title = n.Title,
+                                    Message = n.Message,
+                                    Type = n.Type,
+                                    CreatedDate = n.CreatedDate,
+                                    IsRead = n.IsRead,
+                                    UserId = n.UserId,
+                                    RequestId = n.RequestId,
+                                    OfferId = n.OfferId,
+                                    SupplierId = n.SupplierId
+                                })
+                                .ToListAsync();
+
+                            return new NotificationSummaryDto
+                            {
+                                TotalCount = totalCount,
+                                UnreadCount = unreadCount,
+                                RecentNotifications = recentNotifications
+                            };
                         }
                     }
                     else if (user.Role == UserRole.Admin)
                     {
-                        // Admin i�in: Admin bildirimleri (UserId null olanlar) veya admin'e �zel olanlar
-                        query = query.Where(n => n.UserId == null || n.UserId == userId.Value);
+                        // Admin için: Tüm admin bildirimleri (UserId ile eşleşenler dahil)
+                        var adminQuery = _context.Notifications
+                            .Where(n => n.UserId == null || n.UserId == userId.Value);
+                        
                         Console.WriteLine("NotificationService.GetNotificationSummaryAsync - Applied Admin filter");
+                        
+                        var totalCount = await adminQuery.CountAsync();
+                        var unreadCount = await adminQuery.Where(n => !n.IsRead).CountAsync();
+                        
+                        Console.WriteLine($"NotificationService.GetNotificationSummaryAsync - Admin TotalCount: {totalCount}, UnreadCount: {unreadCount}");
+                        
+                        var recentNotifications = await adminQuery
+                            .OrderByDescending(n => n.CreatedDate)
+                            .Take(5)
+                            .Select(n => new NotificationDto
+                            {
+                                Id = n.Id,
+                                Title = n.Title,
+                                Message = n.Message,
+                                Type = n.Type,
+                                CreatedDate = n.CreatedDate,
+                                IsRead = n.IsRead,
+                                UserId = n.UserId,
+                                RequestId = n.RequestId,
+                                OfferId = n.OfferId,
+                                SupplierId = n.SupplierId
+                            })
+                            .ToListAsync();
+
+                        return new NotificationSummaryDto
+                        {
+                            TotalCount = totalCount,
+                            UnreadCount = unreadCount,
+                            RecentNotifications = recentNotifications
+                        };
                     }
                     else
                     {
-                        // Di�er roller i�in: Sadece kendi bildirimler
-                        query = query.Where(n => n.UserId == userId.Value);
+                        // Diğer roller (Employee) için: Sadece kendi bildirimleri
+                        var employeeQuery = _context.Notifications.Where(n => n.UserId == userId.Value);
+                        
                         Console.WriteLine($"NotificationService.GetNotificationSummaryAsync - Applied Employee filter for UserId: {userId.Value}");
+                        
+                        var totalCount = await employeeQuery.CountAsync();
+                        var unreadCount = await employeeQuery.Where(n => !n.IsRead).CountAsync();
+                        
+                        var recentNotifications = await employeeQuery
+                            .OrderByDescending(n => n.CreatedDate)
+                            .Take(5)
+                            .Select(n => new NotificationDto
+                            {
+                                Id = n.Id,
+                                Title = n.Title,
+                                Message = n.Message,
+                                Type = n.Type,
+                                CreatedDate = n.CreatedDate,
+                                IsRead = n.IsRead,
+                                UserId = n.UserId,
+                                RequestId = n.RequestId,
+                                OfferId = n.OfferId,
+                                SupplierId = n.SupplierId
+                            })
+                            .ToListAsync();
+
+                        return new NotificationSummaryDto
+                        {
+                            TotalCount = totalCount,
+                            UnreadCount = unreadCount,
+                            RecentNotifications = recentNotifications
+                        };
                     }
                 }
                 else
                 {
                     Console.WriteLine($"NotificationService.GetNotificationSummaryAsync - User not found for UserId: {userId.Value}");
-                    // Kullan�c� bulunamad�ysa bo� sonu� d�nd�r
                     return new NotificationSummaryDto
                     {
                         TotalCount = 0,
@@ -246,39 +404,40 @@ namespace SantiyeTalepApi.Services
             else
             {
                 Console.WriteLine("NotificationService.GetNotificationSummaryAsync - UserId is null, applying admin filter");
+                
                 // Admin bildirimleri (UserId null olanlar)
-                query = query.Where(n => n.UserId == null);
-            }
+                var adminQuery = _context.Notifications.Where(n => n.UserId == null);
+                
+                var totalCount = await adminQuery.CountAsync();
+                var unreadCount = await adminQuery.Where(n => !n.IsRead).CountAsync();
+                
+                Console.WriteLine($"NotificationService.GetNotificationSummaryAsync - No UserId - TotalCount: {totalCount}, UnreadCount: {unreadCount}");
+                
+                var recentNotifications = await adminQuery
+                    .OrderByDescending(n => n.CreatedDate)
+                    .Take(5)
+                    .Select(n => new NotificationDto
+                    {
+                        Id = n.Id,
+                        Title = n.Title,
+                        Message = n.Message,
+                        Type = n.Type,
+                        CreatedDate = n.CreatedDate,
+                        IsRead = n.IsRead,
+                        UserId = n.UserId,
+                        RequestId = n.RequestId,
+                        OfferId = n.OfferId,
+                        SupplierId = n.SupplierId
+                    })
+                    .ToListAsync();
 
-            var totalCount = await query.CountAsync();
-            var unreadCount = await query.Where(n => !n.IsRead).CountAsync();
-
-            Console.WriteLine($"NotificationService.GetNotificationSummaryAsync - TotalCount: {totalCount}, UnreadCount: {unreadCount}");
-
-            var recentNotifications = await query
-                .OrderByDescending(n => n.CreatedDate)
-                .Take(5)
-                .Select(n => new NotificationDto
+                return new NotificationSummaryDto
                 {
-                    Id = n.Id,
-                    Title = n.Title,
-                    Message = n.Message,
-                    Type = n.Type,
-                    CreatedDate = n.CreatedDate,
-                    IsRead = n.IsRead,
-                    UserId = n.UserId,
-                    RequestId = n.RequestId,
-                    OfferId = n.OfferId,
-                    SupplierId = n.SupplierId
-                })
-                .ToListAsync();
-
-            return new NotificationSummaryDto
-            {
-                TotalCount = totalCount,
-                UnreadCount = unreadCount,
-                RecentNotifications = recentNotifications
-            };
+                    TotalCount = totalCount,
+                    UnreadCount = unreadCount,
+                    RecentNotifications = recentNotifications
+                };
+            }
         }
 
         public async Task MarkAsReadAsync(int notificationId)

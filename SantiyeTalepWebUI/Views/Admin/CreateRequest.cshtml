@@ -965,10 +965,10 @@
 
         function downloadTemplate() {
             const template = [
-                ['Ürün Kodu', 'Ürün Adý', 'Miktar', 'Birim', 'Açýklama'],
-                ['PROD001', 'Örnek Ürün 1', '10', 'Adet', 'Örnek açýklama 1'],
-                ['PROD002', 'Örnek Ürün 2', '5', 'Kutu', 'Örnek açýklama 2'],
-                ['PROD003', 'Örnek Ürün 3', '20', 'Metre', 'Örnek açýklama 3']
+                        ['Sýra','Açýklama',	'Marka',	'Miktar',	'Birim',	'Br. Fiyatý',	'Tutarý'],
+                        ['1','EMERGENCY STOP','SCHNEIDER', '10', 'Adet', '',''],
+                        ['2','ADAPTATION KIT UA/BA', 'SCHNEIDER', '5', 'Adet', '',''],
+                        ['3',' KARTUS SIGORTA 6A 10X38', 'SCHNEIDER', '158', 'Adet', '','']
             ];
 
             const ws = XLSX.utils.aoa_to_sheet(template);
@@ -1132,19 +1132,28 @@
 
                     const siteId = document.getElementById('excelSiteSelect').value;
                     const employeeId = document.getElementById('excelEmployeeSelect').value;
+                    const excelFileInput = document.getElementById('excelFile');
                     const selectedSuppliers = Array.from(document.querySelectorAll('.supplier-checkbox:checked'))
                         .map(cb => parseInt(cb.value));
 
-                    if (!parsedExcelData || !siteId || !employeeId || selectedSuppliers.length === 0) {
+                    if (!siteId || !employeeId || !excelFileInput.files.length || selectedSuppliers.length === 0) {
                         Swal.fire('Uyarý', 'Lütfen tüm alanlarý doldurun', 'warning');
                         return;
                     }
 
                     const formData = new FormData();
-                    formData.append('SiteId', siteId);
-                    formData.append('EmployeeId', employeeId);
-                    formData.append('ExcelFile', document.getElementById('excelFile').files[0]);
-                    selectedSuppliers.forEach(id => formData.append('SupplierIds', id));
+                    formData.append('siteId', siteId);
+                    formData.append('employeeId', employeeId);
+                    formData.append('excelFile', excelFileInput.files[0]);
+                    
+                    selectedSuppliers.forEach(supplierId => {
+                        formData.append('supplierIds', supplierId);
+                    });
+
+                    const description = document.getElementById('excelDescription')?.value;
+                    if (description) {
+                        formData.append('description', description);
+                    }
 
                     try {
                         Swal.fire({
@@ -1156,12 +1165,9 @@
                             }
                         });
 
-                        const response = await fetch('@Url.Action("CreateRequestFromExcel", "Admin")', {
+                        const response = await fetch('/Admin/UploadExcelRequest', {
                             method: 'POST',
-                            body: formData,
-                            headers: {
-                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                            }
+                            body: formData
                         });
 
                         const result = await response.json();

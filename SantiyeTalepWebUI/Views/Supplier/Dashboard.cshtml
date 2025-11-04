@@ -182,7 +182,6 @@
                                 <div class="flex-grow-1">
                                     <h6 class="alert-heading mb-1">Yeni Bildirimleriniz Var!</h6>
                                     <p class="mb-0">
-                                        <span class="notifications-count">@Model.NotificationSummary.UnreadCount</span> adet okunmamış bildiriminiz bulunuyor.
                                         <a href="javascript:void(0)" onclick="toggleNotifications()" class="alert-link fw-semibold">Bildirimleri görüntülemek için tıklayın</a>.
                                     </p>
                                 </div>
@@ -907,7 +906,8 @@
         {
             NotificationType.NewOffer => Url.Action("Offers", "Supplier"),
             NotificationType.OfferApproved => Url.Action("Offers", "Supplier"),
-            NotificationType.OfferRejected => Url.Action("Offers", "Supplier"),
+            NotificationType.OfferRejected => Url.Action("Offers", "Supplier"),           
+            NotificationType.ExcelRequestAssigned => Url.Action("ExcelRequests","Supplier"),
             _ => Url.Action("AvailableRequests", "Supplier")
         };
     }

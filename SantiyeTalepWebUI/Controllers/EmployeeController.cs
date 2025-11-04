@@ -273,5 +273,87 @@ namespace SantiyeTalepWebUI.Controllers
                 return Json(new { success = false, message = "Talep iptal edilirken bir hata oluştu" });
             }
         }
+
+        // Notification Management Methods
+        [HttpGet]
+        public async Task<IActionResult> GetNotifications()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi doldu" });
+
+            try
+            {
+                var notifications = await _apiService.GetAsync<List<Models.DTOs.NotificationDto>>("api/Notification", token) ?? new List<Models.DTOs.NotificationDto>();
+                return Json(new { success = true, data = notifications });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting notifications");
+                return Json(new { success = false, message = "Bildirimler yüklenirken hata oluştu" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNotificationSummary()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi doldu" });
+
+            try
+            {
+                var summary = await _apiService.GetAsync<Models.DTOs.NotificationSummaryDto>("api/Notification/summary", token);
+                return Json(new { success = true, data = summary });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting notification summary");
+                return Json(new { success = false, message = "Bildirim özeti yüklenirken hata oluştu" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkNotificationAsRead([FromBody] int id)
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi doldu" });
+
+            try
+            {
+                _logger.LogInformation("MarkNotificationAsRead called with ID: {NotificationId}", id);
+                
+                await _apiService.PutAsync<dynamic>($"api/Notification/{id}/read", new { }, token);
+                
+                _logger.LogInformation("Backend API response received for notification {NotificationId}", id);
+                
+                return Json(new { success = true, message = "Bildirim okundu olarak işaretlendi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking notification {NotificationId} as read", id);
+                return Json(new { success = false, message = "Bildirim güncellenirken hata oluştu: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkAllNotificationsAsRead()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return Json(new { success = false, message = "Oturum süresi doldu" });
+
+            try
+            {
+                await _apiService.PutAsync<dynamic>("api/Notification/mark-all-read", new { }, token);
+                return Json(new { success = true, message = "Tüm bildirimler okundu olarak işaretlendi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking all notifications as read");
+                return Json(new { success = false, message = "Bildirimler güncellenirken hata oluştu" });
+            }
+        }
     }
 }

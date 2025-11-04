@@ -16,11 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    // JSON property naming policy'yi camelCase olarak ayarla
     options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     options.JsonSerializerOptions.WriteIndented = true;
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
 
 // Entity Framework
@@ -49,6 +49,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -79,16 +80,22 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo 
-    { 
-        Title = "Şantiye Talep Yönetim API", 
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Şantiye Talep Yönetim API",
         Version = "v1",
         Description = "Şantiye çalışanlarının talep yönetimi için API"
     });
+
+    // Aynı isimli sınıflar için
+    c.CustomSchemaIds(type => type.FullName);
+
+    // Çakışan action'lar için
+    c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
     // JWT için Swagger yapılandırması
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -121,11 +128,12 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Şantiye Talep API V1");
-        c.RoutePrefix = string.Empty; // Swagger UI'ı root'ta göster
+        c.RoutePrefix = string.Empty;
     });
 }
 
@@ -137,7 +145,7 @@ app.UseCors("AllowAll");
 app.Use(async (context, next) =>
 {
     Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {context.Request.Method} {context.Request.Path}");
-    
+
     if (context.Request.ContentLength > 0)
     {
         context.Request.EnableBuffering();
@@ -145,13 +153,14 @@ app.Use(async (context, next) =>
         context.Request.Body.Position = 0;
         Console.WriteLine($"Request Body: {body}");
     }
-    
+
     await next();
-    
+
     Console.WriteLine($"Response Status: {context.Response.StatusCode}");
 });
 
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();

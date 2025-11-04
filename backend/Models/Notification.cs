@@ -35,5 +35,9 @@ namespace SantiyeTalepApi.Models
         // Ýlgili tedarikçi ID'si (varsa)
         public int? SupplierId { get; set; }
         public Supplier? Supplier { get; set; }
+        
+        // JSON formatýnda ek veri (ExcelRequestId gibi)
+        [MaxLength(2000)]
+        public string? Data { get; set; }
     }
 }

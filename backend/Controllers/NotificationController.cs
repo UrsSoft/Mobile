@@ -12,10 +12,12 @@ namespace SantiyeTalepApi.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _notificationService;
+        private readonly IPushNotificationService _pushNotificationService;
 
-        public NotificationController(INotificationService notificationService)
+        public NotificationController(INotificationService notificationService, IPushNotificationService pushNotificationService)
         {
             _notificationService = notificationService;
+            _pushNotificationService = pushNotificationService;
         }
 
         [HttpGet]
@@ -115,6 +117,33 @@ namespace SantiyeTalepApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Bildirimler güncellenirken bir hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpPost("test-push")]
+        public async Task<IActionResult> TestPushNotification()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized(new { message = "Kullanıcı kimliği bulunamadı" });
+                }
+
+                // Test bildirimi gönder
+                await _pushNotificationService.SendNotificationToUserAsync(
+                    userId,
+                    "Test Bildirimi 🔔",
+                    "Bu bir test bildirimidir. Firebase çalışıyor!",
+                    new { test = true, timestamp = DateTime.Now.ToString() }
+                );
+
+                return Ok(new { message = "Test bildirimi gönderildi. Telefonunuzu kontrol edin!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Test bildirimi gönderilemedi", error = ex.Message });
             }
         }
     }

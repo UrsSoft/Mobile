@@ -316,6 +316,27 @@ class NotificationChecker {
                 }
             });
         }
+        
+        // Excel request/offer counters
+        if (counts.excelRequests !== undefined) {
+            const elements = document.querySelectorAll('.excel-requests-count');
+            elements.forEach(el => {
+                el.textContent = counts.excelRequests;
+                if (counts.excelRequests > 0) {
+                    el.classList.add('badge-pulse');
+                }
+            });
+        }
+        
+        if (counts.excelOffers !== undefined) {
+            const elements = document.querySelectorAll('.excel-offers-count');
+            elements.forEach(el => {
+                el.textContent = counts.excelOffers;
+                if (counts.excelOffers > 0) {
+                    el.classList.add('badge-pulse');
+                }
+            });
+        }
     }
 
     playNotificationSound() {

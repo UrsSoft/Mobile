@@ -26,6 +26,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- Notification Checker CSS -->
     <link href="~/css/notification-checker.css" rel="stylesheet" type="text/css" />
+    <!-- Supplier Notification CSS -->
+    <link href="~/css/supplier-notification.css" rel="stylesheet" type="text/css" />
     
     @RenderSection("Styles", false)
 </head>
@@ -215,7 +217,7 @@
                                     <li class="nav-item">
                                         <a href="@Url.Action("Offers", "Supplier")" class="nav-link" data-key="t-all-offers">Tüm Teklifler</a>
                                     </li>
-                                    <li class="nav-item">
+                                 @*    <li class="nav-item">
                                         <a href="@Url.Action("Offers", "Supplier", new { status = "pending" })" class="nav-link" data-key="t-pending-offers">Bekleyen Teklifler</a>
                                     </li>
                                     <li class="nav-item">
@@ -223,9 +225,16 @@
                                     </li>
                                     <li class="nav-item">
                                         <a href="@Url.Action("Offers", "Supplier", new { status = "rejected" })" class="nav-link" data-key="t-rejected-offers">Reddedilen Teklifler</a>
-                                    </li>
+                                    </li> *@
                                 </ul>
                             </div>
+                        </li>
+
+                        <!-- Excel Talepleri -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="@Url.Action("ExcelRequests", "Supplier")">
+                                <i class="ri-file-excel-2-line"></i> <span data-key="t-excel-requests">Excel Talepleri</span>
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -300,6 +309,8 @@
     
     <!-- Include notification checker first (global) -->
     <script src="~/js/notification-checker.js"></script>
+    <!-- Supplier-specific notification checker -->
+    <script src="~/js/supplier-notification-checker.js"></script>
     
     <!-- Supplier Notifications Script -->
     <script>
@@ -378,7 +389,7 @@
         // Display notifications
         function displayNotifications() {
             const container = document.getElementById('notifications-container');
-            
+            console.log(notifications)
             if (!notifications || notifications.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-4">
@@ -530,6 +541,9 @@
                     case 6: // OfferApproved
                     case 7: // OfferRejected
                         targetUrl = '/Supplier/Offers';
+                        break;
+                    case 11: // ExcelRequestAssigned
+                        targetUrl = '/Supplier/ExcelRequests';
                         break;
                 }
                 

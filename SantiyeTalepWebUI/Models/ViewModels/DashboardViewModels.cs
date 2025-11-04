@@ -36,6 +36,8 @@ namespace SantiyeTalepWebUI.Models.ViewModels
         public List<RequestDto> RecentRequests { get; set; } = new();
         public List<SiteDto> Sites { get; set; } = new();
         public List<EmployeeDto> Employees { get; set; } = new();
+        public NotificationSummaryDto? NotificationSummary { get; set; }
+        public List<NotificationDto> Notifications { get; set; } = new();
     }
 
     public class EmployeeDashboardViewModel

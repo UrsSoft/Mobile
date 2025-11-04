@@ -3,9 +3,9 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Þantiye Talep Yönetim Sistemi | Element Elektrik Prj. Taah. Tic. Ltd. Þti.</title>
+    <title>ï¿½antiye Talep Yï¿½netim Sistemi | Element Elektrik Prj. Taah. Tic. Ltd. ï¿½ti.</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="Þantiye Talep Yönetim Sistemi" name="description" />
+    <meta content="ï¿½antiye Talep Yï¿½netim Sistemi" name="description" />
     <meta content="Velzon" name="author" />
     <!-- App favicon -->
     <link rel="shortcut icon" href="~/assets/images/favicon.ico">
@@ -82,6 +82,49 @@
                                 <i class='bx bx-moon fs-22'></i>
                             </button>
                         </div>
+
+                        <!-- Notifications -->
+                        <div class="dropdown topbar-head-dropdown ms-1 header-item" id="notificationDropdown">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" id="page-header-notifications-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="toggleNotifications()">
+                                <i class='bx bx-bell fs-22'></i>
+                                <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger" id="notification-badge" style="display: none;">
+                                    <span id="notification-count">0</span>
+                                    <span class="visually-hidden">okunmamÄ±ÅŸ bildirimler</span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0" id="notification-dropdown" aria-labelledby="page-header-notifications-dropdown">
+                                <div class="dropdown-head bg-primary bg-pattern rounded-top">
+                                    <div class="p-3">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="m-0 fs-16 fw-semibold text-white">Bildirimler</h6>
+                                            </div>
+                                            <div class="col-auto dropdown-tabs">
+                                                <span class="badge bg-light-subtle text-body fs-13" id="notification-summary">
+                                                    <span id="notification-total-count">0</span> Bildirim
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="tab-content position-relative" id="notificationItemsTabContent">
+                                    <div class="tab-pane fade show active py-2 ps-2" id="all-noti-tab" role="tabpanel">
+                                        <div data-simplebar style="max-height: 300px;" class="pe-2" id="notifications-container">
+                                            <!-- Bildirimler buraya yÃ¼klenecek -->
+                                            <div class="text-center py-4">
+                                                <div class="avatar-sm mx-auto mb-3">
+                                                    <span class="avatar-title bg-info-subtle text-info fs-18 rounded-circle">
+                                                        <i class="bx bx-bell"></i>
+                                                    </span>
+                                                </div>
+                                                <h6 class="fs-13 text-muted">Bildirimler yÃ¼kleniyor...</h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                                                
                         <div class="dropdown ms-sm-3 header-item topbar-user">
                             <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -89,15 +132,15 @@
                                     <img class="rounded-circle header-profile-user" src="~/assets/images/users/avatar-1.jpg" alt="Header Avatar">
                                     <span class="text-start ms-xl-2">
                                         <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">@User.Identity.Name</span>
-                                        <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">Çalýþan</span>
+                                        <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">ï¿½alï¿½ï¿½an</span>
                                     </span>
                                 </span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <h6 class="dropdown-header">Hoþgeldiniz!</h6>
+                                <h6 class="dropdown-header">Hoï¿½geldiniz!</h6>
                                 <a class="dropdown-item" href="@Url.Action("Profile", "Account")"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profil</span></a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="@Url.Action("Logout", "Account")"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Çýkýþ Yap</span></a>
+                                <a class="dropdown-item" href="@Url.Action("Logout", "Account")"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle">ï¿½ï¿½kï¿½ï¿½ Yap</span></a>
                             </div>
                         </div>
                     </div>
@@ -136,7 +179,7 @@
                 <div class="container-fluid">
                     <div id="two-column-menu"></div>
                     <ul class="navbar-nav" id="navbar-nav">
-                        <li class="menu-title"><span>Ana Menü</span></li>
+                        <li class="menu-title"><span>Ana Menï¿½</span></li>
                         
                         <!-- Dashboard -->
                         <li class="nav-item">
@@ -145,10 +188,10 @@
                             </a>
                         </li>
 
-                        <!-- Talep Yönetimi -->
+                        <!-- Talep Yï¿½netimi -->
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="#sidebarRequests" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRequests">
-                                <i class="ri-file-list-3-line"></i> <span>Talep Yönetimi</span>
+                                <i class="ri-file-list-3-line"></i> <span>Talep Yï¿½netimi</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarRequests">
                                 <ul class="nav nav-sm flex-column">
@@ -199,7 +242,7 @@
     <div id="preloader">
         <div id="status">
             <div class="spinner-border text-primary avatar-sm" role="status">
-                <span class="visually-hidden">Yükleniyor...</span>
+                <span class="visually-hidden">Yï¿½kleniyor...</span>
             </div>
         </div>
     </div>
@@ -218,6 +261,191 @@
     <!-- Dashboard init -->
     <script src="~/assets/js/pages/dashboard-crm.init.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    
+    <!-- Employee Notifications Script -->
+    <script>
+        // Global variables for notification management
+        let notifications = [];
+        let notificationSummary = null;
+        let notificationCheckInterval = null;
+
+        // Initialize notifications when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotificationSummary();
+            loadNotifications();
+            
+            // Start periodic check for new notifications every 60 seconds
+            startNotificationCheck();
+        });
+
+        // Start periodic notification check
+        function startNotificationCheck() {
+            // Clear existing interval if any
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+            }
+            
+            // Check for new notifications every 60 seconds
+            notificationCheckInterval = setInterval(() => {
+                loadNotificationSummary();
+                loadNotifications();
+            }, 60000); // 60 seconds
+        }
+
+        // Load notification summary
+        async function loadNotificationSummary() {
+            try {
+                const response = await fetch('/Employee/GetNotificationSummary');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    notificationSummary = result.data;
+                    updateNotificationBadge();
+                }
+            } catch (error) {
+                console.error('Error loading notification summary:', error);
+            }
+        }
+
+        // Load notifications
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/Employee/GetNotifications');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    notifications = result.data;
+                    displayNotifications();
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                showNotificationsError();
+            }
+        }
+
+        // Update notification badge
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notification-badge');
+            const count = document.getElementById('notification-count');
+            const totalCount = document.getElementById('notification-total-count');
+            
+            if (notificationSummary && notificationSummary.unreadCount > 0) {
+                badge.style.display = 'block';
+                count.textContent = notificationSummary.unreadCount;
+                totalCount.textContent = notificationSummary.totalCount || notificationSummary.unreadCount;
+            } else {
+                badge.style.display = 'none';
+                totalCount.textContent = notificationSummary ? notificationSummary.totalCount : 0;
+            }
+        }
+
+        // Display notifications
+        function displayNotifications() {
+            const container = document.getElementById('notifications-container');
+            
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <span class="avatar-title bg-info-subtle text-info fs-18 rounded-circle">
+                                <i class="bx bx-bell"></i>
+                            </span>
+                        </div>
+                        <h6 class="fs-13 text-muted">HenÃ¼z bildirim yok</h6>
+                        <p class="text-muted mb-0 fs-12">Yeni bildirimler burada gÃ¶rÃ¼necektir.</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            notifications.slice(0, 10).forEach(notification => {
+                const iconClass = getNotificationIcon(notification.type);
+                const iconColor = notification.isRead ? 'text-muted' : 'text-primary';
+                const bgClass = notification.isRead ? '' : 'bg-light';
+                const date = new Date(notification.createdDate).toLocaleDateString('tr-TR');
+                
+                html += `
+                    <div class="text-reset notification-item d-block dropdown-item position-relative ${bgClass}" 
+                         style="cursor: pointer;" 
+                         onclick="handleNotificationClick(${notification.id}, ${notification.requestId || 'null'})">
+                        <div class="d-flex">
+                            <div class="avatar-xs me-3 flex-shrink-0">
+                                <span class="avatar-title bg-info-subtle ${iconColor} rounded-circle fs-16">
+                                    <i class="${iconClass}"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mt-0 mb-1 fs-13 fw-semibold">${notification.title}</h6>
+                                <div class="fs-12 text-muted">
+                                    <p class="mb-1">${notification.message}</p>
+                                </div>
+                                <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                    <span><i class="mdi mdi-clock-outline"></i> ${date}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Get notification icon based on type
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 4: return 'bx bx-check-circle';  // RequestApproved
+                case 5: return 'bx bx-x-circle'; // RequestRejected
+                case 9: return 'bx bx-time'; // RequestStatusChanged
+                default: return 'bx bx-bell';
+            }
+        }
+
+        // Show notifications error
+        function showNotificationsError() {
+            const container = document.getElementById('notifications-container');
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="avatar-sm mx-auto mb-3">
+                        <span class="avatar-title bg-danger-subtle text-danger fs-18 rounded-circle">
+                            <i class="bx bx-error"></i>
+                        </span>
+                    </div>
+                    <h6 class="fs-13 text-muted">Bildirimler yÃ¼klenemedi</h6>
+                    <p class="text-muted mb-0 fs-12">LÃ¼tfen sayfayÄ± yenileyin.</p>
+                </div>`;
+        }
+
+        // Toggle notifications dropdown
+        function toggleNotifications() {
+            loadNotifications();
+        }
+
+        // Handle notification click
+        async function handleNotificationClick(notificationId, requestId) {
+            try {
+                // Mark as read
+                await fetch('/Employee/MarkNotificationAsRead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(notificationId)
+                });
+
+                // Navigate if there's a request ID
+                if (requestId && requestId !== 'null') {
+                    window.location.href = `/Employee/RequestDetails/${requestId}`;
+                } else {
+                    // Refresh notifications
+                    loadNotifications();
+                    loadNotificationSummary();
+                }
+            } catch (error) {
+                console.error('Error handling notification click:', error);
+            }
+        }
+    </script>
+    
     <!-- App js -->
     <!--<script src="~/assets/js/app.js"></script>-->
 

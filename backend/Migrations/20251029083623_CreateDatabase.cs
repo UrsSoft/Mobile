@@ -181,6 +181,39 @@ namespace SantiyeTalepApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ExcelRequests",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SiteId = table.Column<int>(type: "int", nullable: false),
+                    EmployeeId = table.Column<int>(type: "int", nullable: false),
+                    OriginalFileName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    StoredFileName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    FilePath = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    FileSize = table.Column<long>(type: "bigint", nullable: false),
+                    UploadedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ExcelRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ExcelRequests_Employees_EmployeeId",
+                        column: x => x.EmployeeId,
+                        principalTable: "Employees",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ExcelRequests_Sites_SiteId",
+                        column: x => x.SiteId,
+                        principalTable: "Sites",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Requests",
                 columns: table => new
                 {
@@ -209,6 +242,72 @@ namespace SantiyeTalepApi.Migrations
                         name: "FK_Requests_Sites_SiteId",
                         column: x => x.SiteId,
                         principalTable: "Sites",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ExcelRequestSuppliers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ExcelRequestId = table.Column<int>(type: "int", nullable: false),
+                    SupplierId = table.Column<int>(type: "int", nullable: false),
+                    AssignedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Downloaded = table.Column<bool>(type: "bit", nullable: false),
+                    DownloadedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    OfferUploaded = table.Column<bool>(type: "bit", nullable: false),
+                    OfferUploadedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ExcelRequestSuppliers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ExcelRequestSuppliers_ExcelRequests_ExcelRequestId",
+                        column: x => x.ExcelRequestId,
+                        principalTable: "ExcelRequests",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ExcelRequestSuppliers_Suppliers_SupplierId",
+                        column: x => x.SupplierId,
+                        principalTable: "Suppliers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SupplierExcelOffers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ExcelRequestId = table.Column<int>(type: "int", nullable: false),
+                    SupplierId = table.Column<int>(type: "int", nullable: false),
+                    OriginalFileName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    StoredFileName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    FilePath = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    FileSize = table.Column<long>(type: "bigint", nullable: false),
+                    UploadedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    ApprovedByAdmin = table.Column<bool>(type: "bit", nullable: false),
+                    ApprovedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Notes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SupplierExcelOffers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SupplierExcelOffers_ExcelRequests_ExcelRequestId",
+                        column: x => x.ExcelRequestId,
+                        principalTable: "ExcelRequests",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SupplierExcelOffers_Suppliers_SupplierId",
+                        column: x => x.SupplierId,
+                        principalTable: "Suppliers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -263,7 +362,8 @@ namespace SantiyeTalepApi.Migrations
                     UserId = table.Column<int>(type: "int", nullable: true),
                     RequestId = table.Column<int>(type: "int", nullable: true),
                     OfferId = table.Column<int>(type: "int", nullable: true),
-                    SupplierId = table.Column<int>(type: "int", nullable: true)
+                    SupplierId = table.Column<int>(type: "int", nullable: true),
+                    Data = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -312,6 +412,33 @@ namespace SantiyeTalepApi.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ExcelRequests_EmployeeId",
+                table: "ExcelRequests",
+                column: "EmployeeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExcelRequests_SiteId",
+                table: "ExcelRequests",
+                column: "SiteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExcelRequests_StoredFileName",
+                table: "ExcelRequests",
+                column: "StoredFileName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExcelRequestSuppliers_ExcelRequestId_SupplierId",
+                table: "ExcelRequestSuppliers",
+                columns: new[] { "ExcelRequestId", "SupplierId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExcelRequestSuppliers_SupplierId",
+                table: "ExcelRequestSuppliers",
+                column: "SupplierId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Notifications_OfferId",
                 table: "Notifications",
                 column: "OfferId");
@@ -357,6 +484,22 @@ namespace SantiyeTalepApi.Migrations
                 column: "BrandId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SupplierExcelOffers_ExcelRequestId",
+                table: "SupplierExcelOffers",
+                column: "ExcelRequestId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SupplierExcelOffers_StoredFileName",
+                table: "SupplierExcelOffers",
+                column: "StoredFileName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SupplierExcelOffers_SupplierId",
+                table: "SupplierExcelOffers",
+                column: "SupplierId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Suppliers_UserId",
                 table: "Suppliers",
                 column: "UserId",
@@ -382,10 +525,16 @@ namespace SantiyeTalepApi.Migrations
                 name: "CategoryBrands");
 
             migrationBuilder.DropTable(
+                name: "ExcelRequestSuppliers");
+
+            migrationBuilder.DropTable(
                 name: "Notifications");
 
             migrationBuilder.DropTable(
                 name: "SiteBrands");
+
+            migrationBuilder.DropTable(
+                name: "SupplierExcelOffers");
 
             migrationBuilder.DropTable(
                 name: "Categories");
@@ -395,6 +544,9 @@ namespace SantiyeTalepApi.Migrations
 
             migrationBuilder.DropTable(
                 name: "Brands");
+
+            migrationBuilder.DropTable(
+                name: "ExcelRequests");
 
             migrationBuilder.DropTable(
                 name: "Requests");

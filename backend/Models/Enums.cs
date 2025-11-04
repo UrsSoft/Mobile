@@ -71,6 +71,31 @@ namespace SantiyeTalepApi.Models
         OfferRejected = 7, // Teklif reddedildiğinde
         SupplierApproved = 8, // Tedarikçi onaylandığında
         SupplierRejected = 9, // Tedarikçi reddedildiğinde
-        RequestSentToSupplier = 10 // Admin talebi tedarikçilere gönderdiğinde
+        RequestSentToSupplier = 10, // Admin talebi tedarikçilere gönderdiğinde
+        ExcelRequestAssigned = 11, // Excel talebi tedarikçiye atandığında
+        ExcelOfferUploaded = 12 // Tedarikçi Excel teklifi yüklediğinde
+    }
+
+    /// <summary>
+    /// Excel talep durumları
+    /// </summary>
+    public enum ExcelRequestStatus
+    {
+        Uploaded = 0,           // Yüklendi
+        AssignedToSuppliers = 1, // Tedarikçilere atandı
+        InProgress = 2,         // İşlemde (bazı tedarikçiler teklif yükledi)
+        Completed = 3,          // Tamamlandı (tüm tedarikçiler teklif yükledi)
+        Cancelled = 4           // İptal edildi
+    }
+
+    /// <summary>
+    /// Tedarikçi teklif Excel durumları
+    /// </summary>
+    public enum OfferExcelStatus
+    {
+        Submitted = 0,          // Gönderildi
+        UnderReview = 1,        // İnceleniyor
+        Approved = 2,           // Onaylandı
+        Rejected = 3            // Reddedildi
     }
 }

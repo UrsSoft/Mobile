@@ -1322,6 +1322,144 @@ namespace SantiyeTalepApi.Controllers
             }
         }
 
+        [HttpGet("offers")]
+        public async Task<IActionResult> GetAllOffers()
+        {
+            try
+            {
+                var offers = await _context.Offers
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Employee)
+                            .ThenInclude(e => e.User)
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Site)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .OrderByDescending(o => o.OfferDate)
+                    .ToListAsync();
+
+                var offerDtos = _mapper.Map<List<OfferDto>>(offers);
+                return Ok(offerDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all offers");
+                return StatusCode(500, new { message = "Teklifler yüklenirken hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpPut("offers/{id}/approve")]
+        public async Task<IActionResult> ApproveOffer(int id)
+        {
+            try
+            {
+                var offer = await _context.Offers
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Employee)
+                            .ThenInclude(e => e.User)
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Site)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
+                if (offer == null)
+                    return NotFound(new { message = "Teklif bulunamadı" });
+
+                if (offer.Status != OfferStatus.Pending)
+                    return BadRequest(new { message = "Sadece bekleyen teklifler onaylanabilir" });
+
+                // Teklifi onayla
+                offer.Status = OfferStatus.Approved;
+
+                // Request'i tamamla
+                offer.Request.Status = RequestStatus.Completed;
+
+                // Aynı request için diğer pending teklifleri reddet
+                var otherOffers = await _context.Offers
+                    .Where(o => o.RequestId == offer.RequestId && o.Id != offer.Id && o.Status == OfferStatus.Pending)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .ToListAsync();
+
+                foreach (var otherOffer in otherOffers)
+                {
+                    otherOffer.Status = OfferStatus.Rejected;
+
+                    // Reddedilen tedarikçilere bildirim gönder
+                    await _notificationService.CreateNotificationAsync(
+                        "Teklif Reddedildi",
+                        $"{offer.Request.ProductDescription} talebi için verdiğiniz teklif reddedildi. Başka bir teklif seçilmiştir.",
+                        NotificationType.OfferRejected,
+                        otherOffer.Supplier.UserId,
+                        offer.RequestId,
+                        otherOffer.Id,
+                        otherOffer.SupplierId
+                    );
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Onaylanan tedarikçiye bildirim gönder
+                await _notificationService.CreateNotificationAsync(
+                    "Teklif Onaylandı",
+                    $"Tebrikler! {offer.Request.ProductDescription} talebi için verdiğiniz {offer.FinalPrice:C} tutarındaki teklif onaylandı.",
+                    NotificationType.OfferApproved,
+                    offer.Supplier.UserId,
+                    offer.RequestId,
+                    offer.Id,
+                    offer.SupplierId
+                );
+
+                return Ok(new { message = "Teklif onaylandı ve diğer teklifler reddedildi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error approving offer");
+                return StatusCode(500, new { message = "Teklif onaylanırken hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpPut("offers/{id}/reject")]
+        public async Task<IActionResult> RejectOffer(int id)
+        {
+            try
+            {
+                var offer = await _context.Offers
+                    .Include(o => o.Request)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
+                if (offer == null)
+                    return NotFound(new { message = "Teklif bulunamadı" });
+
+                if (offer.Status != OfferStatus.Pending)
+                    return BadRequest(new { message = "Sadece bekleyen teklifler reddedilebilir" });
+
+                offer.Status = OfferStatus.Rejected;
+                await _context.SaveChangesAsync();
+
+                // Tedarikçiye red bildirimi gönder
+                await _notificationService.CreateNotificationAsync(
+                    "Teklif Reddedildi",
+                    $"{offer.Request.ProductDescription} talebi için verdiğiniz teklif reddedildi.",
+                    NotificationType.OfferRejected,
+                    offer.Supplier.UserId,
+                    offer.RequestId,
+                    offer.Id,
+                    offer.SupplierId
+                );
+
+                return Ok(new { message = "Teklif reddedildi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error rejecting offer");
+                return StatusCode(500, new { message = "Teklif reddedilirken hata oluştu", error = ex.Message });
+            }
+        }
+
         // Note: ApproveSupplier and RejectSupplier endpoints removed 
         // because only Admin can create suppliers and they are auto-approved.
         // Suppliers cannot self-register anymore.

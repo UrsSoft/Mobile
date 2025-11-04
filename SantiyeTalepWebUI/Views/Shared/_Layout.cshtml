@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
     <!-- Notification Checker CSS -->
     <link href="~/css/notification-checker.css" rel="stylesheet" type="text/css" />
-    
+
     @RenderSection("Styles", false)
 </head>
 
@@ -88,7 +88,50 @@
                                 <i class='bx bx-moon fs-22'></i>
                             </button>
                         </div>
-                                               
+
+                        <!-- Notifications -->
+                        <div class="dropdown topbar-head-dropdown ms-1 header-item" id="notificationDropdown">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" id="page-header-notifications-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="toggleNotifications()">
+                                <i class='bx bx-bell fs-22'></i>
+                                <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger" id="notification-badge" style="display: none;">
+                                    <span id="notification-count">0</span>
+                                    <span class="visually-hidden">okunmamış bildirimler</span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0" id="notification-dropdown" aria-labelledby="page-header-notifications-dropdown">
+                                <div class="dropdown-head bg-primary bg-pattern rounded-top">
+                                    <div class="p-3">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="m-0 fs-16 fw-semibold text-white">Bildirimler</h6>
+                                            </div>
+                                            <div class="col-auto dropdown-tabs">
+                                                <span class="badge bg-light-subtle text-body fs-13" id="notification-summary">
+                                                    <span id="notification-total-count">0</span> Bildirim
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="tab-content position-relative" id="notificationItemsTabContent">
+                                    <div class="tab-pane fade show active py-2 ps-2" id="all-noti-tab" role="tabpanel">
+                                        <div data-simplebar style="max-height: 300px;" class="pe-2" id="notifications-container">
+                                            <!-- Bildirimler buraya yüklenecek -->
+                                            <div class="text-center py-4">
+                                                <div class="avatar-sm mx-auto mb-3">
+                                                    <span class="avatar-title bg-info-subtle text-info fs-18 rounded-circle">
+                                                        <i class="bx bx-bell"></i>
+                                                    </span>
+                                                </div>
+                                                <h6 class="fs-13 text-muted">Bildirimler yükleniyor...</h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="dropdown ms-sm-3 header-item topbar-user">
                             <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="d-flex align-items-center">
@@ -144,7 +187,7 @@
                     <div id="two-column-menu"></div>
                     <ul class="navbar-nav" id="navbar-nav">
                         <li class="menu-title"><span>Ana Menü</span></li>
-                        
+
                         <!-- Dashboard -->
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="@Url.Action("Dashboard", "Admin")">
@@ -239,6 +282,22 @@
                                 </ul>
                             </div>
                         </li>
+                        <!-- Excel Yönetimi -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#sidebarExcels" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExcels">
+                                <i class="ri-file-text-line"></i> <span>Excel Yönetimi</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarExcels">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("ExcelManagement", "Admin")" class="nav-link">Yüklenen Exceller</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("SupplierExcelManagement", "Admin")" class="nav-link">Tedarikçi Excelleri</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
                     </ul>
                 </div>
                 <!-- Sidebar -->
@@ -253,7 +312,7 @@
         <!-- ============================================================== -->
         <!-- Start right Content here -->
         <!-- ============================================================== -->
-       @RenderBody()
+        @RenderBody()
         <!-- end main content-->
         <footer class="footer">
             <div class="container-fluid">
@@ -273,13 +332,11 @@
         </footer>
     </div>
     <!-- END layout-wrapper -->
-    
     <!--start back-to-top-->
     <button onclick="topFunction()" class="btn btn-danger btn-icon" id="back-to-top">
         <i class="ri-arrow-up-line"></i>
     </button>
     <!--end back-to-top-->
-    
     <!--preloader-->
     <div id="preloader">
         <div id="status">
@@ -303,17 +360,265 @@
     <!-- Dashboard init -->
     <script src="~/assets/js/pages/dashboard-crm.init.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    
+
     <!-- Toastr Notifications -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    
-    <!-- Include notification checker (global) -->
-    <script src="~/js/notification-checker.js"></script>
-    
+
+    <!-- Admin Notifications Script (Global for Layout) -->
+    <script>
+        // Global variables for notification management
+        let notifications = [];
+        let notificationSummary = null;
+        let notificationCheckInterval = null;
+
+        // Initialize notifications when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Layout: Initializing notifications');
+            loadNotificationSummary();
+            loadNotifications();
+
+            // Start periodic check for new notifications every 60 seconds
+            startNotificationCheck();
+        });
+
+        // Start periodic notification check
+        function startNotificationCheck() {
+            // Clear existing interval if any
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+            }
+
+            // Check for new notifications every 60 seconds
+            notificationCheckInterval = setInterval(() => {
+                console.log('Layout: Periodic notification check');
+                loadNotificationSummary();
+                loadNotifications();
+            }, 60000); // 60 seconds
+        }
+
+        // Load notification summary
+        async function loadNotificationSummary() {
+            try {
+                console.log('Layout: Loading notification summary');
+                const response = await fetch('/Admin/GetNotificationSummary');
+                const result = await response.json();
+
+                console.log('Layout: Notification summary response:', result);
+
+                if (result.success && result.data) {
+                    notificationSummary = result.data;
+                    console.log('Layout: Notification summary loaded:', notificationSummary);
+                    updateNotificationBadge();
+                } else {
+                    console.warn('Layout: Failed to load notification summary:', result);
+                }
+            } catch (error) {
+                console.error('Layout: Error loading notification summary:', error);
+            }
+        }
+
+        // Load notifications
+        async function loadNotifications() {
+            try {
+                console.log('Layout: Loading notifications');
+                const response = await fetch('/Admin/GetNotifications');
+                const result = await response.json();
+
+                console.log('Layout: Notifications response:', result);
+
+                if (result.success && result.data) {
+                    notifications = result.data;
+                    console.log('Layout: Notifications loaded, count:', notifications.length);
+                    displayNotifications();
+                } else {
+                    console.warn('Layout: Failed to load notifications:', result);
+                    showNotificationsError();
+                }
+            } catch (error) {
+                console.error('Layout: Error loading notifications:', error);
+                showNotificationsError();
+            }
+        }
+
+        // Update notification badge
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notification-badge');
+            const count = document.getElementById('notification-count');
+            const totalCount = document.getElementById('notification-total-count');
+
+            console.log('Layout: Updating notification badge, summary:', notificationSummary);
+
+            if (notificationSummary && notificationSummary.unreadCount > 0) {
+                badge.style.display = 'block';
+                count.textContent = notificationSummary.unreadCount;
+                totalCount.textContent = notificationSummary.totalCount || notificationSummary.unreadCount;
+                console.log('Layout: Badge shown with unread count:', notificationSummary.unreadCount);
+            } else {
+                badge.style.display = 'none';
+                totalCount.textContent = notificationSummary ? notificationSummary.totalCount : 0;
+                console.log('Layout: Badge hidden, no unread notifications');
+            }
+        }
+
+        // Display notifications
+        function displayNotifications() {
+            const container = document.getElementById('notifications-container');
+            console.log('Layout: Displaying notifications, count:', notifications ? notifications.length : 0);
+
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="avatar-sm mx-auto mb-3">
+                            <span class="avatar-title bg-info-subtle text-info fs-18 rounded-circle">
+                                <i class="bx bx-bell"></i>
+                            </span>
+                        </div>
+                        <h6 class="fs-13 text-muted">Henüz bildirim yok</h6>
+                        <p class="text-muted mb-0 fs-12">Yeni bildirimler burada görünecektir.</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            notifications.slice(0, 10).forEach(notification => {
+                const iconClass = getNotificationIcon(notification.type);
+                const iconColor = notification.isRead ? 'text-muted' : 'text-primary';
+                const bgClass = notification.isRead ? '' : 'bg-light';
+                const date = new Date(notification.createdDate).toLocaleDateString('tr-TR');
+
+                html += `
+                    <div class="text-reset notification-item d-block dropdown-item position-relative ${bgClass}"
+                         style="cursor: pointer;"
+                         onclick="goToRelatedPage(${notification.type}, ${notification.requestId || 'null'}, ${notification.offerId || 'null'}, ${notification.supplierId || 'null'}, ${notification.id})">
+                        <div class="d-flex">
+                            <div class="avatar-xs me-3 flex-shrink-0">
+                                <span class="avatar-title bg-info-subtle ${iconColor} rounded-circle fs-16">
+                                    <i class="${iconClass}"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mt-0 mb-1 fs-13 fw-semibold">${notification.title}</h6>
+                                <div class="fs-12 text-muted">
+                                    <p class="mb-1">${notification.message}</p>
+                                </div>
+                                <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                    <span><i class="mdi mdi-clock-outline"></i> ${date}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+
+            container.innerHTML = html;
+            console.log('Layout: Notifications displayed');
+        }
+
+        // Get notification icon based on type
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 1: return 'bx bx-user-plus';  // SupplierRegistration
+                case 2: return 'bx bx-shopping-bag'; // NewRequest
+                case 3: return 'bx bx-purchase-tag'; // NewOffer
+                case 11: return 'bx bx-file'; // ExcelRequestAssigned
+                case 12: return 'bx bx-upload'; // ExcelOfferUploaded
+                default: return 'bx bx-bell';
+            }
+        }
+
+        // Show notifications error
+        function showNotificationsError() {
+            const container = document.getElementById('notifications-container');
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="avatar-sm mx-auto mb-3">
+                        <span class="avatar-title bg-danger-subtle text-danger fs-18 rounded-circle">
+                            <i class="bx bx-error"></i>
+                        </span>
+                    </div>
+                    <h6 class="fs-13 text-muted">Bildirimler yüklenemedi</h6>
+                    <p class="text-muted mb-0 fs-12">Lütfen sayfayı yenileyin.</p>
+                </div>`;
+        }
+
+        // Toggle notifications dropdown
+        function toggleNotifications() {
+            console.log('Layout: Toggling notifications');
+            loadNotifications();
+        }
+
+        // İlgili sayfaya git
+        function goToRelatedPage(type, requestId, offerId, supplierId, notificationId) {
+            console.log('Layout: Going to related page, type:', type, 'notificationId:', notificationId);
+            
+            // Önce bildirimi okundu olarak işaretle
+            const notification = notifications.find(n => n.id === notificationId);
+            if (notification && !notification.isRead) {
+                fetch(`/Admin/MarkNotificationAsRead`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(notificationId)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        notification.isRead = true;
+                        displayNotifications();
+                        loadNotificationSummary();
+                    }
+                })
+                .catch(error => {
+                    console.error('Layout: Error marking notification as read:', error);
+                });
+            }
+
+            // Sayfaya yönlendir
+            let targetUrl = '/Admin/Dashboard';
+
+            switch(type) {
+                case 1: // SupplierRegistration
+                    targetUrl = '/Admin/Suppliers';
+                    break;
+                case 2: // NewRequest
+                    targetUrl = '/Admin/Requests';
+                    if (requestId && requestId !== 'null') {
+                        targetUrl += `?requestId=${requestId}`;
+                    }
+                    break;
+                case 3: // NewOffer
+                    targetUrl = '/Admin/Offers';
+                    if (offerId && offerId !== 'null') {
+                        targetUrl += `?offerId=${offerId}`;
+                    }
+                    break;
+                case 11: // ExcelRequestAssigned
+                    targetUrl = '/Admin/ExcelManagement';
+                    if (requestId && requestId !== 'null') {
+                        targetUrl += `?requestId=${requestId}`;
+                    }
+                    break;
+                case 12: // ExcelOfferUploaded
+                    targetUrl = '/Admin/SupplierExcelManagement';
+                    if (requestId && requestId !== 'null') {
+                        targetUrl += `?requestId=${requestId}`;
+                    }
+                    break;
+                default:
+                    targetUrl = '/Admin/Dashboard';
+                    break;
+            }
+
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 100);
+        }
+    </script>
+
     <!-- App js -->
     <script src="~/assets/js/app.js"></script>
 
-    @RenderSection("Scripts",false)
+    @RenderSection("Scripts", false)
 </body>
 
 </html>

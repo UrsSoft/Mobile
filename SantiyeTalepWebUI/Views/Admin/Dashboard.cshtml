@@ -189,6 +189,116 @@
                 </div>
             </div>
             <!-- end page title -->
+            <!-- Notification Alert for New Requests -->
+            @if (Model.NotificationSummary != null && Model.NotificationSummary.UnreadCount > 0)
+            {
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-info alert-dismissible fade show" role="alert" id="notificationAlert">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 me-3">
+                                    <i class="ri-notification-3-line fs-24 text-info"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="alert-heading mb-1">Yeni Bildirimleriniz Var!</h6>
+                                    <p class="mb-0">
+                                        <span class="notifications-count">@Model.NotificationSummary.UnreadCount</span> adet okunmamış bildiriminiz bulunuyor.
+                                        <a href="javascript:void(0)" onclick="toggleNotificationPanel()" class="alert-link fw-semibold">Bildirimleri görüntülemek için tıklayın</a>.
+                                    </p>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Notification Panel (Initially Hidden) -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="notification-panel" id="notificationPanel" style="display: none;">
+                        <div class="notification-panel-header">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <i class="ri-notification-3-line fs-20 text-primary me-2"></i>
+                                <h5 class="mb-0">Bildirimlerim</h5>
+                                @if (Model.NotificationSummary != null && Model.NotificationSummary.UnreadCount > 0)
+                                {
+                                    <span class="badge bg-danger ms-2 notifications-count">@Model.NotificationSummary.UnreadCount</span>
+                                }
+                            </div>
+                            <div class="d-flex gap-2">
+                                @if (Model.NotificationSummary != null && Model.NotificationSummary.UnreadCount > 0)
+                                {
+                                    <button class="btn btn-sm btn-outline-primary" onclick="markAllAsReadDashboard()">
+                                        <i class="ri-check-double-line"></i> Tümünü Okundu Olarak İşaretle
+                                    </button>
+                                }
+                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleNotificationPanel()">
+                                    <i class="ri-close-line"></i> Kapat
+                                </button>
+                            </div>
+                        </div>
+                        <div class="notification-panel-body">
+                            @if (Model.Notifications.Any())
+                            {
+                                @foreach (var notification in Model.Notifications.Where(i => i.IsRead == false).Take(10))
+                                {
+                                    <div class="notification-item @(!notification.IsRead ? "unread" : "")" data-id="@notification.Id">
+                                        <div class="notification-content">
+                                            <div class="notification-meta">
+                                                <div class="notification-type-icon bg-@(GetNotificationColor(notification.Type))-subtle text-@(GetNotificationColor(notification.Type))">
+                                                    <i class="@GetNotificationIcon(notification.Type)"></i>
+                                                </div>
+                                                <small class="text-muted">@notification.CreatedDate.ToString("dd.MM.yyyy HH:mm")</small>
+                                                @if (!notification.IsRead)
+                                                {
+                                                    <span class="badge bg-primary">Yeni</span>
+                                                }
+                                            </div>
+                                            @{
+                                                var notificationUrl = GetNotificationUrl(notification.Type, notification.RequestId, notification.OfferId, notification.SupplierId);
+                                            }
+                                            <a href="@notificationUrl" class="notification-title-link" onclick="handleNotificationClickDashboard(@notification.Id, '@notificationUrl', event)">
+                                                <h6 class="notification-title mb-1" style="color:#2385ba">@notification.Title</h6>
+                                            </a>
+                                            <p class="notification-message mb-2 text-muted">@notification.Message</p>
+                                        </div>
+                                        @if (!notification.IsRead)
+                                        {
+                                            <div class="notification-actions">
+                                                <button class="btn btn-sm btn-outline-primary btn-mark-read" onclick="markAsReadDashboard(@notification.Id)">
+                                                    <i class="ri-check-line"></i> Okundu olarak işaretle
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="notification-empty">
+                                    <div class="avatar-md mx-auto mb-3">
+                                        <div class="avatar-title bg-light rounded-circle display-6 text-muted">
+                                            <i class="ri-notification-off-line"></i>
+                                        </div>
+                                    </div>
+                                    <h6>Henüz bildiriminiz bulunmuyor</h6>
+                                    <p class="text-muted">Yeni bildirimler geldiğinde burada görüntülenecektir.</p>
+                                </div>
+                            }
+                        </div>
+                        @if (Model.Notifications.Count() > 10)
+                        {
+                            <div class="notification-panel-footer">
+                                <a href="@Url.Action("Notifications", "Admin")" class="btn btn-link">
+                                    Tüm Bildirimleri Görüntüle (@Model.Notifications.Count())
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            
             <!-- Notification Alert -->
             <div class="row mb-4" id="notificationAlertRow" style="display: none;">
                 <div class="col-12">
@@ -205,34 +315,6 @@
                                 </p>
                             </div>
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Notification Panel (Initially Hidden) -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="notification-panel" id="notification-panel">
-                        <div class="notification-panel-header">
-                            <div class="d-flex align-items-center flex-grow-1">
-                                <i class="ri-notification-3-line fs-20 text-primary me-2"></i>
-                                <h5 class="mb-0">Bildirimlerim</h5>
-                                <span class="badge bg-danger ms-2 notifications-count" id="panel-unread-count" style="display: none;">0</span>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-sm btn-outline-primary" id="markAllReadBtn" onclick="markAllAsRead()" style="display: none;">
-                                    <i class="ri-check-double-line"></i> Tümünü Okundu İşaretle
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleNotifications()">
-                                    <i class="ri-close-line"></i> Kapat
-                                </button>
-                            </div>
-                        </div>
-                        <div class="notification-panel-body">
-                            <div id="notifications-list">
-                                <!-- Bildirimler buraya yüklenecek -->
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -755,7 +837,7 @@
 
 <!-- Bildirim JavaScript'leri -->
 <script>
-    let notifications = [];
+  
     let requestStatusChart = null; // Global değişken olarak tanımlayalım
 
     // ========================================
@@ -978,6 +1060,175 @@
 
         // Show results state
         showProductSearchState('results');
+    }
+
+    // ========================================
+    // DASHBOARD NOTIFICATION FUNCTIONS
+    // ========================================
+
+    // Toggle notification panel
+    function toggleNotificationPanel() {
+        const panel = document.getElementById('notificationPanel');
+        if (panel) {
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                setTimeout(() => {
+                    panel.classList.add('show');
+                }, 10);
+            } else {
+                panel.classList.remove('show');
+                setTimeout(() => {
+                    panel.style.display = 'none';
+                }, 300);
+            }
+        }
+    }
+
+    // Handle notification click in dashboard panel
+    async function handleNotificationClickDashboard(notificationId, url, event) {
+        event.preventDefault();
+        
+        const notificationItem = document.querySelector(`[data-id="${notificationId}"]`);
+        const isUnread = notificationItem && notificationItem.classList.contains('unread');
+        
+        if (isUnread) {
+            try {
+                await markAsReadDashboard(notificationId, event);
+                setTimeout(() => {
+                    window.location.href = url;
+                }, 300);
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+                window.location.href = url;
+            }
+        } else {
+            window.location.href = url;
+        }
+    }
+
+    // Mark single notification as read in dashboard
+    async function markAsReadDashboard(notificationId) {
+        
+        
+        console.log('Dashboard: markAsRead called with ID:', notificationId);
+        
+        try {
+               const response = await fetch('/Admin/MarkNotificationAsRead', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(notificationId)
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+    }
+
+            console.log('Dashboard: API response status:', response.status);
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Dashboard: API response result:', result);
+                
+                if (result.success) {
+                    // Update UI
+                    const notificationItem = document.querySelector(`[data-id="${notificationId}"]`);
+                    if (notificationItem) {
+                        notificationItem.classList.remove('unread');
+                        const badge = notificationItem.querySelector('.badge.bg-primary');
+                        if (badge) badge.remove();
+                        const actions = notificationItem.querySelector('.notification-actions');
+                        if (actions) actions.remove();
+                    }
+
+                    // Update counters
+                    updateDashboardNotificationCounts();
+                    checkAndHideAlertIfAllReadDashboard();
+                    
+                    return true;
+                }
+            }
+            return false;
+        } catch (error) {
+            console.error('Dashboard: Error marking notification as read:', error);
+            return false;
+        }
+    }
+
+    // Mark all notifications as read in dashboard
+    async function markAllAsReadDashboard() {
+        try {
+            const response = await fetch('/Admin/MarkAllNotificationsAsRead', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // Update UI
+                    const unreadItems = document.querySelectorAll('.notification-item.unread');
+                    unreadItems.forEach(item => {
+                        item.classList.remove('unread');
+                        const badge = item.querySelector('.badge.bg-primary');
+                        if (badge) badge.remove();
+                        const actions = item.querySelector('.notification-actions');
+                        if (actions) actions.remove();
+                    });
+
+                    // Update counters and hide alert
+                    updateDashboardNotificationCounts(0);
+                    const alert = document.getElementById('notificationAlert');
+                    if (alert) alert.style.display = 'none';
+                    
+                    const headerBadge = document.querySelector('.notification-panel-header .badge');
+                    if (headerBadge) headerBadge.remove();
+
+                    const markAllBtn = document.querySelector('button[onclick="markAllAsReadDashboard()"]');
+                    if (markAllBtn) markAllBtn.style.display = 'none';
+                    
+                    console.log('Dashboard: Tüm bildirimler okundu olarak işaretlendi.');
+                }
+            }
+        } catch (error) {
+            console.error('Dashboard: Error marking all notifications as read:', error);
+        }
+    }
+
+    // Update notification counts in dashboard
+    function updateDashboardNotificationCounts(count = null) {
+        if (count === null) {
+            count = document.querySelectorAll('.notification-item.unread').length;
+        }
+
+        const countElements = document.querySelectorAll('.notifications-count');
+        countElements.forEach(el => {
+            el.textContent = count;
+            if (count === 0) {
+                el.style.display = 'none';
+            }
+        });
+    }
+
+    // Check if all notifications are read and hide alert
+    function checkAndHideAlertIfAllReadDashboard() {
+        const unreadItems = document.querySelectorAll('.notification-item.unread');
+        if (unreadItems.length === 0) {
+            const alert = document.getElementById('notificationAlert');
+            if (alert) alert.style.display = 'none';
+            
+            const markAllBtn = document.querySelector('button[onclick="markAllAsReadDashboard()"]');
+            if (markAllBtn) markAllBtn.style.display = 'none';
+            
+            const headerBadge = document.querySelector('.notification-panel-header .badge');
+            if (headerBadge) headerBadge.remove();
+        }
     }
 
     // ========================================
@@ -1568,31 +1819,26 @@
     }
 
     // Bildirimleri yükle ve göster
-    function loadNotifications() {
-        fetch('/Admin/GetNotifications')
+     function loadNotificationSummary() {
+        fetch('/Admin/GetNotificationSummary')
             .then(response => response.json())
             .then(data => {
-                if (data.success && data.notifications) {
-                    notifications = data.notifications;
-                    displayNotifications();
+                if (data.success && data.summary) {
+                    updateNotificationCounts(data.summary.unreadCount);
 
-                    // Panel'i göster
-                    const notificationPanel = document.getElementById('notification-panel');
-                    if (notificationPanel) {
-                        notificationPanel.classList.add('show');
-                    }
-
-                    // Alert'i gizle
+                    // Show/hide notification alert based on unread count
                     const alertRow = document.getElementById('notificationAlertRow');
                     if (alertRow) {
-                        alertRow.style.display = 'none';
+                        if (data.summary.unreadCount > 0) {
+                            alertRow.style.display = 'block';
+                        } else {
+                            alertRow.style.display = 'none';
+                        }
                     }
-                } else {
-                    console.error('Bildirimler yüklenemedi:', data.message);
                 }
             })
             .catch(error => {
-                console.error('Bildirimler yüklenirken hata:', error);
+                console.error('Bildirim özeti yüklenirken hata:', error);
             });
     }
 
@@ -1744,17 +1990,85 @@
             case 1: return 'ri-user-add-line'; // Supplier Registration
             case 2: return 'ri-file-add-line'; // New Request
             case 3: return 'ri-price-tag-3-line'; // New Offer
+            case 4: return 'ri-check-line'; // Offer Approved
+            case 5: return 'ri-close-line'; // Offer Rejected
+            case 6: return 'ri-file-excel-line'; // Excel Request Assigned
+            case 7: return 'ri-upload-line'; // Excel Offer Uploaded
             default: return 'ri-notification-3-line';
         }
     }
 
     function getNotificationTypeColor(type) {
         switch(type) {
-            case 1: return '#34c38f'; // Yeşil - Supplier Registration
-            case 2: return '#556ee6'; // Mavi - New Request
-            case 3: return '#f1b44c'; // Turuncu - New Offer
-            default: return '#6c757d'; // Gri
+            case 1: return 'success';
+            case 2: return 'info';
+            case 3: return 'warning';
+            case 4: return 'success';
+            case 5: return 'danger';
+            case 6: return 'info';
+            case 7: return 'primary';
+            default: return 'primary';
+        }
+    }
+
+    function getNotificationUrl(type, requestId, offerId, supplierId) {
+        switch(type) {
+            case 1: return '@Url.Action("Suppliers", "Admin")';
+            case 2: return '@Url.Action("Requests", "Admin")' + (requestId ? `?requestId=${requestId}` : '');
+            case 3: return '@Url.Action("Offers", "Admin")' + (offerId ? `?offerId=${offerId}` : '');
+            case 4: return '@Url.Action("Offers", "Admin")' + (offerId ? `?offerId=${offerId}` : '');
+            case 5: return '@Url.Action("Offers", "Admin")' + (offerId ? `?offerId=${offerId}` : '');
+            case 6: return '@Url.Action("ExcelManagement", "Admin")' + (requestId ? `?requestId=${requestId}` : '');
+            case 7: return '@Url.Action("SupplierExcelManagement", "Admin")' + (requestId ? `?requestId=${requestId}` : '');
+            default: return '@Url.Action("Dashboard", "Admin")';
         }
     }
 
 </script>
+
+@functions {
+    private string GetNotificationIcon(NotificationType type)
+    {
+        return type switch
+        {
+            NotificationType.SupplierRegistration => "ri-user-add-line",
+            NotificationType.NewRequest => "ri-file-add-line",
+            NotificationType.NewOffer => "ri-price-tag-3-line",
+            NotificationType.OfferApproved => "ri-check-line",
+            NotificationType.OfferRejected => "ri-close-line",
+            NotificationType.ExcelRequestAssigned => "ri-file-excel-line",
+            NotificationType.ExcelOfferUploaded => "ri-upload-line",
+            _ => "ri-notification-line"
+        };
+    }
+
+    private string GetNotificationColor(NotificationType type)
+    {
+        return type switch
+        {
+            NotificationType.SupplierRegistration => "success",
+            NotificationType.NewRequest => "info",
+            NotificationType.NewOffer => "warning",
+            NotificationType.OfferApproved => "success",
+            NotificationType.OfferRejected => "danger",
+            NotificationType.ExcelRequestAssigned => "info",
+            NotificationType.ExcelOfferUploaded => "primary",
+            _ => "primary"
+        };
+    }
+
+    private string GetNotificationUrl(NotificationType type, int? requestId, int? offerId, int? supplierId)
+    {
+        return type switch
+        {
+            NotificationType.SupplierRegistration => Url.Action("Suppliers", "Admin"),
+            NotificationType.NewRequest => Url.Action("Requests", "Admin") + (requestId.HasValue ? $"?requestId={requestId}" : ""),
+            NotificationType.NewOffer => Url.Action("Offers", "Admin") + (offerId.HasValue ? $"?offerId={offerId}" : ""),
+            NotificationType.OfferApproved => Url.Action("Offers", "Admin") + (offerId.HasValue ? $"?offerId={offerId}" : ""),
+            NotificationType.OfferRejected => Url.Action("Offers", "Admin") + (offerId.HasValue ? $"?offerId={offerId}" : ""),
+            NotificationType.ExcelRequestAssigned => Url.Action("ExcelManagement", "Admin") + (requestId.HasValue ? $"?requestId={requestId}" : ""),
+            NotificationType.ExcelOfferUploaded => Url.Action("SupplierExcelManagement", "Admin") + (requestId.HasValue ? $"?requestId={requestId}" : ""),
+            _ => Url.Action("Dashboard", "Admin")
+        };
+    }
+}

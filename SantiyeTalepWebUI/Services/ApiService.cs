@@ -6,6 +6,7 @@ namespace SantiyeTalepWebUI.Services
 {
     public interface IApiService
     {
+        string BaseUrl { get; }
         Task<T?> GetAsync<T>(string endpoint, string? token = null);
         Task<T?> PostAsync<T>(string endpoint, object data, string? token = null);
         Task<T?> PostMultipartAsync<T>(string endpoint, MultipartFormDataContent content, string? token = null);
@@ -19,6 +20,8 @@ namespace SantiyeTalepWebUI.Services
         private readonly ILogger<ApiService> _logger;
         private readonly int _maxRetries = 3;
         private readonly TimeSpan _baseDelay = TimeSpan.FromSeconds(1);
+
+        public string BaseUrl => _httpClient.BaseAddress?.ToString().TrimEnd('/') ?? "";
 
         public ApiService(IHttpClientFactory httpClientFactory, ILogger<ApiService> logger)
         {

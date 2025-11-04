@@ -9,7 +9,7 @@ using SantiyeTalepWebUI.Filters;
 namespace SantiyeTalepWebUI.Controllers
 {
     [AuthorizeRole(UserRole.Supplier)]
-    public class SupplierController : Controller
+    public partial class SupplierController : Controller    
     {
         private readonly IApiService _apiService;
         private readonly IAuthService _authService;
@@ -503,21 +503,46 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
-                var availableRequests = await _apiService.GetAsync<List<RequestDto>>("api/Request/open", token) ?? new List<RequestDto>();
-                var notificationSummary = await _apiService.GetAsync<Models.DTOs.NotificationSummaryDto>("api/Notification/summary", token);
-                
-                return Json(new { 
-                    success = true, 
-                    data = new {
-                        newRequestCount = availableRequests.Count,
-                        unreadNotificationCount = notificationSummary?.UnreadCount ?? 0,
-                        hasNewContent = availableRequests.Any() || (notificationSummary?.UnreadCount ?? 0) > 0
+                var recentRequests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
+                var allSuppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers", token) ?? new List<SupplierDto>();
+                var pendingOffers = await _apiService.GetAsync<List<OfferDto>>("api/Admin/offers/pending", token) ?? new List<OfferDto>();
+
+                // Filter pending suppliers from all suppliers
+                var pendingSuppliers = allSuppliers.Where(s => s.Status == SupplierStatus.Pending).ToList();
+
+                // Count new requests from today
+                var today = DateTime.Today;
+                var newRequestsToday = recentRequests.Count(r => r.RequestDate.Date == today);
+
+                // Get new Excel offers count
+                var excelOffers = await _apiService.GetAsync<List<object>>("api/ExcelRequest/supplier/list", token) ?? new List<object>();
+                var newExcelOffersCount = excelOffers.Count(r => {
+                    if (r is System.Text.Json.JsonElement element && element.TryGetProperty("uploadedDate", out var uploadedProp))
+                    {
+                        if (DateTime.TryParse(uploadedProp.GetString(), out var uploadedDate))
+                        {
+                            return uploadedDate.Date == today;
+                        }
+                    }
+                    return false;
+                });
+
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        newRequestsToday = newRequestsToday,
+                        pendingSuppliersCount = pendingSuppliers.Count,
+                        pendingOffersCount = pendingOffers.Count,
+                        newExcelOffersCount = newExcelOffersCount,  // YENİ ALAN
+                        hasNewContent = newRequestsToday > 0 || pendingSuppliers.Any() || pendingOffers.Any() || newExcelOffersCount > 0
                     }
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking new requests");
+                _logger.LogError(ex, "Error checking new requests for admin");
                 return Json(new { success = false, message = "Yeni talepler kontrol edilirken hata oluştu" });
             }
         }
@@ -561,5 +586,132 @@ namespace SantiyeTalepWebUI.Controllers
                 return Json(new { success = false, message = "Debug bilgiler yüklenirken hata oluştu" });
             }
         }
+
+        #region Excel Request Management
+
+        /// <summary>
+        /// Excel talepleri sayfası
+        /// </summary>
+        //[HttpGet]
+        //public IActionResult ExcelRequests()
+        //{
+        //    return View();
+        //}
+
+        /// <summary>
+        /// Tedarikçiye atanan Excel taleplerini getir
+        /// </summary>
+        //[HttpGet]
+        //public async Task<IActionResult> GetAssignedExcelRequests()
+        //{
+        //    var token = _authService.GetStoredToken();
+        //    if (string.IsNullOrEmpty(token))
+        //        return Json(new { success = false, message = "Oturum süresi doldu" });
+
+        //    try
+        //    {
+        //        var requests = await _apiService.GetAsync<List<SupplierExcelRequestDto>>("api/ExcelRequest/supplier/assigned", token) 
+        //            ?? new List<SupplierExcelRequestDto>();
+                
+        //        return Json(new { success = true, data = requests });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error getting assigned Excel requests");
+        //        return Json(new { success = false, message = "Excel talepleri yüklenirken hata oluştu" });
+        //    }
+        //}
+
+        ///// <summary>
+        ///// Excel dosyasını indir
+        ///// </summary>
+        //[HttpGet]
+        //public async Task<IActionResult> DownloadExcelFile(int id)
+        //{
+        //    var token = _authService.GetStoredToken();
+        //    if (string.IsNullOrEmpty(token))
+        //        return RedirectToAction("Login", "Account");
+
+        //    try
+        //    {
+        //        var response = await _apiService.GetAsync<byte[]>($"api/ExcelRequest/supplier/download/{id}", token);
+                
+        //        if (response != null)
+        //        {
+        //            return File(response, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"excel_request_{id}.xlsx");
+        //        }
+
+        //        TempData["ErrorMessage"] = "Dosya indirilirken hata oluştu";
+        //        return RedirectToAction("ExcelRequests");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error downloading Excel file");
+        //        TempData["ErrorMessage"] = "Dosya indirilirken hata oluştu";
+        //        return RedirectToAction("ExcelRequests");
+        //    }
+        //}
+
+        ///// <summary>
+        ///// Teklif Excel'i yükle
+        ///// </summary>
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> UploadOfferExcel([FromForm] int excelRequestId, [FromForm] IFormFile offerFile, [FromForm] string? notes)
+        //{
+        //    var token = _authService.GetStoredToken();
+        //    if (string.IsNullOrEmpty(token))
+        //        return Json(new { success = false, message = "Oturum süresi doldu" });
+
+        //    try
+        //    {
+        //        if (offerFile == null || offerFile.Length == 0)
+        //        {
+        //            return Json(new { success = false, message = "Lütfen bir dosya seçin" });
+        //        }
+
+        //        // Validate file extension
+        //        var extension = Path.GetExtension(offerFile.FileName).ToLowerInvariant();
+        //        if (extension != ".xlsx" && extension != ".xls")
+        //        {
+        //            return Json(new { success = false, message = "Sadece .xlsx ve .xls dosyaları kabul edilir" });
+        //        }
+
+        //        // Validate file size (max 10MB)
+        //        if (offerFile.Length > 10 * 1024 * 1024)
+        //        {
+        //            return Json(new { success = false, message = "Dosya boyutu 10MB'dan küçük olmalıdır" });
+        //        }
+
+        //        // Create multipart form data
+        //        using var content = new MultipartFormDataContent();
+        //        using var fileContent = new StreamContent(offerFile.OpenReadStream());
+        //        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(offerFile.ContentType);
+                
+        //        content.Add(fileContent, "offerFile", offerFile.FileName);
+        //        content.Add(new StringContent(excelRequestId.ToString()), "excelRequestId");
+                
+        //        if (!string.IsNullOrEmpty(notes))
+        //        {
+        //            content.Add(new StringContent(notes), "notes");
+        //        }
+
+        //        var result = await _apiService.PostMultipartAsync<dynamic>("api/ExcelRequest/supplier/upload-offer", content, token);
+                
+        //        if (result != null)
+        //        {
+        //            return Json(new { success = true, message = "Teklif dosyası başarıyla yüklendi. Admin bilgilendirildi." });
+        //        }
+
+        //        return Json(new { success = false, message = "Teklif yüklenirken bir hata oluştu" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error uploading offer Excel");
+        //        return Json(new { success = false, message = "Teklif yüklenirken hata oluştu: " + ex.Message });
+        //    }
+        //}
+
+        #endregion
     }
 }

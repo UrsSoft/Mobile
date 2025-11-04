@@ -1,0 +1,631 @@
+﻿@{
+    ViewData["Title"] = "Excel Yönetimi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<!-- Anti-Forgery Token Eklendi -->
+@Html.AntiForgeryToken()
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Page Title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">
+                            <i class="ri-file-excel-2-line me-2"></i>Excel Dosya Yönetimi
+                        </h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Excel Yönetimi</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-animate">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Toplam Excel Talebi</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end justify-content-between mt-4">
+                                <div>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4"><span class="counter-value" id="totalExcelRequests">0</span></h4>
+                                </div>
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-primary-subtle rounded fs-3">
+                                        <i class="bx bx-file text-primary"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-animate">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Admin Yüklemeleri</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end justify-content-between mt-4">
+                                <div>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4"><span class="counter-value" id="adminUploads">0</span></h4>
+                                </div>
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-success-subtle rounded fs-3">
+                                        <i class="bx bx-upload text-success"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-animate">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Tedarikçi Teklifleri</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end justify-content-between mt-4">
+                                <div>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4"><span class="counter-value" id="supplierOffers">0</span></h4>
+                                </div>
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-warning-subtle rounded fs-3">
+                                        <i class="bx bx-store text-warning"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    <div class="card card-animate">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Tamamlanan</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end justify-content-between mt-4">
+                                <div>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4"><span class="counter-value" id="completedRequests">0</span></h4>
+                                </div>
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-info-subtle rounded fs-3">
+                                        <i class="bx bx-check-circle text-info"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="ri-search-line"></i></span>
+                                        <input type="text" class="form-control" id="searchInput" placeholder="Dosya adı veya açıklama ara...">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="uploaderFilter">
+                                        <option value="">Tüm Yükleyenler</option>
+                                        <option value="admin">Admin Yüklemeleri</option>
+                                        <option value="supplier">Tedarikçi Teklifleri</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="statusFilter">
+                                        <option value="">Tüm Durumlar</option>
+                                        <option value="0">Yüklendi</option>
+                                        <option value="1">Tedarikçilere Atandı</option>
+                                        <option value="2">İşlemde</option>
+                                        <option value="3">Tamamlandı</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button class="btn btn-primary" onclick="refreshData()">
+                                        <i class="ri-refresh-line me-1"></i>Yenile
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Excel Requests List -->
+            <div class="row" id="excelRequestsContainer">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                                <p class="mt-3 text-muted">Excel talepleri yükleniyor...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Excel Request Details Modal -->
+<div class="modal fade" id="excelDetailsModal" tabindex="-1" aria-labelledby="excelDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="excelDetailsModalLabel">
+                    <i class="ri-file-excel-2-line me-2"></i>Excel Talep Detayları
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="excelDetailsContent">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        let excelRequests = [];
+        let filteredRequests = [];
+        let highlightRequestId = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if there's a highlighted request ID from notification
+            const urlParams = new URLSearchParams(window.location.search);
+            highlightRequestId = urlParams.get('requestId');
+
+            loadExcelRequests();
+
+            // Setup filters
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+            document.getElementById('uploaderFilter').addEventListener('change', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        });
+
+        async function loadExcelRequests() {
+            try {
+                const response = await fetch('/Admin/GetExcelRequests');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    excelRequests = result.data;
+                    applyFilters();
+                    updateStatistics();
+                } else {
+                    showError('Excel talepleri yüklenirken hata oluştu');
+                }
+            } catch (error) {
+                console.error('Error loading excel requests:', error);
+                showError('Excel talepleri yüklenirken hata oluştu');
+            }
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const uploaderFilter = document.getElementById('uploaderFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredRequests = excelRequests.filter(request => {
+                // Search filter
+                const matchesSearch = !searchTerm ||
+                    request.originalFileName.toLowerCase().includes(searchTerm) ||
+                    (request.description && request.description.toLowerCase().includes(searchTerm)) ||
+                    request.siteName.toLowerCase().includes(searchTerm);
+
+                // Uploader filter
+                let matchesUploader = true;
+                if (uploaderFilter === 'admin') {
+                    matchesUploader = true; // All requests are admin uploads
+                } else if (uploaderFilter === 'supplier') {
+                    matchesUploader = request.supplierOffers && request.supplierOffers.length > 0;
+                }
+
+                // Status filter
+                const matchesStatus = !statusFilter || request.statusValue.toString() === statusFilter;
+
+                return matchesSearch && matchesUploader && matchesStatus;
+            });
+
+            displayExcelRequests();
+        }
+
+        function displayExcelRequests() {
+            const container = document.getElementById('excelRequestsContainer');
+
+            if (!filteredRequests || filteredRequests.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <i class="ri-file-excel-2-line display-1 text-muted mb-3"></i>
+                                <h5 class="text-muted">Excel Talebi Bulunamadı</h5>
+                                <p class="text-muted">Filtrelere uygun Excel talebi bulunmamaktadır.</p>
+                            </div>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            let html = '<div class="col-12"><div class="card"><div class="card-body"><div class="table-responsive">';
+            html += '<table class="table table-hover align-middle table-nowrap mb-0">';
+            html += `
+                <thead class="table-light">
+                    <tr>
+                        <th>Talep #</th>
+                        <th>Dosya Adı</th>
+                        <th>Şantiye</th>
+                        <th>Çalışan</th>
+                        <th>Durum</th>
+                        <th>Tedarikçiler</th>
+                        <th>Teklifler</th>
+                        <th>Yüklenme Tarihi</th>
+                        <th class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            filteredRequests.forEach(request => {
+                const isHighlighted = highlightRequestId && request.id.toString() === highlightRequestId;
+                const rowClass = isHighlighted ? 'table-warning' : '';
+
+                html += `
+                    <tr class="${rowClass}" ${isHighlighted ? 'id="highlighted-row"' : ''}>
+                        <td><strong>#${request.id}</strong></td>
+                        <td>
+                            <i class="ri-file-excel-line text-success me-1"></i>
+                            ${request.originalFileName}
+                            <br><small class="text-muted">${formatFileSize(request.fileSize)}</small>
+                        </td>
+                        <td>${request.siteName}</td>
+                        <td>${request.employeeName}</td>
+                        <td>${getStatusBadge(request.statusValue)}</td>
+                        <td>
+                            <span class="badge bg-primary">${request.assignedSuppliers.length} Tedarikçi</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">${request.supplierOffers.length} Teklif</span>
+                        </td>
+                        <td>${formatDateTime(request.uploadedDate)}</td>
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-soft-primary" onclick="viewDetails(${request.id})" title="Detaylar">
+                                    <i class="ri-eye-line"></i>
+                                </button>
+                                <button class="btn btn-sm btn-soft-info" onclick="downloadOffer(${request.id})" title="Orijinal Dosyayı İndir">
+                                    <i class="ri-download-line"></i>
+                                </button>
+                                <button class="btn btn-sm btn-soft-danger" onclick="deleteRequest(${request.id})" title="Sil">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+
+            html += '</tbody></table></div></div></div></div>';
+            container.innerHTML = html;
+
+            // Scroll to highlighted row
+            if (highlightRequestId) {
+                setTimeout(() => {
+                    const highlightedRow = document.getElementById('highlighted-row');
+                    if (highlightedRow) {
+                        highlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
+        }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                0: { text: 'Yüklendi', class: 'bg-secondary' },
+                1: { text: 'Tedarikçilere Atandı', class: 'bg-info' },
+                2: { text: 'İşlemde', class: 'bg-warning' },
+                3: { text: 'Tamamlandı', class: 'bg-success' },
+                4: { text: 'İptal', class: 'bg-danger' }
+            };
+            const s = statusMap[status] || { text: 'Bilinmiyor', class: 'bg-secondary' };
+            return `<span class="badge ${s.class}">${s.text}</span>`;
+        }
+
+        function updateStatistics() {
+            document.getElementById('totalExcelRequests').textContent = excelRequests.length;
+            document.getElementById('adminUploads').textContent = excelRequests.length;
+
+            let totalOffers = 0;
+            let completedCount = 0;
+
+            excelRequests.forEach(req => {
+                totalOffers += req.supplierOffers.length;
+                if (req.statusValue === 3) completedCount++;
+            });
+
+            document.getElementById('supplierOffers').textContent = totalOffers;
+            document.getElementById('completedRequests').textContent = completedCount;
+        }
+
+        function viewDetails(requestId) {
+            const request = excelRequests.find(r => r.id === requestId);
+            if (!request) return;
+
+            let html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-semibold">Genel Bilgiler</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr><td class="fw-medium">Talep ID:</td><td>#${request.id}</td></tr>
+                            <tr><td class="fw-medium">Dosya Adı:</td><td>${request.originalFileName}</td></tr>
+                            <tr><td class="fw-medium">Dosya Boyutu:</td><td>${formatFileSize(request.fileSize)}</td></tr>
+                            <tr><td class="fw-medium">Şantiye:</td><td>${request.siteName}</td></tr>
+                            <tr><td class="fw-medium">Çalışan:</td><td>${request.employeeName}</td></tr>
+                            <tr><td class="fw-medium">Durum:</td><td>${getStatusBadge(request.statusValue)}</td></tr>
+                            <tr><td class="fw-medium">Yüklenme:</td><td>${formatDateTime(request.uploadedDate)}</td></tr>
+                            ${request.description ? `<tr><td class="fw-medium">Açıklama:</td><td>${request.description}</td></tr>` : ''}
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-semibold">Atanan Tedarikçiler (${request.assignedSuppliers.length})</h6>
+                        <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                            <table class="table table-sm">
+                                <thead><tr><th>Firma</th><th>Durum</th></tr></thead>
+                                <tbody>`;
+
+            request.assignedSuppliers.forEach(supplier => {
+                html += `
+                    <tr>
+                        <td>${supplier.companyName}</td>
+                        <td>
+                            ${supplier.downloaded ? '<i class="ri-download-line text-success" title="İndirildi"></i>' : '<i class="ri-download-line text-muted"></i>'}
+                            ${supplier.offerUploaded ? '<i class="ri-upload-line text-primary ms-2" title="Teklif Yüklendi"></i>' : '<i class="ri-upload-line text-muted ms-2"></i>'}
+                        </td>
+                    </tr>`;
+            });
+
+            html += `</tbody></table></div></div></div>`;
+
+            if (request.supplierOffers.length > 0) {
+                html += `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="fw-semibold">Tedarikçi Teklifleri (${request.supplierOffers.length})</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Firma</th>
+                                            <th>Dosya</th>
+                                            <th>Yüklenme Tarihi</th>
+                                            <th>Notlar</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+
+                request.supplierOffers.forEach(offer => {
+                    html += `
+                        <tr>
+                            <td>${offer.companyName}</td>
+                            <td>
+                                <i class="ri-file-excel-line text-success me-1"></i>
+                                ${offer.originalFileName}
+                                <br><small class="text-muted">${formatFileSize(offer.fileSize)}</small>
+                            </td>
+                            <td>${formatDateTime(offer.uploadedDate)}</td>
+                            <td>${offer.notes || '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-soft-info" onclick="downloadOriginal(${offer.id})" title="İndir">
+                                    <i class="ri-download-line"></i>
+                                </button>
+                                <button class="btn btn-sm btn-soft-danger" onclick="deleteOffer(${offer.id})" title="Sil">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+
+                html += `</tbody></table></div></div></div>`;
+            }
+
+            document.getElementById('excelDetailsContent').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('excelDetailsModal'));
+            modal.show();
+        }
+
+        async function downloadOriginal(requestId) {
+            try {
+                window.location.href = `/Admin/DownloadOriginalExcel/${requestId}`;
+            } catch (error) {
+                console.error('Download error:', error);
+                Swal.fire('Hata', 'Dosya indirilirken hata oluştu', 'error');
+            }
+        }
+
+        async function downloadOffer(offerId) {
+            try {
+                window.location.href = `/Admin/DownloadSupplierOfferExcel/${offerId}`;
+            } catch (error) {
+                console.error('Download error:', error);
+                Swal.fire('Hata', 'Dosya indirilirken hata oluştu', 'error');
+            }
+        }
+
+        async function deleteRequest(requestId) {
+            const result = await Swal.fire({
+                title: 'Excel Talebini Sil?',
+                text: 'Bu işlem geri alınamaz! Orijinal dosya ve tüm tedarikçi teklifleri silinecek.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Evet, Sil',
+                cancelButtonText: 'İptal'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                // Anti-forgery token'ı al
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+                const response = await fetch(`/Admin/DeleteExcelRequest/${requestId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token  // Header olarak gönder
+                    },
+                    body: JSON.stringify({ id: requestId })  // Body'de id gönder (opsiyonel)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('Başarılı!', data.message, 'success');
+                    loadExcelRequests();
+                } else {
+                    Swal.fire('Hata', data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                Swal.fire('Hata', 'Silme işlemi sırasında hata oluştu: ' + error.message, 'error');
+            }
+        }
+
+
+        async function deleteOffer(offerId) {
+            const result = await Swal.fire({
+                title: 'Tedarikçi Teklifini Sil?',
+                text: 'Bu işlem geri alınamaz!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Evet, Sil',
+                cancelButtonText: 'İptal'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`/Admin/DeleteSupplierOfferExcel/${offerId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('Başarılı!', data.message, 'success');
+
+                    // Close modal and reload
+                    bootstrap.Modal.getInstance(document.getElementById('excelDetailsModal'))?.hide();
+                    loadExcelRequests();
+                } else {
+                    Swal.fire('Hata', data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                Swal.fire('Hata', 'Silme işlemi sırasında hata oluştu', 'error');
+            }
+        }
+
+        function refreshData() {
+            loadExcelRequests();
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('tr-TR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function showError(message) {
+            const container = document.getElementById('excelRequestsContainer');
+            container.innerHTML = `
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="ri-error-warning-line display-1 text-danger mb-3"></i>
+                            <h5 class="text-danger">Hata</h5>
+                            <p class="text-muted">${message}</p>
+                            <button class="btn btn-primary" onclick="loadExcelRequests()">
+                                <i class="ri-refresh-line me-1"></i>Yeniden Dene
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+    </script>
+
+    <style>
+        .table-warning {
+            background-color: #fff3cd !important;
+            animation: highlight 2s ease-in-out;
+        }
+
+        @@keyframes highlight {
+            0%, 100% {
+                background-color: #fff3cd;
+            }
+
+            50% {
+                background-color: #ffc107;
+            }
+        }
+
+        .btn-group .btn {
+            margin: 0 2px;
+        }
+    </style>
+}
+
+

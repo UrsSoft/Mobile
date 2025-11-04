@@ -12,7 +12,7 @@ using SantiyeTalepApi.Data;
 namespace SantiyeTalepApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251022074426_CreateDatabase")]
+    [Migration("20251029083623_CreateDatabase")]
     partial class CreateDatabase
     {
         /// <inheritdoc />
@@ -111,6 +111,99 @@ namespace SantiyeTalepApi.Migrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("SantiyeTalepApi.Models.ExcelRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("SiteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("UploadedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("SiteId");
+
+                    b.HasIndex("StoredFileName")
+                        .IsUnique();
+
+                    b.ToTable("ExcelRequests");
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.ExcelRequestSupplier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AssignedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Downloaded")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("DownloadedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ExcelRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("OfferUploaded")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("OfferUploadedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("ExcelRequestId", "SupplierId")
+                        .IsUnique();
+
+                    b.ToTable("ExcelRequestSuppliers");
+                });
+
             modelBuilder.Entity("SantiyeTalepApi.Models.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -121,6 +214,10 @@ namespace SantiyeTalepApi.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Data")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
@@ -363,6 +460,66 @@ namespace SantiyeTalepApi.Migrations
                     b.ToTable("Suppliers");
                 });
 
+            modelBuilder.Entity("SantiyeTalepApi.Models.SupplierExcelOffer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("ApprovedByAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ExcelRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UploadedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExcelRequestId");
+
+                    b.HasIndex("StoredFileName")
+                        .IsUnique();
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("SupplierExcelOffers");
+                });
+
             modelBuilder.Entity("SantiyeTalepApi.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -469,6 +626,44 @@ namespace SantiyeTalepApi.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SantiyeTalepApi.Models.ExcelRequest", b =>
+                {
+                    b.HasOne("SantiyeTalepApi.Models.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SantiyeTalepApi.Models.Site", "Site")
+                        .WithMany()
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Site");
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.ExcelRequestSupplier", b =>
+                {
+                    b.HasOne("SantiyeTalepApi.Models.ExcelRequest", "ExcelRequest")
+                        .WithMany("AssignedSuppliers")
+                        .HasForeignKey("ExcelRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SantiyeTalepApi.Models.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExcelRequest");
+
+                    b.Navigation("Supplier");
+                });
+
             modelBuilder.Entity("SantiyeTalepApi.Models.Notification", b =>
                 {
                     b.HasOne("SantiyeTalepApi.Models.Offer", "Offer")
@@ -568,6 +763,25 @@ namespace SantiyeTalepApi.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SantiyeTalepApi.Models.SupplierExcelOffer", b =>
+                {
+                    b.HasOne("SantiyeTalepApi.Models.ExcelRequest", "ExcelRequest")
+                        .WithMany("SupplierOffers")
+                        .HasForeignKey("ExcelRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SantiyeTalepApi.Models.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExcelRequest");
+
+                    b.Navigation("Supplier");
+                });
+
             modelBuilder.Entity("SantiyeTalepApi.Models.Brand", b =>
                 {
                     b.Navigation("CategoryBrands");
@@ -583,6 +797,13 @@ namespace SantiyeTalepApi.Migrations
             modelBuilder.Entity("SantiyeTalepApi.Models.Employee", b =>
                 {
                     b.Navigation("Requests");
+                });
+
+            modelBuilder.Entity("SantiyeTalepApi.Models.ExcelRequest", b =>
+                {
+                    b.Navigation("AssignedSuppliers");
+
+                    b.Navigation("SupplierOffers");
                 });
 
             modelBuilder.Entity("SantiyeTalepApi.Models.Request", b =>

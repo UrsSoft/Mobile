@@ -56,6 +56,8 @@ namespace SantiyeTalepWebUI.Models
         OfferRejected = 7, // Teklif reddedildiğinde
         SupplierApproved = 8, // Tedarikçi onaylandığında
         SupplierRejected = 9, // Tedarikçi reddedildiğinde
-        RequestSentToSupplier = 10 // Admin talebi tedarikçilere gönderdiğinde
+        RequestSentToSupplier = 10, // Admin talebi tedarikçilere gönderdiğinde
+        ExcelRequestAssigned = 11, // Excel talebi tedarikçiye atandığında
+        ExcelOfferUploaded = 12 // Tedarikçi Excel teklifi yüklediğinde
     }
 }

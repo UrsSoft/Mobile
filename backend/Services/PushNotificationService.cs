@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using SantiyeTalepApi.Data;
 using SantiyeTalepApi.Models;
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
+using System.Text.Json;
 
 namespace SantiyeTalepApi.Services
 {
@@ -16,11 +20,47 @@ namespace SantiyeTalepApi.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PushNotificationService> _logger;
+        private readonly bool _isFirebaseInitialized;
 
         public PushNotificationService(ApplicationDbContext context, ILogger<PushNotificationService> logger)
         {
             _context = context;
             _logger = logger;
+
+            // Initialize Firebase Admin SDK if not already initialized
+            try
+            {
+                if (FirebaseApp.DefaultInstance == null)
+                {
+                    // Check if service account file exists
+                    var serviceAccountPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "firebase-service-account.json");
+                    
+                    if (File.Exists(serviceAccountPath))
+                    {
+                        FirebaseApp.Create(new AppOptions()
+                        {
+                            Credential = GoogleCredential.FromFile(serviceAccountPath)
+                        });
+                        _isFirebaseInitialized = true;
+                        _logger.LogInformation("Firebase Admin SDK initialized successfully");
+                    }
+                    else
+                    {
+                        _isFirebaseInitialized = false;
+                        _logger.LogWarning("Firebase service account file not found. Push notifications will be simulated.");
+                        _logger.LogWarning($"Expected path: {serviceAccountPath}");
+                    }
+                }
+                else
+                {
+                    _isFirebaseInitialized = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _isFirebaseInitialized = false;
+                _logger.LogError(ex, "Failed to initialize Firebase Admin SDK. Push notifications will be simulated.");
+            }
         }
 
         public async Task SendNotificationToUserAsync(int userId, string title, string body, object? data = null)
@@ -121,37 +161,75 @@ namespace SantiyeTalepApi.Services
         {
             try
             {
-                // In a real implementation, you would use Firebase Admin SDK here
-                // Example with Firebase Admin SDK:
-                
-                // var message = new Message()
-                // {
-                //     Token = fcmToken,
-                //     Notification = new Notification()
-                //     {
-                //         Title = title,
-                //         Body = body,
-                //     },
-                //     Data = data != null ? 
-                //         JsonSerializer.Serialize(data).ToDictionary() : 
-                //         new Dictionary<string, string>()
-                // };
-                
-                // var messaging = FirebaseMessaging.DefaultInstance;
-                // var result = await messaging.SendAsync(message);
-                
-                // For now, just log the notification
-                _logger.LogInformation($"Simulated FCM notification sent to token: {fcmToken.Substring(0, 10)}...");
-                _logger.LogInformation($"Title: {title}");
-                _logger.LogInformation($"Body: {body}");
-                
-                if (data != null)
+                if (_isFirebaseInitialized)
                 {
-                    _logger.LogInformation($"Data: {System.Text.Json.JsonSerializer.Serialize(data)}");
-                }
+                    // Real Firebase implementation
+                    var messageBuilder = new Message()
+                    {
+                        Token = fcmToken,
+                        Notification = new FirebaseAdmin.Messaging.Notification()
+                        {
+                            Title = title,
+                            Body = body,
+                        },
+                        Android = new AndroidConfig()
+                        {
+                            Priority = Priority.High,
+                            Notification = new AndroidNotification()
+                            {
+                                Sound = "default",
+                                ChannelId = "default",
+                                Priority = NotificationPriority.MAX,
+                            }
+                        },
+                        Apns = new ApnsConfig()
+                        {
+                            Aps = new Aps()
+                            {
+                                Sound = "default",
+                                Badge = 1,
+                            }
+                        }
+                    };
 
-                // Simulate network delay
-                await Task.Delay(100);
+                    // Add data payload if provided
+                    if (data != null)
+                    {
+                        var dataDict = new Dictionary<string, string>();
+                        var jsonData = JsonSerializer.Serialize(data);
+                        var dataObj = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonData);
+                        
+                        if (dataObj != null)
+                        {
+                            foreach (var kvp in dataObj)
+                            {
+                                dataDict[kvp.Key] = kvp.Value?.ToString() ?? "";
+                            }
+                        }
+                        
+                        messageBuilder.Data = dataDict;
+                    }
+
+                    var messaging = FirebaseMessaging.DefaultInstance;
+                    var result = await messaging.SendAsync(messageBuilder);
+                    
+                    _logger.LogInformation($"Successfully sent FCM notification. Message ID: {result}");
+                }
+                else
+                {
+                    // Simulated implementation for development
+                    _logger.LogInformation($"[SIMULATED] FCM notification sent to token: {fcmToken.Substring(0, Math.Min(10, fcmToken.Length))}...");
+                    _logger.LogInformation($"[SIMULATED] Title: {title}");
+                    _logger.LogInformation($"[SIMULATED] Body: {body}");
+                    
+                    if (data != null)
+                    {
+                        _logger.LogInformation($"[SIMULATED] Data: {JsonSerializer.Serialize(data)}");
+                    }
+
+                    // Simulate network delay
+                    await Task.Delay(100);
+                }
             }
             catch (Exception ex)
             {

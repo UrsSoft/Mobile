@@ -20,6 +20,11 @@ namespace SantiyeTalepApi.Data
         public DbSet<CategoryBrand> CategoryBrands { get; set; }
         public DbSet<SiteBrand> SiteBrands { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        
+        // Excel Request Management
+        public DbSet<ExcelRequest> ExcelRequests { get; set; }
+        public DbSet<ExcelRequestSupplier> ExcelRequestSuppliers { get; set; }
+        public DbSet<SupplierExcelOffer> SupplierExcelOffers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -196,6 +201,59 @@ namespace SantiyeTalepApi.Data
                 .HasMaxLength(100)
                 .IsRequired();
 
+            #endregion
+
+            #region ExcelRequest Configurations
+            modelBuilder.Entity<ExcelRequest>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                
+                entity.HasOne(e => e.Site)
+                    .WithMany()
+                    .HasForeignKey(e => e.SiteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                
+                entity.HasOne(e => e.Employee)
+                    .WithMany()
+                    .HasForeignKey(e => e.EmployeeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                
+                entity.HasIndex(e => e.StoredFileName).IsUnique();
+            });
+
+            modelBuilder.Entity<ExcelRequestSupplier>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                
+                entity.HasOne(e => e.ExcelRequest)
+                    .WithMany(er => er.AssignedSuppliers)
+                    .HasForeignKey(e => e.ExcelRequestId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.HasOne(e => e.Supplier)
+                    .WithMany()
+                    .HasForeignKey(e => e.SupplierId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                
+                entity.HasIndex(e => new { e.ExcelRequestId, e.SupplierId }).IsUnique();
+            });
+
+            modelBuilder.Entity<SupplierExcelOffer>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                
+                entity.HasOne(e => e.ExcelRequest)
+                    .WithMany(er => er.SupplierOffers)
+                    .HasForeignKey(e => e.ExcelRequestId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.HasOne(e => e.Supplier)
+                    .WithMany()
+                    .HasForeignKey(e => e.SupplierId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                
+                entity.HasIndex(e => e.StoredFileName).IsUnique();
+            });
             #endregion
 
             // Seed data
