@@ -7,11 +7,12 @@ using SantiyeTalepApi.DTOs;
 using SantiyeTalepApi.Models;
 using SantiyeTalepApi.Services;
 
-namespace SantiyeTalepApi.Controllers
+
+namespace SantiyeTalepWebUI.Controllers.Api
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [AllowAnonymous]
     public class AdminController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -362,9 +363,9 @@ namespace SantiyeTalepApi.Controllers
 
                             // Notification'ın gerçekten oluştuğunu kontrol edelim
                             var createdNotification = await _context.Notifications
-                                .Where(n => n.Type == NotificationType.RequestSentToSupplier 
-                                           && n.UserId == supplier.UserId 
-                                           && n.RequestId == request.Id 
+                                .Where(n => n.Type == NotificationType.RequestSentToSupplier
+                                           && n.UserId == supplier.UserId
+                                           && n.RequestId == request.Id
                                            && n.SupplierId == supplier.Id)
                                 .FirstOrDefaultAsync();
 
@@ -391,7 +392,7 @@ namespace SantiyeTalepApi.Controllers
                 {
                     var supplierIds = suppliers.Select(s => s.Id).ToList();
                     var requestTitles = string.Join(", ", requests.Select(r => r.ProductDescription).Take(3));
-                    
+
                     if (requests.Count > 3)
                     {
                         requestTitles += $" ve {requests.Count - 3} tane daha";
@@ -414,8 +415,8 @@ namespace SantiyeTalepApi.Controllers
 
                 _logger.LogInformation("All notifications processed successfully");
 
-                var result = new 
-                { 
+                var result = new
+                {
                     message = $"{requests.Count} talep {suppliers.Count} tedarikçiye başarıyla gönderildi",
                     requestCount = requests.Count,
                     supplierCount = suppliers.Count,
@@ -508,7 +509,7 @@ namespace SantiyeTalepApi.Controllers
                 var request = await _context.Requests.FindAsync(id);
                 if (request == null)
                     return NotFound(new { message = "Talep bulunamadı" });
-                var notification = _context.Notifications.Where(n=> n.RequestId==id).FirstOrDefault();
+                var notification = _context.Notifications.Where(n => n.RequestId == id).FirstOrDefault();
                 _context.Notifications.Remove(notification);
                 _context.Requests.Remove(request);
                 await _context.SaveChangesAsync();
@@ -599,27 +600,45 @@ namespace SantiyeTalepApi.Controllers
         {
             try
             {
-                _logger.LogInformation($"CreateSite called with model: {System.Text.Json.JsonSerializer.Serialize(model)}");
+                // ❌ YANLIŞ - String interpolation
+                // _logger.LogInformation($"CreateSite called with model: {System.Text.Json.JsonSerializer.Serialize(model)}");
+
+                // ✅ DOĞRU - Structured logging
+                _logger.LogInformation("CreateSite called with model: {Model}", System.Text.Json.JsonSerializer.Serialize(model));
 
                 if (!ModelState.IsValid)
                 {
-                    var errors = ModelState.SelectMany(x => x.Value.Errors.Select(e => e.ErrorMessage));
-                    _logger.LogWarning($"CreateSite ModelState invalid: {string.Join(", ", errors)}");
+                    var errors = ModelState.SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage) ?? Enumerable.Empty<string>());
+                    // ❌ _logger.LogWarning($"CreateSite ModelState invalid: {string.Join(", ", errors)}");
+                    // ✅ DOĞRU
+                    _logger.LogWarning("CreateSite ModelState invalid: {Errors}", string.Join(", ", errors));
                     return BadRequest(new { message = "Geçersiz veri", errors = errors });
                 }
 
-                // Validate brands exist
-                var brands = await _context.Brands
-                    .Where(b => model.BrandIds.Contains(b.Id) && b.IsActive)
+                var brandIds = model.BrandIds?.ToList() ?? new List<int>();
+
+                // Sorguyu çalıştır
+                // 1. Önce tüm aktif markaları çek
+                var allActiveBrands = await _context.Brands
+                    .Where(b => b.IsActive)
                     .ToListAsync();
 
-                _logger.LogInformation($"Found {brands.Count} brands out of {model.BrandIds.Count} requested");
+                // 2. Memory'de filtrele (Contains() SQL'e çevrilmez)
+                var brands = allActiveBrands
+                    .Where(b => brandIds.Contains(b.Id))
+                    .ToList();
+
+                // ❌ _logger.LogInformation($"Found {brands.Count} brands out of {model.BrandIds.Count} requested");
+                // ✅ DOĞRU
+                _logger.LogInformation("Found {BrandsCount} brands out of {RequestedCount} requested", brands.Count, model.BrandIds.Count);
 
                 if (brands.Count != model.BrandIds.Count)
                 {
                     var foundBrandIds = brands.Select(b => b.Id).ToList();
                     var missingBrandIds = model.BrandIds.Except(foundBrandIds).ToList();
-                    _logger.LogWarning($"Some brands not found or inactive: {string.Join(", ", missingBrandIds)}");
+                    // ❌ _logger.LogWarning($"Some brands not found or inactive: {string.Join(", ", missingBrandIds)}");
+                    // ✅ DOĞRU
+                    _logger.LogWarning("Some brands not found or inactive: {MissingBrandIds}", string.Join(", ", missingBrandIds));
                     return BadRequest(new { message = "Seçilen markalardan bir kısmı bulunamadı veya aktif değil" });
                 }
 
@@ -635,7 +654,9 @@ namespace SantiyeTalepApi.Controllers
 
                 _context.Sites.Add(site);
                 await _context.SaveChangesAsync();
-                _logger.LogInformation($"Site created with ID: {site.Id}");
+                // ❌ _logger.LogInformation($"Site created with ID: {site.Id}");
+                // ✅ DOĞRU
+                _logger.LogInformation("Site created with ID: {SiteId}", site.Id);
 
                 // Create site-brand relationships
                 foreach (var brandId in model.BrandIds)
@@ -649,7 +670,9 @@ namespace SantiyeTalepApi.Controllers
                 }
 
                 await _context.SaveChangesAsync();
-                _logger.LogInformation($"Site-brand relationships created for site {site.Id}");
+                // ❌ _logger.LogInformation($"Site-brand relationships created for site {site.Id}");
+                // ✅ DOĞRU
+                _logger.LogInformation("Site-brand relationships created for site {SiteId}", site.Id);
 
                 // Load created site with brands for response
                 var createdSite = await _context.Sites
@@ -660,7 +683,9 @@ namespace SantiyeTalepApi.Controllers
                     .FirstOrDefaultAsync(s => s.Id == site.Id);
 
                 var siteDto = _mapper.Map<SiteDto>(createdSite);
-                _logger.LogInformation($"Site creation completed successfully: {siteDto.Id}");
+                // ❌ _logger.LogInformation($"Site creation completed successfully: {siteDto.Id}");
+                // ✅ DOĞRU
+                _logger.LogInformation("Site creation completed successfully: {SiteId}", siteDto.Id);
 
                 return Ok(siteDto);
             }
@@ -670,6 +695,7 @@ namespace SantiyeTalepApi.Controllers
                 return StatusCode(500, new { message = "Şantiye oluşturulurken hata oluştu", error = ex.Message });
             }
         }
+
 
         [HttpPut("sites/{id}")]
         public async Task<IActionResult> UpdateSite(int id, [FromBody] UpdateSiteDto model)
@@ -692,10 +718,18 @@ namespace SantiyeTalepApi.Controllers
                 if (site == null)
                     return NotFound(new { message = "Şantiye bulunamadı" });
 
+                var brandIds = model.BrandIds?.ToList() ?? new List<int>();
                 // Validate brands exist
-                var brands = await _context.Brands
-                    .Where(b => model.BrandIds.Contains(b.Id) && b.IsActive)
+                // Sorguyu çalıştır
+                // 1. Önce tüm aktif markaları çek
+                var allActiveBrands = await _context.Brands
+                    .Where(b => b.IsActive)
                     .ToListAsync();
+
+                // 2. Memory'de filtrele (Contains() SQL'e çevrilmez)
+                var brands = allActiveBrands
+                    .Where(b => brandIds.Contains(b.Id))
+                    .ToList();
 
                 if (brands.Count != model.BrandIds.Count)
                     return BadRequest(new { message = "Seçilen markalardan bir kısmı bulunamadı veya aktif değil" });
@@ -756,7 +790,8 @@ namespace SantiyeTalepApi.Controllers
                 // Check if site has employees
                 if (site.Employees?.Any() == true)
                 {
-                    return BadRequest(new { 
+                    return BadRequest(new
+                    {
                         message = "Bu şantiyede çalışan bulunduğu için silinemez. Önce çalışanları başka şantiyelere transfer edin veya hesaplarını silin.",
                         employeeCount = site.Employees.Count
                     });
@@ -810,8 +845,9 @@ namespace SantiyeTalepApi.Controllers
                         if (sitesWithEmployees.Any())
                         {
                             var siteNames = string.Join(", ", sitesWithEmployees.Select(s => s.Name));
-                            return BadRequest(new { 
-                                message = $"Aşağıdaki şantiyelerde çalışan bulunduğu için silme işlemi tamamlanamadı: {siteNames}. Önce tüm çalışanları transfer edin veya silin." 
+                            return BadRequest(new
+                            {
+                                message = $"Aşağıdaki şantiyelerde çalışan bulunduğu için silme işlemi tamamlanamadı: {siteNames}. Önce tüm çalışanları transfer edin veya silin."
                             });
                         }
 
@@ -889,7 +925,7 @@ namespace SantiyeTalepApi.Controllers
                 var availableEmployees = await _context.Employees
                     .Include(e => e.User)
                     .Include(e => e.Site)
-                    .Where(e => e.User.IsActive && 
+                    .Where(e => e.User.IsActive &&
                                (e.Site == null || !e.Site.IsActive))
                     .ToListAsync();
 
@@ -1087,7 +1123,7 @@ namespace SantiyeTalepApi.Controllers
 
                 // Delete employee first
                 _context.Employees.Remove(employee);
-                
+
                 // Then delete associated user
                 _context.Users.Remove(employee.User);
 
@@ -1100,6 +1136,37 @@ namespace SantiyeTalepApi.Controllers
             {
                 _logger.LogError(ex, "Error deleting employee {EmployeeId}: {Message}", id, ex.Message);
                 return StatusCode(500, new { message = "Çalışan silinirken hata oluştu", error = ex.Message });
+            }
+        }
+
+        [HttpPut("employees/{id}/status")]
+        public async Task<IActionResult> ToggleEmployeeStatus(int id, [FromBody] ToggleEmployeeStatusDto model)
+        {
+            try
+            {
+                _logger.LogInformation($"ToggleEmployeeStatus called for ID: {id} with isActive: {model.IsActive}");
+
+                var employee = await _context.Employees
+                    .Include(e => e.User)
+                    .FirstOrDefaultAsync(e => e.Id == id);
+
+                if (employee == null)
+                {
+                    _logger.LogWarning($"Employee not found with ID: {id}");
+                    return NotFound(new { message = "Çalışan bulunamadı" });
+                }
+
+                // Update user status
+                employee.User.IsActive = model.IsActive;
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Employee status updated successfully: {id}, IsActive: {model.IsActive}");
+                return Ok(new { message = $"Çalışan durumu {(model.IsActive ? "aktif" : "pasif")} olarak güncellendi" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling employee status {EmployeeId}: {Message}", id, ex.Message);
+                return StatusCode(500, new { message = "Çalışan durumu güncellenirken hata oluştu", error = ex.Message });
             }
         }
 
@@ -1298,7 +1365,8 @@ namespace SantiyeTalepApi.Controllers
                 // Check if supplier has any offers
                 if (supplier.Offers?.Any() == true)
                 {
-                    return BadRequest(new { 
+                    return BadRequest(new
+                    {
                         message = "Bu tedarikçinin mevcut teklifleri bulunduğu için silinemez.",
                         offerCount = supplier.Offers.Count
                     });
@@ -1306,7 +1374,7 @@ namespace SantiyeTalepApi.Controllers
 
                 // Delete supplier first
                 _context.Suppliers.Remove(supplier);
-                
+
                 // Then delete associated user
                 _context.Users.Remove(supplier.User);
 
@@ -1344,6 +1412,81 @@ namespace SantiyeTalepApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting all offers");
+                return StatusCode(500, new { message = "Teklifler yüklenirken hata oluştu", error = ex.Message });
+            }
+        }
+        [HttpGet("offers/pending")]
+        public async Task<IActionResult> GetPendingOffers()
+        {
+            try
+            {
+                var offers = await _context.Offers
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Employee)
+                            .ThenInclude(e => e.User)
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Site)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .OrderByDescending(o => o.OfferDate).Where(o => o.Status == OfferStatus.Pending)
+                    .ToListAsync();
+
+                var offerDtos = _mapper.Map<List<OfferDto>>(offers);
+                return Ok(offerDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all pending offers");
+                return StatusCode(500, new { message = "Teklifler yüklenirken hata oluştu", error = ex.Message });
+            }
+        }
+        [HttpGet("offers/approved")]
+        public async Task<IActionResult> GetApprovedOffers()
+        {
+            try
+            {
+                var offers = await _context.Offers
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Employee)
+                            .ThenInclude(e => e.User)
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Site)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .OrderByDescending(o => o.OfferDate).Where(o => o.Status == OfferStatus.Approved)
+                    .ToListAsync();
+
+                var offerDtos = _mapper.Map<List<OfferDto>>(offers);
+                return Ok(offerDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all approved offers");
+                return StatusCode(500, new { message = "Teklifler yüklenirken hata oluştu", error = ex.Message });
+            }
+        }
+        [HttpGet("offers/rejected")]
+        public async Task<IActionResult> GetRejectedOffers()
+        {
+            try
+            {
+                var offers = await _context.Offers
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Employee)
+                            .ThenInclude(e => e.User)
+                    .Include(o => o.Request)
+                        .ThenInclude(r => r.Site)
+                    .Include(o => o.Supplier)
+                        .ThenInclude(s => s.User)
+                    .OrderByDescending(o => o.OfferDate).Where(o => o.Status == OfferStatus.Rejected)
+                    .ToListAsync();
+
+                var offerDtos = _mapper.Map<List<OfferDto>>(offers);
+                return Ok(offerDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all rejected offers");
                 return StatusCode(500, new { message = "Teklifler yüklenirken hata oluştu", error = ex.Message });
             }
         }

@@ -17,8 +17,8 @@
                         </h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
-                                <li class="breadcrumb-item"><a href="@Url.Action("Requests", "Admin")">Talepler</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Requests">Talepler</a></li>
                                 <li class="breadcrumb-item active">Yeni Talep</li>
                             </ol>
                         </div>
@@ -85,7 +85,7 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <form asp-action="CreateRequest" method="post" id="manualRequestForm">
+                            <form action="/Admin/CreateRequest" method="post" class="needs-validation" novalidate>
                                 @Html.AntiForgeryToken()
 
                                 <!-- Þantiye Seçimi -->
@@ -1145,7 +1145,7 @@
                     formData.append('siteId', siteId);
                     formData.append('employeeId', employeeId);
                     formData.append('excelFile', excelFileInput.files[0]);
-                    
+
                     selectedSuppliers.forEach(supplierId => {
                         formData.append('supplierIds', supplierId);
                     });

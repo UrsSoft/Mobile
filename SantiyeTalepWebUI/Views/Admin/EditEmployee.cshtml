@@ -16,8 +16,8 @@
 
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
-                                <li class="breadcrumb-item"><a href="@Url.Action("Employees", "Admin")">Çalýþanlar</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Employees">Çalýþanlar</a></li>
                                 <li class="breadcrumb-item active">Düzenle</li>
                             </ol>
                         </div>
@@ -25,7 +25,6 @@
                 </div>
             </div>
             <!-- end page title -->
-
             <!-- Success/Error Messages -->
             @if (TempData["SuccessMessage"] != null)
             {
@@ -243,7 +242,7 @@
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <div class="hstack gap-2 justify-content-end">
-                                            <a href="@Url.Action("Employees", "Admin")" class="btn btn-light">
+                                            <a href="/Admin/Employees" class="btn btn-light">
                                                 <i class="ri-arrow-left-line align-bottom me-1"></i> Geri Dön
                                             </a>
                                             <button type="button" class="btn btn-ghost-secondary" onclick="resetForm()">
@@ -260,7 +259,6 @@
                     </div><!-- end card -->
                 </div><!-- end col -->
             </div><!-- end row -->
-
             <!-- Additional Info Card -->
             <div class="row justify-content-center">
                 <div class="col-xxl-9">
@@ -294,8 +292,10 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
     <script>
         // Store original values for reset
         const originalValues = {
@@ -347,11 +347,11 @@
             const statusText = isActive ? 'Aktif' : 'Pasif';
             const statusIcon = document.getElementById('previewStatusIcon');
             const statusElement = document.getElementById('previewStatus');
-            
+
             statusElement.textContent = statusText;
             statusElement.className = isActive ? 'mb-0 text-success' : 'mb-0 text-danger';
-            statusIcon.className = isActive ? 
-                'ri-shield-check-line me-2 fs-16 text-success' : 
+            statusIcon.className = isActive ?
+                'ri-shield-check-line me-2 fs-16 text-success' :
                 'ri-shield-cross-line me-2 fs-16 text-danger';
         }
 
@@ -372,10 +372,10 @@
                 document.getElementById('SiteId').value = originalValues.siteId;
                 document.getElementById('isActiveSwitch').checked = originalValues.isActive;
                 document.querySelector('input[name="Password"]').value = '';
-                
+
                 const label = document.getElementById('statusLabel');
                 label.textContent = originalValues.isActive ? 'Aktif' : 'Pasif';
-                
+
                 document.querySelector('form').classList.remove('was-validated');
                 updatePreview();
             }
@@ -401,7 +401,7 @@
             phoneInput.addEventListener('input', function() {
                 // Remove all non-numeric characters
                 this.value = this.value.replace(/\D/g, '');
-                
+
                 // Limit to 11 digits
                 if (this.value.length > 11) {
                     this.value = this.value.substring(0, 11);
@@ -443,15 +443,15 @@
         border-left: 4px solid;
         box-shadow: 0 2px 4px rgba(0,0,0,.08);
     }
-    
+
     .alert-success {
         border-left-color: #0ab39c;
     }
-    
+
     .alert-danger {
         border-left-color: #f06548;
     }
-    
+
     .alert-warning {
         border-left-color: #f7b84b;
     }

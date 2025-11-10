@@ -1,10 +1,5 @@
 /* Supplier Notification Styles */
 
-/* Toast Notification Styles */
-.notification-toast {
-    padding: 8px 0;
-}
-
 .notification-title {
     font-weight: 600;
     font-size: 14px;

@@ -12,7 +12,7 @@ using SantiyeTalepApi.Data;
 namespace SantiyeTalepApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251029083623_CreateDatabase")]
+    [Migration("20251105094634_CreateDatabase")]
     partial class CreateDatabase
     {
         /// <inheritdoc />
@@ -579,12 +579,12 @@ namespace SantiyeTalepApi.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedDate = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "altanemre1989@gmail.com",
+                            CreatedDate = new DateTime(2025, 11, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "info@elementelk.com",
                             FullName = "Sistem Yöneticisi",
                             IsActive = true,
                             Password = "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.",
-                            Phone = "05366295131",
+                            Phone = "05355229174",
                             Role = 1
                         });
                 });

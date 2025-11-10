@@ -3,9 +3,9 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>�antiye Talep Y�netim Sistemi | Element Elektrik Prj. Taah. Tic. Ltd. �ti.</title>
+    <title>Şantiye Talep Yönetim Sistemi | Element Elektrik Prj. Taah. Tic. Ltd. Şti.</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="�antiye Talep Y�netim Sistemi" name="description" />
+    <meta content="Şantiye Talep Yönetim Sistemi" name="description" />
     <meta content="Velzon" name="author" />
     <!-- App favicon -->
     <link rel="shortcut icon" href="~/assets/images/favicon.ico">
@@ -59,15 +59,6 @@
                                 <span></span>
                             </span>
                         </button>
-
-                        <!-- App Search-->
-                        <form class="app-search d-none d-md-block">
-                            <div class="position-relative">
-                                <input type="text" class="form-control" placeholder="Talep ara..." autocomplete="off" id="search-options" value="">
-                                <span class="mdi mdi-magnify search-widget-icon"></span>
-                                <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none" id="search-close-options"></span>
-                            </div>
-                        </form>
                     </div>
 
                     <div class="d-flex align-items-center">
@@ -125,22 +116,22 @@
                                 </div>
                             </div>
                         </div>
-                                               
+
                         <div class="dropdown ms-sm-3 header-item topbar-user">
                             <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="d-flex align-items-center">
                                     <img class="rounded-circle header-profile-user" src="~/assets/images/users/avatar-1.jpg" alt="Header Avatar">
                                     <span class="text-start ms-xl-2">
                                         <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">@User.Identity.Name</span>
-                                        <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">�al��an</span>
+                                        <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">Çalışan</span>
                                     </span>
                                 </span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <h6 class="dropdown-header">Ho�geldiniz!</h6>
-                                <a class="dropdown-item" href="@Url.Action("Profile", "Account")"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profil</span></a>
+                                <h6 class="dropdown-header">Hoşgeldiniz!</h6>
+                                <a class="dropdown-item" href="/Account/Profile"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profil</span></a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="@Url.Action("Logout", "Account")"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle">��k�� Yap</span></a>
+                                <a class="dropdown-item" href="/Account/Logout"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Çıkış Yap</span></a>
                             </div>
                         </div>
                     </div>
@@ -153,7 +144,7 @@
             <!-- LOGO -->
             <div class="navbar-brand-box">
                 <!-- Dark Logo-->
-                <a href="@Url.Action("Dashboard", "Employee")" class="logo logo-dark">
+                <a href="/Employee/Dashboard" class="logo logo-dark">
                     <span class="logo-sm">
                         <img src="~/assets/images/logo-sm.png" alt="" height="22">
                     </span>
@@ -162,7 +153,7 @@
                     </span>
                 </a>
                 <!-- Light Logo-->
-                <a href="@Url.Action("Dashboard", "Employee")" class="logo logo-light">
+                <a href="/Employee/Dashboard" class="logo logo-light">
                     <span class="logo-sm">
                         <img src="~/assets/images/logo-sm.png" alt="" height="22">
                     </span>
@@ -179,11 +170,11 @@
                 <div class="container-fluid">
                     <div id="two-column-menu"></div>
                     <ul class="navbar-nav" id="navbar-nav">
-                        <li class="menu-title"><span>Ana Men�</span></li>
-                        
+                        <li class="menu-title"><span>Ana Menü</span></li>
+
                         <!-- Dashboard -->
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="@Url.Action("Dashboard", "Employee")">
+                            <a class="nav-link menu-link" href="/Employee/Dashboard">
                                 <i class="ri-dashboard-2-line"></i> <span>Dashboard</span>
                             </a>
                         </li>
@@ -191,7 +182,7 @@
                         <!-- Talep Y�netimi -->
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="#sidebarRequests" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRequests">
-                                <i class="ri-file-list-3-line"></i> <span>Talep Y�netimi</span>
+                                <i class="ri-file-list-3-line"></i> <span>Talep Yönetimi</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarRequests">
                                 <ul class="nav nav-sm flex-column">
@@ -226,23 +217,21 @@
         <!-- ============================================================== -->
         <!-- Start right Content here -->
         <!-- ============================================================== -->
-       @RenderBody()
+        @RenderBody()
         <!-- end main content-->
 
     </div>
     <!-- END layout-wrapper -->
-    
     <!--start back-to-top-->
     <button onclick="topFunction()" class="btn btn-danger btn-icon" id="back-to-top">
         <i class="ri-arrow-up-line"></i>
     </button>
     <!--end back-to-top-->
-    
     <!--preloader-->
     <div id="preloader">
         <div id="status">
             <div class="spinner-border text-primary avatar-sm" role="status">
-                <span class="visually-hidden">Y�kleniyor...</span>
+                <span class="visually-hidden">Yükleniyor...</span>
             </div>
         </div>
     </div>
@@ -261,7 +250,7 @@
     <!-- Dashboard init -->
     <script src="~/assets/js/pages/dashboard-crm.init.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    
+
     <!-- Employee Notifications Script -->
     <script>
         // Global variables for notification management
@@ -273,7 +262,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadNotificationSummary();
             loadNotifications();
-            
+
             // Start periodic check for new notifications every 60 seconds
             startNotificationCheck();
         });
@@ -284,7 +273,7 @@
             if (notificationCheckInterval) {
                 clearInterval(notificationCheckInterval);
             }
-            
+
             // Check for new notifications every 60 seconds
             notificationCheckInterval = setInterval(() => {
                 loadNotificationSummary();
@@ -297,7 +286,7 @@
             try {
                 const response = await fetch('/Employee/GetNotificationSummary');
                 const result = await response.json();
-                
+
                 if (result.success && result.data) {
                     notificationSummary = result.data;
                     updateNotificationBadge();
@@ -312,7 +301,7 @@
             try {
                 const response = await fetch('/Employee/GetNotifications');
                 const result = await response.json();
-                
+
                 if (result.success && result.data) {
                     notifications = result.data;
                     displayNotifications();
@@ -328,7 +317,7 @@
             const badge = document.getElementById('notification-badge');
             const count = document.getElementById('notification-count');
             const totalCount = document.getElementById('notification-total-count');
-            
+
             if (notificationSummary && notificationSummary.unreadCount > 0) {
                 badge.style.display = 'block';
                 count.textContent = notificationSummary.unreadCount;
@@ -342,7 +331,7 @@
         // Display notifications
         function displayNotifications() {
             const container = document.getElementById('notifications-container');
-            
+
             if (!notifications || notifications.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-4">
@@ -363,10 +352,10 @@
                 const iconColor = notification.isRead ? 'text-muted' : 'text-primary';
                 const bgClass = notification.isRead ? '' : 'bg-light';
                 const date = new Date(notification.createdDate).toLocaleDateString('tr-TR');
-                
+
                 html += `
-                    <div class="text-reset notification-item d-block dropdown-item position-relative ${bgClass}" 
-                         style="cursor: pointer;" 
+                    <div class="text-reset notification-item d-block dropdown-item position-relative ${bgClass}"
+                         style="cursor: pointer;"
                          onclick="handleNotificationClick(${notification.id}, ${notification.requestId || 'null'})">
                         <div class="d-flex">
                             <div class="avatar-xs me-3 flex-shrink-0">
@@ -386,7 +375,7 @@
                         </div>
                     </div>`;
             });
-            
+
             container.innerHTML = html;
         }
 
@@ -445,11 +434,10 @@
             }
         }
     </script>
-    
+
     <!-- App js -->
     <!--<script src="~/assets/js/app.js"></script>-->
-
-    @RenderSection("Scripts",false)
+    @RenderSection("Scripts", false)
 </body>
 
 </html>

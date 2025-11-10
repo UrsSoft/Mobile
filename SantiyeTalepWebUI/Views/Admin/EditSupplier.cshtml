@@ -15,16 +15,16 @@
 
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
-                                <li class="breadcrumb-item"><a href="@Url.Action("Suppliers", "Admin")">Tedarikçiler</a></li>
-                                <li class="breadcrumb-item active">Düzenle</li>
+                                <li class="breadcrumb-item"><a href="/Admin/Dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Suppliers">Tedarikçiler</a></li>
+                                <li class="breadcrumb-item active">Tedarikçi Düzenle</li>
                             </ol>
+
                         </div>
                     </div>
                 </div>
             </div>
             <!-- end page title -->
-
             <!-- Success/Error Messages -->
             @if (TempData["SuccessMessage"] != null)
             {
@@ -206,7 +206,7 @@
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <div class="hstack gap-2 justify-content-end">
-                                            <a href="@Url.Action("Suppliers", "Admin")" class="btn btn-light">
+                                            <a href="/Admin/Suppliers" class="btn btn-light">
                                                 <i class="ri-arrow-left-line align-bottom me-1"></i> Geri Dön
                                             </a>
                                             <button type="submit" class="btn btn-success">
@@ -220,7 +220,6 @@
                     </div><!-- end card -->
                 </div><!-- end col -->
             </div><!-- end row -->
-
             <!-- Additional Info Card -->
             <div class="row justify-content-center">
                 <div class="col-xxl-9">
@@ -255,8 +254,10 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
     <script>
         // Form validation
         (function() {
@@ -291,7 +292,7 @@
             phoneInput.addEventListener('input', function() {
                 // Remove all non-numeric characters
                 this.value = this.value.replace(/\D/g, '');
-                
+
                 // Limit to 11 digits (0 + 10 digits for Turkish phone numbers)
                 if (this.value.length > 11) {
                     this.value = this.value.substring(0, 11);
@@ -322,15 +323,15 @@
         border-left: 4px solid;
         box-shadow: 0 2px 4px rgba(0,0,0,.08);
     }
-    
+
     .alert-success {
         border-left-color: #0ab39c;
     }
-    
+
     .alert-danger {
         border-left-color: #f06548;
     }
-    
+
     .alert-warning {
         border-left-color: #f7b84b;
     }

@@ -27,7 +27,7 @@ namespace SantiyeTalepApi.Controllers
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-                
+
                 int? userId = null;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
                 {
@@ -50,10 +50,10 @@ namespace SantiyeTalepApi.Controllers
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-                
+
                 // Debug logging
                 Console.WriteLine($"NotificationController.GetNotificationSummary - UserIdClaim: {userIdClaim}, UserRole: {userRole}");
-                
+
                 int? userId = null;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
                 {
@@ -104,7 +104,7 @@ namespace SantiyeTalepApi.Controllers
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-                
+
                 int? userId = null;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int parsedUserId))
                 {

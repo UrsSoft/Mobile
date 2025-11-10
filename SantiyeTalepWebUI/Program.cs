@@ -16,7 +16,7 @@ builder.Services.AddHttpContextAccessor();
 // HTTP Client for API calls
 builder.Services.AddHttpClient("SantiyeTalepAPI", client =>
 {
-    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7141/";
+    var baseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://elementelkapi.com/";
     client.BaseAddress = new Uri(baseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30); // 30 second timeout

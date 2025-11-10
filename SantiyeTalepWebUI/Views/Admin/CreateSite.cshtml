@@ -16,8 +16,8 @@
 
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
-                                <li class="breadcrumb-item"><a href="@Url.Action("Sites", "Admin")">Þantiyeler</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Sites">Þantiyeler</a></li>
                                 <li class="breadcrumb-item active">Yeni Þantiye</li>
                             </ol>
                         </div>
@@ -39,7 +39,7 @@
                         <div class="card-body">
                             <form asp-action="CreateSite" method="post" class="needs-validation" novalidate>
                                 @Html.AntiForgeryToken()
-                                
+
 
                                 <div class="row">
                                     <div class="col-lg-12">
@@ -81,67 +81,67 @@
                                             <label class="form-label">Þantiye Markalarý <span class="text-danger">*</span></label>
                                             <span asp-validation-for="BrandIds" class="text-danger d-block"></span>
                                             <div class="form-text mb-3">Bu þantiyede kullanýlacak markalarý seçiniz. En az bir marka seçilmelidir.</div>
-                                            
 
-                                                    <div class="card border">
-                                                        <div class="card-header bg-light">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <h6 class="mb-0">
-                                                                    <i class="ri-price-tag-line me-2"></i>Marka Seçimi
-                                                                </h6>
-                                                                <div>
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllBrands()">
-                                                                        <i class="ri-check-double-line me-1"></i>Tümünü Seç
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="clearAllBrands()">
-                                                                        <i class="ri-close-line me-1"></i>Temizle
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            @if (brands.Any())
-                                                            {
-                                                                <div class="row g-3">
-                                                                    @foreach (var brand in brands)
-                                                                    {
-                                                                        <div class="col-md-4 col-sm-6">
-                                                                            <div class="form-check form-check-custom">
-                                                                                <input class="form-check-input brand-checkbox" type="checkbox" 
-                                                                                       name="BrandIds" value="@brand.Id" id="brand_@brand.Id"
-                                                                                       @(Model.BrandIds != null && Model.BrandIds.Contains(brand.Id) ? "checked" : "") />
-                                                                                <label class="form-check-label d-flex align-items-center" for="brand_@brand.Id">
-                                                                                    <div class="flex-grow-1">
-                                                                                        <div class="fw-medium">@brand.Name</div>          
-                                                                                    </div>
-                                                                                </label>
-                                                                            </div>
-                                                                        </div>
-                                                                    }
-                                                                </div>
-                                                                
-                                                                <div class="mt-3">
-                                                                    <div class="alert alert-info d-none" id="brandSelectionInfo">
-                                                                        <i class="ri-information-line me-2"></i>
-                                                                        <span id="selectedBrandCount">0</span> marka seçildi.
-                                                                    </div>
-                                                                </div>
-                                                            }
-                                                            else
-                                                            {
-                                                                <div class="text-center py-3">
-                                                                    <i class="ri-error-warning-line fs-24 text-warning mb-2"></i>
-                                                                    <p class="text-muted mb-0">Henüz sistem marka bulunamadý.</p>
-                                                                    <small class="text-muted">Lütfen önce sistem yöneticisi ile iletiþime geçin.</small>
-                                                                </div>
-                                                            }
+
+                                            <div class="card border">
+                                                <div class="card-header bg-light">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <h6 class="mb-0">
+                                                            <i class="ri-price-tag-line me-2"></i>Marka Seçimi
+                                                        </h6>
+                                                        <div>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllBrands()">
+                                                                <i class="ri-check-double-line me-1"></i>Tümünü Seç
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="clearAllBrands()">
+                                                                <i class="ri-close-line me-1"></i>Temizle
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="card-body">
+                                                    @if (brands.Any())
+                                                    {
+                                                        <div class="row g-3">
+                                                            @foreach (var brand in brands)
+                                                            {
+                                                                <div class="col-md-4 col-sm-6">
+                                                                    <div class="form-check form-check-custom">
+                                                                        <input class="form-check-input brand-checkbox" type="checkbox"
+                                                                               name="BrandIds" value="@brand.Id" id="brand_@brand.Id"
+                                                                               @(Model.BrandIds != null && Model.BrandIds.Contains(brand.Id) ? "checked" : "") />
+                                                                        <label class="form-check-label d-flex align-items-center" for="brand_@brand.Id">
+                                                                            <div class="flex-grow-1">
+                                                                                <div class="fw-medium">@brand.Name</div>
+                                                                            </div>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        </div>
+
+                                                        <div class="mt-3">
+                                                            <div class="alert alert-info d-none" id="brandSelectionInfo">
+                                                                <i class="ri-information-line me-2"></i>
+                                                                <span id="selectedBrandCount">0</span> marka seçildi.
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="text-center py-3">
+                                                            <i class="ri-error-warning-line fs-24 text-warning mb-2"></i>
+                                                            <p class="text-muted mb-0">Henüz sistem marka bulunamadý.</p>
+                                                            <small class="text-muted">Lütfen önce sistem yöneticisi ile iletiþime geçin.</small>
+                                                        </div>
+                                                    }
+                                                </div>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
 
-                               
+
 
                                 <!-- Preview Card -->
                                 <div class="row">
@@ -199,7 +199,7 @@
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <div class="hstack gap-2 justify-content-end">
-                                            <a href="@Url.Action("Sites", "Admin")" class="btn btn-light">
+                                            <a href="/Admin/Sites" class="btn btn-light">
                                                 <i class="ri-arrow-left-line align-bottom me-1"></i> Geri Dön
                                             </a>
                                             <button type="button" class="btn btn-ghost-secondary" onclick="resetForm()">
@@ -216,7 +216,6 @@
                     </div><!-- end card -->
                 </div><!-- end col -->
             </div><!-- end row -->
-
             <!-- Additional Tips Card -->
             <div class="row justify-content-center">
                 <div class="col-xxl-9">
@@ -261,11 +260,11 @@
                         // Check if at least one brand is selected
                         const selectedBrands = document.querySelectorAll('.brand-checkbox:checked');
                         const brandValidation = document.querySelector('[data-valmsg-for="BrandIds"]');
-                        
+
                         if (selectedBrands.length === 0) {
                             event.preventDefault();
                             event.stopPropagation();
-                            
+
 
                             // Show brand validation error
                             if (!document.querySelector('.brand-validation-error')) {
@@ -281,7 +280,7 @@
                                 existingError.remove();
                             }
                         }
-                        
+
                         if (form.checkValidity() === false) {
                             event.preventDefault();
                             event.stopPropagation();
@@ -313,7 +312,7 @@
             const selectedCount = document.querySelectorAll('.brand-checkbox:checked').length;
             const countElement = document.getElementById('selectedBrandCount');
             const infoElement = document.getElementById('brandSelectionInfo');
-            
+
             // Check if elements exist before accessing their properties
             if (countElement && infoElement) {
                 if (selectedCount > 0) {
@@ -328,7 +327,7 @@
         function updateBrandPreview() {
             const selectedBrands = document.querySelectorAll('.brand-checkbox:checked');
             const previewContainer = document.getElementById('previewBrands');
-            
+
             if (selectedBrands.length === 0) {
                 previewContainer.innerHTML = '<span class="badge bg-secondary">Henüz marka seçilmedi</span>';
             } else {
@@ -350,10 +349,10 @@
 
             document.getElementById('previewName').textContent = name;
             document.getElementById('previewAddress').textContent = address;
-            
+
             const descContainer = document.getElementById('previewDescriptionContainer');
             const descElement = document.getElementById('previewDescription');
-            
+
             if (description.trim()) {
                 descElement.textContent = description;
                 descContainer.style.display = 'block';
@@ -367,13 +366,13 @@
             if (confirm('Formu temizlemek istediðinizden emin misiniz? Girilen tüm bilgiler silinecektir.')) {
                 document.querySelector('form').reset();
                 document.querySelector('form').classList.remove('was-validated');
-                
+
                 // Remove any validation errors
                 const existingError = document.querySelector('.brand-validation-error');
                 if (existingError) {
                     existingError.remove();
                 }
-                
+
                 updatePreview();
                 updateBrandPreview();
                 updateBrandCount();
@@ -395,7 +394,7 @@
                 checkbox.addEventListener('change', function() {
                     updateBrandPreview();
                     updateBrandCount();
-                    
+
                     // Remove validation error when user selects a brand
                     const existingError = document.querySelector('.brand-validation-error');
                     if (existingError && document.querySelectorAll('.brand-checkbox:checked').length > 0) {
@@ -414,8 +413,8 @@
             function updateCounter() {
                 const length = descriptionInput.value.length;
                 counter.textContent = `${length}/${maxLength} karakter`;
-                counter.className = length > maxLength * 0.9 ? 
-                    'form-text text-end text-warning' : 
+                counter.className = length > maxLength * 0.9 ?
+                    'form-text text-end text-warning' :
                     'form-text text-end text-muted';
             }
 

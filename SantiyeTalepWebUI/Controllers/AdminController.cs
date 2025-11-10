@@ -2,11 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Newtonsoft.Json;
+using SantiyeTalepWebUI.Filters;
 using SantiyeTalepWebUI.Models;
 using SantiyeTalepWebUI.Models.DTOs;
 using SantiyeTalepWebUI.Models.ViewModels;
 using SantiyeTalepWebUI.Services;
-using SantiyeTalepWebUI.Filters;
 using System.Text;
 
 namespace SantiyeTalepWebUI.Controllers
@@ -132,7 +133,7 @@ namespace SantiyeTalepWebUI.Controllers
             {
                 // Get brands for selection
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
-                ViewBag.Brands = brands;               
+                ViewBag.Brands = brands;
 
                 return View(new Models.DTOs.CreateSiteDto());
             }
@@ -183,16 +184,16 @@ namespace SantiyeTalepWebUI.Controllers
                 // Reload brands for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
-                
+
                 return View(model);
             }
             catch (HttpRequestException httpEx)
             {
                 _logger.LogError(httpEx, "HTTP error creating site");
-                
+
                 // Parse error message from API
                 string errorMessage = "Şantiye oluşturulurken bir hata oluştu";
-                
+
                 if (httpEx.Message.Contains("400:"))
                 {
                     // Extract the actual error message from "400: message"
@@ -207,13 +208,13 @@ namespace SantiyeTalepWebUI.Controllers
                     errorMessage = "Seçilen markalardan bir kısmı bulunamadı veya aktif değil. Lütfen geçerli markalar seçin.";
                     ModelState.AddModelError("BrandIds", "Geçersiz marka seçimi");
                 }
-                
+
                 TempData["ErrorMessage"] = errorMessage;
 
                 // Reload brands for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
-                
+
                 return View(model);
             }
             catch (Exception ex)
@@ -224,7 +225,7 @@ namespace SantiyeTalepWebUI.Controllers
                 // Reload brands for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
-                
+
                 return View(model);
             }
         }
@@ -574,14 +575,14 @@ namespace SantiyeTalepWebUI.Controllers
                 // Get available employees (employees without assigned site) + current site employees
                 var availableEmployees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees/available", token) ?? new List<EmployeeDto>();
                 var currentSiteEmployees = site.Employees ?? new List<EmployeeDto>();
-                
+
                 // Combine and remove duplicates
                 var allSelectableEmployees = availableEmployees
                     .Concat(currentSiteEmployees)
                     .GroupBy(e => e.Id)
                     .Select(g => g.First())
                     .ToList();
-                    
+
                 ViewBag.AvailableEmployees = allSelectableEmployees;
 
                 var model = new UpdateSiteDto
@@ -620,18 +621,18 @@ namespace SantiyeTalepWebUI.Controllers
                 {
                     var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                     ViewBag.Brands = brands;
-                    
+
                     // Get current site info for employee loading
                     var currentSite = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{model.Id}", token);
                     var availableEmployees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees/available", token) ?? new List<EmployeeDto>();
                     var currentSiteEmployees = currentSite?.Employees ?? new List<EmployeeDto>();
-                    
+
                     var allSelectableEmployees = availableEmployees
                         .Concat(currentSiteEmployees)
                         .GroupBy(e => e.Id)
                         .Select(g => g.First())
                         .ToList();
-                        
+
                     ViewBag.AvailableEmployees = allSelectableEmployees;
                 }
                 catch (Exception ex)
@@ -657,19 +658,19 @@ namespace SantiyeTalepWebUI.Controllers
                 // Reload brands and employees for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
-                
+
                 var currentSite = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{model.Id}", token);
                 var availableEmployees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees/available", token) ?? new List<EmployeeDto>();
                 var currentSiteEmployees = currentSite?.Employees ?? new List<EmployeeDto>();
-                
+
                 var allSelectableEmployees = availableEmployees
                     .Concat(currentSiteEmployees)
                     .GroupBy(e => e.Id)
                     .Select(g => g.First())
                     .ToList();
-                    
+
                 ViewBag.AvailableEmployees = allSelectableEmployees;
-                
+
                 return View(model);
             }
             catch (Exception ex)
@@ -680,19 +681,19 @@ namespace SantiyeTalepWebUI.Controllers
                 // Reload brands and employees for error case
                 var brands = await _apiService.GetAsync<List<BrandDto>>("api/Admin/brands", token) ?? new List<BrandDto>();
                 ViewBag.Brands = brands;
-                
+
                 var currentSite = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{model.Id}", token);
                 var availableEmployees = await _apiService.GetAsync<List<EmployeeDto>>("api/Admin/employees/available", token) ?? new List<EmployeeDto>();
                 var currentSiteEmployees = currentSite?.Employees ?? new List<EmployeeDto>();
-                
+
                 var allSelectableEmployees = availableEmployees
                     .Concat(currentSiteEmployees)
                     .GroupBy(e => e.Id)
                     .Select(g => g.First())
                     .ToList();
-                    
+
                 ViewBag.AvailableEmployees = allSelectableEmployees;
-                
+
                 return View(model);
             }
         }
@@ -758,10 +759,10 @@ namespace SantiyeTalepWebUI.Controllers
             catch (HttpRequestException httpEx)
             {
                 _logger.LogError(httpEx, "HTTP error creating employee");
-                
+
                 // Parse error message from API
                 string errorMessage = "Çalışan oluşturulurken bir hata oluştu";
-                
+
                 if (httpEx.Message.Contains("400:"))
                 {
                     // Extract the actual error message from "400: message"
@@ -786,7 +787,7 @@ namespace SantiyeTalepWebUI.Controllers
                     errorMessage = "Seçilen şantiye bulunamadı. Lütfen geçerli bir şantiye seçin.";
                     ModelState.AddModelError("SiteId", "Geçersiz şantiye seçimi");
                 }
-                
+
                 TempData["ErrorMessage"] = errorMessage;
                 var sitesForError = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
                 ViewBag.Sites = sitesForError;
@@ -864,7 +865,7 @@ namespace SantiyeTalepWebUI.Controllers
                 var model = new UpdateEmployeeDto
                 {
                     Id = employee.Id,
-                    Email=employee.Email,
+                    Email = employee.Email,
                     FullName = employee.FullName,
                     Phone = employee.Phone,
                     Position = employee.Position,
@@ -926,16 +927,16 @@ namespace SantiyeTalepWebUI.Controllers
                 // Reload sites for error case
                 var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
                 ViewBag.Sites = sites;
-                
+
                 return View(model);
             }
             catch (HttpRequestException httpEx)
             {
                 _logger.LogError(httpEx, "HTTP error updating employee");
-                
+
                 // Parse error message from API
                 string errorMessage = "Çalışan güncellenirken bir hata oluştu";
-                
+
                 if (httpEx.Message.Contains("400:"))
                 {
                     var parts = httpEx.Message.Split(new[] { "400:" }, 2, StringSplitOptions.None);
@@ -954,7 +955,7 @@ namespace SantiyeTalepWebUI.Controllers
                     errorMessage = "Seçilen şantiye bulunamadı. Lütfen geçerli bir şantiye seçin.";
                     ModelState.AddModelError("SiteId", "Geçersiz şantiye seçimi");
                 }
-                
+
                 TempData["ErrorMessage"] = errorMessage;
                 var sites = await _apiService.GetAsync<List<Models.DTOs.SiteDto>>("api/Admin/sites", token) ?? new List<Models.DTOs.SiteDto>();
                 ViewBag.Sites = sites;
@@ -988,7 +989,7 @@ namespace SantiyeTalepWebUI.Controllers
 
                 // API'den gelen hata mesajını parse et
                 string errorMessage = "Çalışan silinirken bir hata oluştu";
-                
+
                 if (httpEx.Message.Contains("400:"))
                 {
                     var parts = httpEx.Message.Split(new[] { "400:" }, 2, StringSplitOptions.None);
@@ -1036,7 +1037,7 @@ namespace SantiyeTalepWebUI.Controllers
             return View(new CreateSupplierDto());
         }
 
-        [HttpPost]  
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateSupplier(CreateSupplierDto model)
         {
@@ -1070,10 +1071,10 @@ namespace SantiyeTalepWebUI.Controllers
             catch (HttpRequestException httpEx)
             {
                 _logger.LogError(httpEx, "HTTP error creating supplier");
-                
+
                 // Parse error message from API
                 string errorMessage = "Tedarikçi oluşturulurken bir hata oluştu";
-                
+
                 if (httpEx.Message.Contains("400:"))
                 {
                     // Extract the actual error message from "400: message"
@@ -1093,7 +1094,7 @@ namespace SantiyeTalepWebUI.Controllers
                     errorMessage = "Bu telefon numarası zaten kullanılıyor. Lütfen farklı bir telefon numarası kullanın.";
                     ModelState.AddModelError("Phone", "Bu telefon numarası zaten kullanılıyor");
                 }
-                
+
                 TempData["ErrorMessage"] = errorMessage;
                 return View(model);
             }
@@ -1356,9 +1357,8 @@ namespace SantiyeTalepWebUI.Controllers
                 Offers = offers
             };
 
-            return View("Offers", model);
+            return View(model);
         }
-
         public async Task<IActionResult> ApprovedOffers()
         {
             var token = _authService.GetStoredToken();
@@ -1371,7 +1371,21 @@ namespace SantiyeTalepWebUI.Controllers
                 Offers = offers
             };
 
-            return View("Offers", model);
+            return View(model);
+        }
+        public async Task<IActionResult> RejectedOffers()
+        {
+            var token = _authService.GetStoredToken();
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Account");
+
+            var offers = await _apiService.GetAsync<List<OfferDto>>("api/Admin/offers/rejected", token) ?? new List<OfferDto>();
+            var model = new SantiyeTalepWebUI.Models.DTOs.OfferListViewModel
+            {
+                Offers = offers
+            };
+
+            return View(model);
         }
 
         [HttpPost]
@@ -1446,7 +1460,7 @@ namespace SantiyeTalepWebUI.Controllers
                 };
 
                 var result = await _apiService.PostAsync<object>("api/Admin/offers/bulk", apiModel, token);
-                
+
                 if (result != null)
                 {
                     var actionText = model.Action.ToLower() == "approve" ? "onayandı" : "reddedildi";
@@ -1821,7 +1835,7 @@ namespace SantiyeTalepWebUI.Controllers
                 };
 
                 var result = await _apiService.PostAsync<object>("api/Admin/requests/send-to-suppliers", apiModel, token);
-                
+
                 if (result != null)
                 {
                     return Json(new { success = true, message = "Talepler başarıyla tedarikçilere gönderildi" });
@@ -1894,17 +1908,19 @@ namespace SantiyeTalepWebUI.Controllers
                 var recentRequests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
                 var allSuppliers = await _apiService.GetAsync<List<SupplierDto>>("api/Admin/suppliers", token) ?? new List<SupplierDto>();
                 var pendingOffers = await _apiService.GetAsync<List<OfferDto>>("api/Admin/offers/pending", token) ?? new List<OfferDto>();
-                
+
                 // Filter pending suppliers from all suppliers
                 var pendingSuppliers = allSuppliers.Where(s => s.Status == SupplierStatus.Pending).ToList();
-                
+
                 // Count new requests from today
                 var today = DateTime.Today;
                 var newRequestsToday = recentRequests.Count(r => r.RequestDate.Date == today);
-                
-                return Json(new { 
-                    success = true, 
-                    data = new {
+
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
                         newRequestsToday = newRequestsToday,
                         pendingSuppliersCount = pendingSuppliers.Count,
                         pendingOffersCount = pendingOffers.Count,
@@ -1929,7 +1945,7 @@ namespace SantiyeTalepWebUI.Controllers
             try
             {
                 var allRequests = await _apiService.GetAsync<List<RequestDto>>("api/Admin/requests", token) ?? new List<RequestDto>();
-                
+
                 // Filtre tarih aralığını hesapla
                 DateTime startDate;
                 var now = DateTime.Now;
@@ -1965,8 +1981,9 @@ namespace SantiyeTalepWebUI.Controllers
                 var completedCount = filteredRequests.Count(r => r.Status == RequestStatus.Completed);
                 var cancelledCount = filteredRequests.Count(r => r.Status == RequestStatus.Cancelled);
 
-                return Json(new { 
-                    success = true, 
+                return Json(new
+                {
+                    success = true,
                     openCount = openCount,
                     inProgressCount = inProgressCount,
                     completedCount = completedCount,
@@ -1991,7 +2008,7 @@ namespace SantiyeTalepWebUI.Controllers
             try
             {
                 var performanceData = await _apiService.GetAsync<dynamic>($"api/Admin/site-performance?period={period}", token);
-                
+
                 if (performanceData != null)
                 {
                     return Json(new { success = true, data = performanceData });
@@ -2165,7 +2182,7 @@ namespace SantiyeTalepWebUI.Controllers
                 content.Add(fileContent, "ExcelFile", excelFile.FileName);
                 content.Add(new StringContent(siteId), "SiteId");
                 content.Add(new StringContent(employeeId), "EmployeeId");
-                
+
                 foreach (var supplierId in supplierIds)
                 {
                     content.Add(new StringContent(supplierId), "SupplierIds");
@@ -2173,7 +2190,7 @@ namespace SantiyeTalepWebUI.Controllers
 
                 // API'ye gönder
                 var result = await _apiService.PostMultipartAsync<object>("api/Admin/requests/create-from-excel", content, token);
-                
+
                 if (result != null)
                 {
                     return Json(new { success = true, message = "Excel dosyası başarıyla yuedlendi ve tedarikçilere gönderildi" });
@@ -2212,7 +2229,7 @@ namespace SantiyeTalepWebUI.Controllers
         public async Task<IActionResult> GetEmployeesBySite(int siteId)
         {
             _logger.LogInformation("GetEmployeesBySite called with siteId: {SiteId}", siteId);
-            
+
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
             {
@@ -2223,18 +2240,18 @@ namespace SantiyeTalepWebUI.Controllers
             try
             {
                 _logger.LogInformation("Fetching employees from API for site: {SiteId}", siteId);
-                
+
                 // Backend API endpoint: /api/Admin/sites/{id}/employees
                 var employees = await _apiService.GetAsync<List<EmployeeDto>>($"api/Admin/sites/{siteId}/employees", token) ?? new List<EmployeeDto>();
-                
+
                 _logger.LogInformation("Received {Count} employees from API for site {SiteId}", employees.Count, siteId);
-                
-                var result = employees.Select(e => new { 
-                    id = e.Id, 
-                    fullName = e.FullName, 
-                    position = e.Position 
+
+                var result = employees.Select(e => new {
+                    id = e.Id,
+                    fullName = e.FullName,
+                    position = e.Position
                 }).ToList();
-                
+
                 _logger.LogInformation("Returning {Count} employees to frontend", result.Count);
                 return Json(result);
             }
@@ -2244,12 +2261,12 @@ namespace SantiyeTalepWebUI.Controllers
                 return Json(new List<object>());
             }
         }
-
         [HttpGet]
         public async Task<IActionResult> SearchProducts(string query, int? siteId)
         {
-            _logger.LogInformation("SearchProducts called - Query: {Query}, SiteId: {SiteId}", query, siteId);
-            
+            _logger.LogInformation("=== SEARCH PRODUCTS STARTED ===");
+            _logger.LogInformation("Query: {Query}, SiteId: {SiteId}", query, siteId);
+
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
             {
@@ -2265,35 +2282,78 @@ namespace SantiyeTalepWebUI.Controllers
             try
             {
                 // Build search URL with brand filtering based on selected site
-                var searchUrl = $"api/searchapi?query={Uri.EscapeDataString(query)}";
-                
+                var searchUrl = $"https://teklifalani.com/api/searchapi?query={Uri.EscapeDataString(query)}";
+
                 // If a site is selected, get its brands for filtering
                 if (siteId.HasValue && siteId.Value > 0)
                 {
                     _logger.LogInformation("Fetching brands for site: {SiteId}", siteId.Value);
-                    
+
                     var site = await _apiService.GetAsync<Models.DTOs.SiteDto>($"api/Admin/sites/{siteId.Value}", token);
-                    
+
                     if (site?.Brands != null && site.Brands.Any())
                     {
                         var brandIds = string.Join(",", site.Brands.Select(b => b.Id));
                         searchUrl += $"&brandIds={brandIds}";
-                        
-                        _logger.LogInformation("Applying brand filter for site {SiteName}: {BrandNames}", 
-                            site.Name, string.Join(", ", site.Brands.Select(b => b.Name)));
+
+                        _logger.LogInformation("Applying brand filter: {BrandNames} (IDs: {BrandIds})",
+                            string.Join(", ", site.Brands.Select(b => b.Name)), brandIds);
                     }
                 }
-                
+
                 _logger.LogInformation("Calling search API: {Url}", searchUrl);
-                
-                var products = await _apiService.GetAsync<List<Models.ViewModels.ProductDto>>(searchUrl, token) ?? new List<Models.ViewModels.ProductDto>();
-                
-                _logger.LogInformation("Search returned {Count} products", products.Count);
-                
-                return Json(new { 
-                    success = true, 
-                    data = products
+
+                // ✅ API'nin wrapper yapısını kullan
+                using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+                var response = await httpClient.GetAsync(searchUrl);
+                var jsonContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation("API Response Status: {StatusCode}", response.StatusCode);
+                _logger.LogInformation("API Response Content: {Content}", jsonContent);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("API returned error: {StatusCode}", response.StatusCode);
+                    return Json(new { success = false, message = "Ürün arama API'si hata döndü" });
+                }
+
+                // ✅ Response wrapper'ını parse et
+                var apiResponse = System.Text.Json.JsonSerializer.Deserialize<Models.ViewModels.ProductSearchApiResponse>(
+                    jsonContent,
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }
+                );
+
+                if (apiResponse == null || !apiResponse.Success)
+                {
+                    _logger.LogWarning("API returned unsuccessful response or null");
+                    return Json(new { success = false, message = apiResponse?.Message ?? "Ürün bulunamadı" });
+                }
+
+                // ✅ API modelini frontend modeline dönüştür
+                var products = apiResponse.Data
+                    .Select(Models.ViewModels.ProductDto.FromApiDto)
+                    .ToList();
+
+                _logger.LogInformation("=== SEARCH COMPLETED ===");
+                _logger.LogInformation("Found {Count} products", products.Count);
+
+                return Json(new
+                {
+                    success = true,
+                    data = products,
+                    count = products.Count,
+                    message = $"{products.Count} ürün bulundu"
                 });
+            }
+            catch (System.Text.Json.JsonException jsonEx)
+            {
+                _logger.LogError(jsonEx, "JSON parsing error in SearchProducts");
+                return Json(new { success = false, message = "Ürün verileri işlenirken hata oluştu" });
             }
             catch (Exception ex)
             {
@@ -2301,6 +2361,7 @@ namespace SantiyeTalepWebUI.Controllers
                 return Json(new { success = false, message = "Ürün arama sırasında hata oluştu: " + ex.Message });
             }
         }
+
 
         /// <summary>
         /// Excel yönetim sayfası
@@ -2327,9 +2388,9 @@ namespace SantiyeTalepWebUI.Controllers
             return View();
         }
 
-       //Notification Management Methods
-       [HttpGet]
-        public async Task<IActionResult> GetNotifications()
+        //Notification Management Methods
+        [HttpGet]
+        public async Task<IActionResult> GetNotifications([FromQuery] bool unreadOnly = false)
         {
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
@@ -2337,7 +2398,14 @@ namespace SantiyeTalepWebUI.Controllers
 
             try
             {
-                var notifications = await _apiService.GetAsync<List<Models.DTOs.NotificationDto>>("api/Notification", token) ?? new List<Models.DTOs.NotificationDto>();
+                // ✅ unreadOnly parametresini backend'e ilet
+                var endpoint = $"api/Notification?unreadOnly={unreadOnly}";
+
+                var notifications = await _apiService.GetAsync<List<Models.DTOs.NotificationDto>>(endpoint, token)
+                    ?? new List<Models.DTOs.NotificationDto>();
+
+                _logger.LogInformation($"Loaded {notifications.Count} notifications (unreadOnly: {unreadOnly})");
+
                 return Json(new { success = true, data = notifications });
             }
             catch (Exception ex)
@@ -2347,9 +2415,10 @@ namespace SantiyeTalepWebUI.Controllers
             }
         }
 
+
         [HttpGet]
         public async Task<IActionResult> GetNotificationSummary()
-       {
+        {
             var token = _authService.GetStoredToken();
             if (string.IsNullOrEmpty(token))
                 return Json(new { success = false, message = "Oturum süresi doldu" });
@@ -2376,11 +2445,11 @@ namespace SantiyeTalepWebUI.Controllers
             try
             {
                 _logger.LogInformation("MarkNotificationAsRead called with ID: {NotificationId}", id);
-                
+
                 await _apiService.PutAsync<dynamic>($"api/Notification/{id}/read", new { }, token);
-                
+
                 _logger.LogInformation("Backend API response received for notification {NotificationId}", id);
-                
+
                 return Json(new { success = true, message = "Bildirim okundu olarak işaretlendi" });
             }
             catch (Exception ex)

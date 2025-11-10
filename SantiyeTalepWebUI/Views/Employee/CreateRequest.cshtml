@@ -38,7 +38,7 @@
                         <div class="card-body">
                             <form asp-action="CreateRequest" method="post" class="needs-validation" novalidate>
                                 @Html.AntiForgeryToken()
-                                
+
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <div class="mb-3">
@@ -168,11 +168,11 @@
             overflow-y: auto;
             outline: 0;
         }
-        
-        .modal.show {
-            display: block !important;
-        }
-        
+
+            .modal.show {
+                display: block !important;
+            }
+
         .modal-backdrop {
             position: fixed;
             top: 0;
@@ -183,12 +183,12 @@
             background-color: #000;
             opacity: 0.5;
         }
-        
+
         body.modal-open {
             overflow: hidden;
         }
     </style>
-    
+
     <script>
         // Employee site brand information - global variables
         let siteBrands = [];
@@ -221,9 +221,9 @@
 
             isLoadingSiteInfo = true;
             console.log('Starting to load site information...');
-            
+
             try {
-                const response = await fetch('@Url.Action("GetMySiteInfo", "Employee")', {
+                const response = await fetch('/Employee/GetMySiteInfo', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -239,10 +239,10 @@
                     if (result.success) {
                         siteInfo = result.site;
                         siteBrands = siteInfo.brands || [];
-                        
+
                         console.log('Site info loaded successfully:', siteInfo);
                         console.log('Site brands loaded:', siteBrands);
-                        
+
                         // Update UI to show site brand information
                         updateSiteBrandInfo();
                     } else {
@@ -252,13 +252,13 @@
                 } else {
                     const errorText = await response.text();
                     console.warn('Could not load site information. Status:', response.status, 'Response:', errorText);
-                    
+
                     // Show warning to user
                     showInfoMessage('Şantiye bilgileri yüklenemedi. Ürün araması tüm markalardan yapılacak.', 'warning');
                 }
             } catch (error) {
                 console.error('Error loading site information:', error);
-                
+
                 // Show error to user
                 showInfoMessage('Şantiye bilgileri yüklenirken hata oluştu. Ürün araması tüm markalardan yapılacak.', 'warning');
             } finally {
@@ -270,7 +270,7 @@
         function showInfoMessage(message, type = 'info') {
             const alertClass = type === 'warning' ? 'alert-warning' : 'alert-info';
             const iconClass = type === 'warning' ? 'ri-alert-line' : 'ri-information-line';
-            
+
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
             alertDiv.innerHTML = `
@@ -278,10 +278,10 @@
                 ${message}
                 <button type="button" class="btn-close" onclick="this.parentElement.remove()" aria-label="Close"></button>
             `;
-            
+
             const searchContainer = document.getElementById('productSearch').closest('.mb-3');
             searchContainer.insertAdjacentElement('afterend', alertDiv);
-            
+
             // Auto remove after 10 seconds
             setTimeout(() => {
                 if (alertDiv.parentNode) {
@@ -294,13 +294,13 @@
         function updateSiteBrandInfo() {
             if (siteInfo && siteBrands.length > 0) {
                 const searchContainer = document.getElementById('productSearch').closest('.mb-3');
-                
+
                 // Remove existing brand info if present
                 const existingInfo = document.getElementById('siteBrandInfo');
                 if (existingInfo) {
                     existingInfo.remove();
                 }
-                
+
                 // Create brand info display
                 // const brandInfo = document.createElement('div');
                 // brandInfo.id = 'siteBrandInfo';
@@ -309,13 +309,13 @@
                 //     <div class="d-flex align-items-center">
                 //         <i class="ri-information-line me-2"></i>
                 //         <div>
-                //             <strong>${siteInfo.name}</strong> şantiyesinde kayıtlı markalar: 
+                //             <strong>${siteInfo.name}</strong> şantiyesinde kayıtlı markalar:
                 //             ${siteBrands.map(brand => `<span class="badge bg-primary ms-1">${brand.name}</span>`).join('')}
                 //         </div>
                 //     </div>
                 //     <small class="text-muted d-block mt-1">Arama sonuçları bu markalarla sınırlandırılacaktır.</small>
                 // `;
-                
+
                 // searchContainer.appendChild(brandInfo);
             } else if (siteInfo && siteBrands.length === 0) {
                 showInfoMessage(`${siteInfo.name} şantiyesinde henüz marka tanımlanmamış. Ürün araması tüm markalardan yapılacak.`, 'warning');
@@ -342,26 +342,26 @@
             modalElement.classList.add('show');
             modalElement.setAttribute('aria-modal', 'true');
             modalElement.setAttribute('role', 'dialog');
-            
+
             // Add backdrop
             if (!document.querySelector('.modal-backdrop')) {
                 const backdrop = document.createElement('div');
                 backdrop.className = 'modal-backdrop fade show';
                 document.body.appendChild(backdrop);
             }
-            
+
             document.body.classList.add('modal-open');
 
             const loadingSpinner = document.getElementById('loadingSpinner');
             const productListModal = document.getElementById('productListModal');
-            
+
             // Show loading spinner
             loadingSpinner.style.display = 'block';
             productListModal.innerHTML = '';
 
             // Build search URL - The backend will automatically use the employee's site brands
-            const searchUrl = `@Url.Action("SearchProducts", "Employee")?query=${encodeURIComponent(searchTerm)}`;
-            
+            const searchUrl = `/Employee/SearchProducts?query=${encodeURIComponent(searchTerm)}`;
+
             console.log('Searching with automatic brand filtering for site brands');
             console.log('Search URL:', searchUrl);
 
@@ -381,26 +381,26 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 const result = await response.json();
                 console.log('Search API result:', result);
-                
+
                 // Hide loading spinner
                 loadingSpinner.style.display = 'none';
-                
+
                 let products = [];
                 if (result.success && result.data && Array.isArray(result.data)) {
                     products = result.data;
                 } else if (Array.isArray(result)) {
                     products = result;
                 }
-                
+
                 console.log('Processed products:', products);
-                
+
                 if (!products || products.length === 0) {
-                    const brandFilterMessage = siteBrands && siteBrands.length > 0 ? 
+                    const brandFilterMessage = siteBrands && siteBrands.length > 0 ?
                         `<br><small class="text-muted">Arama ${siteInfo?.name || 'şantiye'} markalarıyla sınırlandırıldı: ${siteBrands.map(b => b.name).join(', ')}</small>` : '';
-                    
+
                     productListModal.innerHTML = `
                         <div class="text-center text-muted py-4">
                             <i class="ri-search-line fs-1"></i>
@@ -414,8 +414,8 @@
                         <div class="alert alert-success mb-3">
                             <i class="ri-check-line me-2"></i>
                             <strong>${products.length}</strong> ürün bulundu
-                            ${siteBrands && siteBrands.length > 0 ? 
-                                ` (${siteInfo?.name || 'şantiye'} markalarına göre otomatik filtrelendi)` : 
+                            ${siteBrands && siteBrands.length > 0 ?
+                                ` (${siteInfo?.name || 'şantiye'} markalarına göre otomatik filtrelendi)` :
                                 ''}
                         </div>
                         <div class="table-responsive">
@@ -428,27 +428,27 @@
                                 </thead>
                                 <tbody>
                     `;
-                    
+
                     products.forEach((product, index) => {
                         const description = product.description || product.name || product.title || '';
                         const brand = product.brand || '';
-                        
+
                         const safeDescription = String(description).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
-                        
+
                         // Highlight if brand matches site brands
-                        const brandBadgeClass = siteBrands && siteBrands.some(sb => 
-                            sb.name.toLowerCase().includes(brand.toLowerCase()) || 
+                        const brandBadgeClass = siteBrands && siteBrands.some(sb =>
+                            sb.name.toLowerCase().includes(brand.toLowerCase()) ||
                             brand.toLowerCase().includes(sb.name.toLowerCase())
                         ) ? 'bg-success' : 'bg-secondary';
-                        
+
                         tableHtml += `
                             <tr>
                                 <td>
                                     <div class="fw-medium">${description}</div>
-                                    ${product.units && product.units.length > 0 ? 
+                                    ${product.units && product.units.length > 0 ?
                                         `<small class="text-muted">Birim: ${product.units.join(', ')}</small>` : ''
                                     }
-                                </td>                                                             
+                                </td>
                                 <td>
                                     <button type="button" class="btn btn-primary btn-sm" onclick="selectProduct('${safeDescription}')">
                                         <i class="ri-add-line"></i> Seç
@@ -457,7 +457,7 @@
                             </tr>
                         `;
                     });
-                    
+
                     tableHtml += `</tbody></table></div>`;
                     productListModal.innerHTML = tableHtml;
                 }
@@ -480,12 +480,12 @@
             modalElement.classList.remove('show');
             modalElement.removeAttribute('aria-modal');
             modalElement.removeAttribute('role');
-            
+
             const backdrop = document.querySelector('.modal-backdrop');
             if (backdrop) {
                 backdrop.remove();
             }
-            
+
             document.body.classList.remove('modal-open');
         }
 
@@ -495,9 +495,9 @@
             if (productSearchField) {
                 productSearchField.value = description;
             }
-            
+
             closeModal();
-            
+
             // Show success message
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
@@ -505,10 +505,10 @@
                 <strong>✅ Ürün Seçildi:</strong> ${description}
                 <button type="button" class="btn-close" onclick="this.parentElement.remove()" aria-label="Close"></button>
             `;
-            
+
             const searchContainer = document.getElementById('productSearch').closest('.mb-3');
             searchContainer.insertAdjacentElement('afterend', alertDiv);
-            
+
             setTimeout(() => {
                 if (alertDiv.parentNode) {
                     alertDiv.remove();
@@ -530,10 +530,10 @@
         // Initialize when DOM is loaded
         document.addEventListener("DOMContentLoaded", function() {
             console.log('DOM loaded, initializing...');
-            
+
             // Load site info when page loads
             loadSiteInfo();
-            
+
             // Add click event to modal for backdrop close
             document.getElementById('productSearchModal').addEventListener('click', function(e) {
                 if (e.target === this) {

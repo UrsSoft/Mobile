@@ -23,7 +23,6 @@
                 </div>
             </div>
             <!-- end page title -->
-
             <!-- Success/Error Messages -->
             @if (TempData["SuccessMessage"] != null)
             {
@@ -68,9 +67,9 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <form asp-action="CreateSupplier" method="post" class="needs-validation" novalidate>
+                            <form action="/Admin/CreateSupplier" method="post" class="needs-validation" novalidate>
                                 @Html.AntiForgeryToken()
-                                
+
                                 <!-- User Information -->
                                 <div class="row">
                                     <div class="col-12">
@@ -167,7 +166,7 @@
 @section Scripts {
     <script src="~/assets/libs/prismjs/prism.js"></script>
     <script src="~/assets/js/pages/form-validation.init.js"></script>
-    
+
     <script>
         $(document).ready(function() {
             // Phone input masking - limit to 11 digits (Turkish format: 05551234567)
@@ -209,15 +208,15 @@
         border-left: 4px solid;
         box-shadow: 0 2px 4px rgba(0,0,0,.08);
     }
-    
+
     .alert-success {
         border-left-color: #0ab39c;
     }
-    
+
     .alert-danger {
         border-left-color: #f06548;
     }
-    
+
     .alert-warning {
         border-left-color: #f7b84b;
     }

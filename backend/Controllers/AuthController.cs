@@ -13,6 +13,7 @@ namespace SantiyeTalepApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [AllowAnonymous]
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -408,5 +409,12 @@ namespace SantiyeTalepApi.Controllers
                 return StatusCode(500, new { message = "Şifre sıfırlama işlemi sırasında bir hata oluştu" });
             }
         }
+
+        [HttpGet]
+        public IActionResult Get()
+        {
+            return Ok("API çalışıyor!");
+        }
+
     }
 }

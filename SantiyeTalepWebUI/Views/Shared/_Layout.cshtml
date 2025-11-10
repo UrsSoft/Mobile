@@ -20,10 +20,14 @@
     <link href="~/assets/css/app.min.css" rel="stylesheet" type="text/css" />
     <!-- custom Css-->
     <link href="~/assets/css/custom.min.css" rel="stylesheet" type="text/css" />
-    <!-- Toastr CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+
+    <!-- ✅ BURAYI DEĞİŞTİR -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+
     <!-- Notification Checker CSS -->
     <link href="~/css/notification-checker.css" rel="stylesheet" type="text/css" />
+
+
 
     @RenderSection("Styles", false)
 </head>
@@ -42,6 +46,7 @@
                             <a href="/" class="logo logo-dark">
                                 <span class="logo-sm">
                                     <img src="~/assets/images/logo-sm.png" alt="" height="22">
+                                </span>
                                 </span>
                                 <span class="logo-lg">
                                     <img src="~/assets/images/logo-dark.png" alt="" height="17">
@@ -65,15 +70,6 @@
                                 <span></span>
                             </span>
                         </button>
-
-                        <!-- App Search-->
-                        <form class="app-search d-none d-md-block">
-                            <div class="position-relative">
-                                <input type="text" class="form-control" placeholder="Ara..." autocomplete="off" id="search-options" value="">
-                                <span class="mdi mdi-magnify search-widget-icon"></span>
-                                <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none" id="search-close-options"></span>
-                            </div>
-                        </form>
                     </div>
 
                     <div class="d-flex align-items-center">
@@ -190,7 +186,7 @@
 
                         <!-- Dashboard -->
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="@Url.Action("Dashboard", "Admin")">
+                            <a class="nav-link menu-link" href="/Admin/Dashboard">
                                 <i class="ri-dashboard-2-line"></i> <span>Dashboard</span>
                             </a>
                         </li>
@@ -203,10 +199,10 @@
                             <div class="collapse menu-dropdown" id="sidebarSites">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="@Url.Action("Sites", "Admin")" class="nav-link">Şantiyeler</a>
+                                        <a href="/Admin/Sites" class="nav-link">Şantiyeler</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="@Url.Action("CreateSite", "Admin")" class="nav-link">Yeni Şantiye</a>
+                                        <a href="/Admin/CreateSite" class="nav-link">Yeni Şantiye</a>
                                     </li>
                                 </ul>
                             </div>
@@ -220,10 +216,10 @@
                             <div class="collapse menu-dropdown" id="sidebarEmployees">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="@Url.Action("Employees", "Admin")" class="nav-link">Çalışanlar</a>
+                                        <a href="/Admin/Employees" class="nav-link">Çalışanlar</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="@Url.Action("CreateEmployee", "Admin")" class="nav-link">Çalışan Ekle</a>
+                                        <a href="/Admin/CreateEmployee" class="nav-link">Çalışan Ekle</a>
                                     </li>
                                 </ul>
                             </div>
@@ -237,10 +233,10 @@
                             <div class="collapse menu-dropdown" id="sidebarSuppliers">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="@Url.Action("Suppliers", "Admin")" class="nav-link">Tüm Tedarikçiler</a>
+                                        <a href="/Admin/Suppliers" class="nav-link">Tüm Tedarikçiler</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="@Url.Action("CreateSupplier", "Admin")" class="nav-link">Tedarikçi Ekle</a>
+                                        <a href="/Admin/CreateSupplier" class="nav-link">Tedarikçi Ekle</a>
                                     </li>
                                 </ul>
                             </div>
@@ -254,10 +250,10 @@
                             <div class="collapse menu-dropdown" id="sidebarRequests">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="@Url.Action("Requests", "Admin")" class="nav-link">Tüm Talepler</a>
+                                        <a href="/Admin/Requests" class="nav-link">Tüm Talepler</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="@Url.Action("CreateRequest", "Admin")" class="nav-link">Yeni Talep Ekle</a>
+                                        <a href="/Admin/CreateRequest" class="nav-link">Yeni Talep Ekle</a>
                                     </li>
                                 </ul>
                             </div>
@@ -271,13 +267,16 @@
                             <div class="collapse menu-dropdown" id="sidebarOffers">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="@Url.Action("Offers", "Admin")" class="nav-link">Tüm Teklifler</a>
+                                        <a href="/Admin/Offers" class="nav-link">Tüm Teklifler</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="@Url.Action("PendingOffers", "Admin")" class="nav-link">Bekleyen Teklifler</a>
+                                        <a href="/Admin/PendingOffers" class="nav-link">Bekleyen Teklifler</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="@Url.Action("ApprovedOffers", "Admin")" class="nav-link">Onaylı Teklifler</a>
+                                        <a href="/Admin/ApprovedOffers" class="nav-link">Onaylı Teklifler</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/Admin/RejectedOffers" class="nav-link">Reddedilen Teklifler</a>
                                     </li>
                                 </ul>
                             </div>
@@ -290,10 +289,10 @@
                             <div class="collapse menu-dropdown" id="sidebarExcels">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="@Url.Action("ExcelManagement", "Admin")" class="nav-link">Yüklenen Exceller</a>
+                                        <a href="/Admin/ExcelManagement" class="nav-link">Yüklenen Exceller</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="@Url.Action("SupplierExcelManagement", "Admin")" class="nav-link">Tedarikçi Excelleri</a>
+                                        <a href="/Admin/SupplierExcelManagement" class="nav-link">Tedarikçi Excelleri</a>
                                     </li>
                                 </ul>
                             </div>
@@ -345,8 +344,73 @@
             </div>
         </div>
     </div>
+    <!-- 1. ÖNCE jQuery (CDN) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-    <!-- JAVASCRIPT -->
+    <!-- 2. SONRA Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+
+    <!-- 3. Toastr Ayarları -->
+    <script>
+        // ✅ TOASTR AYARLARI
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut",
+            "preventDuplicates": true,
+            "newestOnTop": true
+        };
+
+        // 🔊 BİLDİRİM SESİ FONKSİYONU
+        function playNotificationSound() {
+            try {
+                // CDN'den ses çal (internet bağlantısı gerekli)
+                const audio = new Audio('https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3');
+                audio.volume = 0.5; // Ses seviyesi (0.0 - 1.0 arası)
+                audio.play().catch(err => {
+                    console.log('Ses çalınamadı:', err);
+                    // Ses çalmazsa sessiz devam et
+                });
+            } catch (error) {
+                console.log('Ses hatası:', error);
+            }
+        }
+
+        // 🎵 TOASTR'A SES EKLE (Override)
+        const originalSuccess = toastr.success;
+        const originalInfo = toastr.info;
+        const originalWarning = toastr.warning;
+        const originalError = toastr.error;
+
+        toastr.success = function(message, title, options) {
+            playNotificationSound();
+            return originalSuccess(message, title, options);
+        };
+
+        toastr.info = function(message, title, options) {
+            playNotificationSound();
+            return originalInfo(message, title, options);
+        };
+
+        toastr.warning = function(message, title, options) {
+            playNotificationSound();
+            return originalWarning(message, title, options);
+        };
+
+        toastr.error = function(message, title, options) {
+            playNotificationSound();
+            return originalError(message, title, options);
+        };
+
+        console.log('✅ Toastr ses entegrasyonu aktif');
+    </script>
+
+
+    <!-- 4. DİĞER KÜTÜPHANELERİ YÜKLE -->
     <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/assets/libs/simplebar/simplebar.min.js"></script>
     <script src="~/assets/libs/node-waves/waves.min.js"></script>
@@ -354,15 +418,15 @@
     <script src="~/assets/js/pages/plugins/lord-icon-2.1.0.js"></script>
     <script src="~/assets/js/plugins.js"></script>
     <script src="~/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
     <!-- apexcharts -->
     <script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
 
     <!-- Dashboard init -->
     <script src="~/assets/js/pages/dashboard-crm.init.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
     <!-- Toastr Notifications -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
 
     <!-- Admin Notifications Script (Global for Layout) -->
     <script>
@@ -372,16 +436,23 @@
         let notificationCheckInterval = null;
 
         // Initialize notifications when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+               document.addEventListener('DOMContentLoaded', function() {
             console.log('Layout: Initializing notifications');
             loadNotificationSummary();
             loadNotifications();
 
             // Start periodic check for new notifications every 60 seconds
             startNotificationCheck();
+
+            // 🔔 Okunmamış bildirim hatırlatmasını başlat
+            setTimeout(() => {
+                checkAndRemindUnreadNotifications(); // İlk kontrolü yap
+                startUnreadNotificationReminder(); // Periyodik kontrolü başlat
+            }, 5000); // 5 saniye sonra başla (sayfa yüklenmesini bekle)
         });
 
         // Start periodic notification check
+               // Start periodic notification check
         function startNotificationCheck() {
             // Clear existing interval if any
             if (notificationCheckInterval) {
@@ -395,6 +466,77 @@
                 loadNotifications();
             }, 60000); // 60 seconds
         }
+
+        // 🔔 OKUNMAMIŞ BİLDİRİM HATIRLATMA SİSTEMİ
+        let unreadReminderInterval = null;
+
+        function startUnreadNotificationReminder() {
+            // Mevcut interval'i temizle
+            if (unreadReminderInterval) {
+                clearInterval(unreadReminderInterval);
+            }
+
+            // 15 saniyede bir kontrol et
+            unreadReminderInterval = setInterval(() => {
+                checkAndRemindUnreadNotifications();
+            }, 15000); // 15 saniye
+
+            console.log('✅ Okunmamış bildirim hatırlatma sistemi başlatıldı (15 saniye)');
+        }
+
+        function stopUnreadNotificationReminder() {
+            if (unreadReminderInterval) {
+                clearInterval(unreadReminderInterval);
+                unreadReminderInterval = null;
+                console.log('⏹️ Okunmamış bildirim hatırlatma sistemi durduruldu');
+            }
+        }
+
+        async function checkAndRemindUnreadNotifications() {
+            try {
+                const response = await fetch('/Admin/GetNotificationSummary');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const unreadCount = result.data.unreadCount || 0;
+
+                    console.log(`🔍 Okunmamış bildirim kontrolü: ${unreadCount} adet`);
+
+                    if (unreadCount > 0) {
+                        // Ses çal
+                        playNotificationSound();
+
+                        // Toastr bildirimi göster
+                        const message = unreadCount === 1
+                            ? '1 okunmamış bildiriminiz var!'
+                            : `${unreadCount} okunmamış bildiriminiz var!`;
+
+                        toastr.warning(message, '🔔 Hatırlatma', {
+                            timeOut: 5000,
+                            extendedTimeOut: 2000,
+                            closeButton: true,
+                            progressBar: true,
+                            onclick: function() {
+                                // Bildirim dropdown'ını aç
+                                const notificationDropdown = document.getElementById('page-header-notifications-dropdown');
+                                if (notificationDropdown) {
+                                    notificationDropdown.click();
+                                }
+                            }
+                        });
+
+                        console.log('🔔 Hatırlatma bildirimi gönderildi');
+                    } else {
+                        // Okunmamış bildirim yoksa hatırlatmayı durdur
+                        console.log('✅ Tüm bildirimler okundu, hatırlatma durduruluyor');
+                        stopUnreadNotificationReminder();
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Hatırlatma kontrolü hatası:', error);
+            }
+        }
+
 
         // Load notification summary
         async function loadNotificationSummary() {
@@ -417,18 +559,39 @@
             }
         }
 
-        // Load notifications
-        async function loadNotifications() {
+                async function loadNotifications() {
             try {
                 console.log('Layout: Loading notifications');
-                const response = await fetch('/Admin/GetNotifications');
+
+                // ✅ Backend'den SADECE okunmamış bildirimleri çek
+                const response = await fetch('/Admin/GetNotifications?unreadOnly=true');
                 const result = await response.json();
 
                 console.log('Layout: Notifications response:', result);
 
                 if (result.success && result.data) {
-                    notifications = result.data;
-                    console.log('Layout: Notifications loaded, count:', notifications.length);
+                    const newNotifications = result.data; // Artık filtrelemeye gerek yok
+
+                    // 🔊 YENİ BİLDİRİM VARSA SES ÇAL
+                    const oldUnreadCount = notifications.length;
+                    const newUnreadCount = newNotifications.length;
+
+                    // Eğer okunmamış bildirim sayısı arttıysa
+                    if (newUnreadCount > oldUnreadCount && oldUnreadCount >= 0) {
+                        console.log('🔔 Yeni bildirim geldi! Ses çalınıyor...');
+                        playNotificationSound();
+
+                        // Toastr bildirimi göster
+                        toastr.info('Yeni bildiriminiz var!', 'Bildirim', {
+                            timeOut: 3000,
+                            onclick: function() {
+                                toggleNotifications();
+                            }
+                        });
+                    }
+
+                    notifications = newNotifications;
+                    console.log('Layout: Unread notifications loaded, count:', notifications.length);
                     displayNotifications();
                 } else {
                     console.warn('Layout: Failed to load notifications:', result);
@@ -439,6 +602,7 @@
                 showNotificationsError();
             }
         }
+
 
         // Update notification badge
         function updateNotificationBadge() {
@@ -460,44 +624,55 @@
             }
         }
 
-        // Display notifications
+                // Display notifications
         function displayNotifications() {
             const container = document.getElementById('notifications-container');
             console.log('Layout: Displaying notifications, count:', notifications ? notifications.length : 0);
 
-            if (!notifications || notifications.length === 0) {
+            // Sadece okunmamış bildirimleri göster
+            const unreadNotifications = notifications.filter(n => !n.isRead);
+
+            if (!unreadNotifications || unreadNotifications.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-4">
                         <div class="avatar-sm mx-auto mb-3">
-                            <span class="avatar-title bg-info-subtle text-info fs-18 rounded-circle">
-                                <i class="bx bx-bell"></i>
+                            <span class="avatar-title bg-success-subtle text-success fs-18 rounded-circle">
+                                <i class="bx bx-check-circle"></i>
                             </span>
                         </div>
-                        <h6 class="fs-13 text-muted">Henüz bildirim yok</h6>
-                        <p class="text-muted mb-0 fs-12">Yeni bildirimler burada görünecektir.</p>
+                        <h6 class="fs-13 text-muted">Tüm bildirimler okundu</h6>
+                        <p class="text-muted mb-0 fs-12">Yeni bildirimler geldiğinde burada görünecektir.</p>
                     </div>`;
                 return;
             }
 
             let html = '';
-            notifications.slice(0, 10).forEach(notification => {
+            unreadNotifications.slice(0, 10).forEach(notification => {
                 const iconClass = getNotificationIcon(notification.type);
-                const iconColor = notification.isRead ? 'text-muted' : 'text-primary';
-                const bgClass = notification.isRead ? '' : 'bg-light';
-                const date = new Date(notification.createdDate).toLocaleDateString('tr-TR');
+                const date = new Date(notification.createdDate).toLocaleDateString('tr-TR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
 
                 html += `
-                    <div class="text-reset notification-item d-block dropdown-item position-relative ${bgClass}"
+                    <div class="text-reset notification-item d-block dropdown-item position-relative bg-light"
                          style="cursor: pointer;"
+                         data-notification-id="${notification.id}"
                          onclick="goToRelatedPage(${notification.type}, ${notification.requestId || 'null'}, ${notification.offerId || 'null'}, ${notification.supplierId || 'null'}, ${notification.id})">
                         <div class="d-flex">
                             <div class="avatar-xs me-3 flex-shrink-0">
-                                <span class="avatar-title bg-info-subtle ${iconColor} rounded-circle fs-16">
+                                <span class="avatar-title bg-primary-subtle text-primary rounded-circle fs-16">
                                     <i class="${iconClass}"></i>
                                 </span>
                             </div>
                             <div class="flex-grow-1">
-                                <h6 class="mt-0 mb-1 fs-13 fw-semibold">${notification.title}</h6>
+                                <div class="d-flex align-items-center mb-1">
+                                    <h6 class="mt-0 mb-0 fs-13 fw-semibold flex-grow-1">${notification.title}</h6>
+                                    <span class="badge bg-primary ms-2">Yeni</span>
+                                </div>
                                 <div class="fs-12 text-muted">
                                     <p class="mb-1">${notification.message}</p>
                                 </div>
@@ -510,8 +685,9 @@
             });
 
             container.innerHTML = html;
-            console.log('Layout: Notifications displayed');
+            console.log('Layout: Unread notifications displayed:', unreadNotifications.length);
         }
+
 
         // Get notification icon based on type
         function getNotificationIcon(type) {
@@ -545,32 +721,54 @@
             console.log('Layout: Toggling notifications');
             loadNotifications();
         }
-
-        // İlgili sayfaya git
-        function goToRelatedPage(type, requestId, offerId, supplierId, notificationId) {
+                // İlgili sayfaya git ve bildirimi okundu işaretle
+        async function goToRelatedPage(type, requestId, offerId, supplierId, notificationId) {
             console.log('Layout: Going to related page, type:', type, 'notificationId:', notificationId);
-            
+
             // Önce bildirimi okundu olarak işaretle
             const notification = notifications.find(n => n.id === notificationId);
             if (notification && !notification.isRead) {
-                fetch(`/Admin/MarkNotificationAsRead`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(notificationId)
-                })
-                .then(response => response.json())
-                .then(data => {
+                try {
+                    const response = await fetch(`/Admin/MarkNotificationAsRead`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(notificationId)
+                    });
+
+                    const data = await response.json();
+
                     if (data.success) {
-                        notification.isRead = true;
+                        console.log('✅ Bildirim okundu olarak işaretlendi');
+
+                        // ✅ Bildirimi listeden KALDIR (çünkü artık okundu)
+                        notifications = notifications.filter(n => n.id !== notificationId);
+
+                        // ✅ UI'ı güncelle
                         displayNotifications();
                         loadNotificationSummary();
+
+                        // ✅ Dropdown'dan da kaldır
+                        const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                        if (notificationElement) {
+                            notificationElement.style.transition = 'opacity 0.3s';
+                            notificationElement.style.opacity = '0';
+                            setTimeout(() => {
+                                notificationElement.remove();
+                            }, 300);
+                        }
+
+                        // Okunmamış bildirim kalmadıysa hatırlatmayı durdur
+                        if (notifications.length === 0) {
+                            if (typeof stopUnreadNotificationReminder === 'function') {
+                                stopUnreadNotificationReminder();
+                            }
+                        }
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Layout: Error marking notification as read:', error);
-                });
+                }
             }
 
             // Sayfaya yönlendir
@@ -609,10 +807,14 @@
                     break;
             }
 
+            // Kısa bir gecikme ile yönlendir
             setTimeout(() => {
                 window.location.href = targetUrl;
-            }, 100);
+            }, 300);
         }
+
+
+       
     </script>
 
     <!-- App js -->

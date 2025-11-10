@@ -267,14 +267,14 @@ namespace SantiyeTalepApi.Data
                 new User
                 {
                     Id = 1,
-                    Email = "altanemre1989@gmail.com",
+                    Email = "info@elementelk.com",
                     // admin123 şifresi için doğru BCrypt hash
                     Password = "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.",
                     FullName = "Sistem Yöneticisi",
-                    Phone = "05366295131",
+                    Phone = "05355229174",
                     Role = UserRole.Admin,
                     IsActive = true,
-                    CreatedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) // Sabit UTC tarih
+                    CreatedDate = new DateTime(2025,11,1)
                 }
             );
             

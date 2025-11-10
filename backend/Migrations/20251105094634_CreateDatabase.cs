@@ -393,7 +393,7 @@ namespace SantiyeTalepApi.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "CreatedDate", "Email", "FcmToken", "FullName", "IsActive", "Password", "PasswordResetToken", "PasswordResetTokenExpiry", "Phone", "Role" },
-                values: new object[] { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "altanemre1989@gmail.com", null, "Sistem Yöneticisi", true, "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.", null, null, "05366295131", 1 });
+                values: new object[] { 1, new DateTime(2025, 11, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "info@elementelk.com", null, "Sistem Yöneticisi", true, "$2a$11$V070yifCQwjKA5g1Ag/FHeqNHjWyUZTZC.cE3Q3nZueVTUr4up4x.", null, null, "05355229174", 1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_CategoryBrands_BrandId",

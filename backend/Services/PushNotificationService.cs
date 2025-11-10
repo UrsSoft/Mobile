@@ -163,39 +163,17 @@ namespace SantiyeTalepApi.Services
             {
                 if (_isFirebaseInitialized)
                 {
-                    // Real Firebase implementation
-                    var messageBuilder = new Message()
+                    // Use data-only messages for reliable background delivery
+                    // The notification will be displayed by the client app
+                    var dataDict = new Dictionary<string, string>
                     {
-                        Token = fcmToken,
-                        Notification = new FirebaseAdmin.Messaging.Notification()
-                        {
-                            Title = title,
-                            Body = body,
-                        },
-                        Android = new AndroidConfig()
-                        {
-                            Priority = Priority.High,
-                            Notification = new AndroidNotification()
-                            {
-                                Sound = "default",
-                                ChannelId = "default",
-                                Priority = NotificationPriority.MAX,
-                            }
-                        },
-                        Apns = new ApnsConfig()
-                        {
-                            Aps = new Aps()
-                            {
-                                Sound = "default",
-                                Badge = 1,
-                            }
-                        }
+                        ["title"] = title,
+                        ["body"] = body
                     };
 
-                    // Add data payload if provided
+                    // Add custom data payload if provided
                     if (data != null)
                     {
-                        var dataDict = new Dictionary<string, string>();
                         var jsonData = JsonSerializer.Serialize(data);
                         var dataObj = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonData);
                         
@@ -206,14 +184,31 @@ namespace SantiyeTalepApi.Services
                                 dataDict[kvp.Key] = kvp.Value?.ToString() ?? "";
                             }
                         }
-                        
-                        messageBuilder.Data = dataDict;
                     }
+
+                    // Create message with data-only payload (no notification field)
+                    // This ensures the message is delivered in all app states
+                    var messageBuilder = new Message()
+                    {
+                        Token = fcmToken,
+                        Data = dataDict,
+                        Android = new AndroidConfig()
+                        {
+                            Priority = Priority.High,
+                        },
+                        Apns = new ApnsConfig()
+                        {
+                            Headers = new Dictionary<string, string>
+                            {
+                                ["apns-priority"] = "10"
+                            }
+                        }
+                    };
 
                     var messaging = FirebaseMessaging.DefaultInstance;
                     var result = await messaging.SendAsync(messageBuilder);
                     
-                    _logger.LogInformation($"Successfully sent FCM notification. Message ID: {result}");
+                    _logger.LogInformation($"Successfully sent FCM data message. Message ID: {result}");
                 }
                 else
                 {

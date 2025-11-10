@@ -15,8 +15,8 @@
 
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
-                                <li class="breadcrumb-item"><a href="@Url.Action("Employees", "Admin")">Çalýþanlar</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Employees">Çalýþanlar</a></li>
                                 <li class="breadcrumb-item active">Yeni Çalýþan</li>
                             </ol>
                         </div>
@@ -24,7 +24,6 @@
                 </div>
             </div>
             <!-- end page title -->
-
             <!-- Success/Error Messages -->
             @if (TempData["SuccessMessage"] != null)
             {
@@ -70,9 +69,9 @@
                         </div><!-- end card header -->
 
                         <div class="card-body">
-                            <form asp-action="CreateEmployee" method="post" class="needs-validation" novalidate>
+                            <form action="/Admin/CreateEmployee" method="post" class="needs-validation" novalidate>
                                 @Html.AntiForgeryToken()
-                                
+
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <div class="mb-3">
@@ -148,7 +147,7 @@
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <div class="hstack gap-2 justify-content-end">
-                                            <a href="@Url.Action("Employees", "Admin")" class="btn btn-light">
+                                            <a href=/Admin/Employees" class="btn btn-light">
                                                 <i class="ri-arrow-left-line align-bottom me-1"></i> Geri Dön
                                             </a>
                                             <button type="submit" class="btn btn-primary">
@@ -168,12 +167,12 @@
     </div>
     <!-- End Page-content -->
 
-   
+
 </div>
 
 @section Scripts {
     <script src="~/assets/libs/choices.js/public/assets/scripts/choices.min.js"></script>
-    
+
     <script>
         // Form validation
         (function() {
@@ -217,7 +216,7 @@
                 let value = this.value;
                 // Remove all non-numeric characters
                 value = value.replace(/\D/g, '');
-                
+
                 // Format the phone number
                 if (value.length > 0) {
                     if (value.length <= 4) {
@@ -233,7 +232,7 @@
                         value = value.slice(0, 4) + ' ' + value.slice(4, 7) + ' ' + value.slice(7, 9) + ' ' + value.slice(9, 11);
                     }
                 }
-                
+
                 this.value = value;
             });
 
@@ -242,7 +241,7 @@
             if (form) {
                 form.addEventListener('submit', function(e) {
                     let phoneValue = phoneInput.value;
-                    
+
                     // Remove spaces and format to clean number before submission
                     phoneValue = phoneValue.replace(/\s/g, '');
                     phoneInput.value = phoneValue;
@@ -257,15 +256,15 @@
         border-left: 4px solid;
         box-shadow: 0 2px 4px rgba(0,0,0,.08);
     }
-    
+
     .alert-success {
         border-left-color: #0ab39c;
     }
-    
+
     .alert-danger {
         border-left-color: #f06548;
     }
-    
+
     .alert-warning {
         border-left-color: #f7b84b;
     }

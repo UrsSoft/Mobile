@@ -15,7 +15,7 @@
 
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Admin")">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/Admin/Dashboard">Dashboard</a></li>
                                 <li class="breadcrumb-item active">Tedarikçiler</li>
                             </ol>
                         </div>
@@ -23,7 +23,6 @@
                 </div>
             </div>
             <!-- end page title -->
-
             @if (TempData["SuccessMessage"] != null)
             {
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -51,7 +50,7 @@
                                 Tedarikçi Listesi
                             </h4>
                             <div class="flex-shrink-0">
-                                <a href="@Url.Action("CreateSupplier", "Admin")" class="btn btn-primary">
+                                <a href="/Admin/CreateSupplier" class="btn btn-primary">
                                     <i class="ri-add-line align-bottom me-1"></i> Yeni Tedarikçi Ekle
                                 </a>
                             </div>
@@ -86,7 +85,7 @@
                             <div class="table-responsive">
                                 <table class="table table-nowrap table-hover align-middle mb-0" id="suppliersTable">
                                     <thead class="table-light">
-                                        <tr class="text-center">                                            
+                                        <tr class="text-center">
                                             <th scope="col">Þirket Bilgileri</th>
                                             <th scope="col">Ýletiþim Kiþisi</th>
                                             <th scope="col">E-posta</th>
@@ -101,7 +100,7 @@
                                         {
                                             @foreach (var supplier in Model)
                                             {
-                                                <tr data-status="@(supplier.User?.IsActive == true ? "active" : "inactive")" class="text-center">                                                  
+                                                <tr data-status="@(supplier.User?.IsActive == true ? "active" : "inactive")" class="text-center">
                                                     <td>
                                                         <div class="d-flex align-items-center">
                                                             <div class="flex-shrink-0 me-2">
@@ -122,9 +121,9 @@
                                                     <td>
                                                         <div class="d-flex align-items-center">
                                                             <div class="flex-grow-1">
-                                                                <h6 class="mb-1">@supplier.User?.FullName</h6>                                                              
+                                                                <h6 class="mb-1">@supplier.User?.FullName</h6>
                                                             </div>
-                                                           
+
                                                         </div>
                                                     </td>
                                                     <td>
@@ -165,7 +164,7 @@
                                                             <button onclick="deleteSupplier(@supplier.Id, '@(string.IsNullOrWhiteSpace(supplier.FullName) ? "Bu çalýþan" : supplier.FullName)')" class="btn btn-sm btn-soft-danger">
                                                                 <i class="ri-delete-bin-fill align-bottom"></i> Sil
                                                             </button>
-                                                        </div>                                                       
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             }
@@ -178,7 +177,7 @@
                                                         <i class="ri-user-add-line display-3 text-muted mb-3"></i>
                                                         <h5 class="text-muted mb-2">Henüz tedarikçi bulunmuyor</h5>
                                                         <p class="text-muted mb-3">Yeni tedarikçi eklemek için butonu kullanabilirsiniz.</p>
-                                                        <a href="@Url.Action("CreateSupplier", "Admin")" class="btn btn-primary">
+                                                        <a href="/Admin/CreateSupplier" class="btn btn-primary">
                                                             <i class="ri-add-line me-1"></i> Ýlk Tedarikçiyi Ekle
                                                         </a>
                                                     </div>
@@ -230,9 +229,9 @@
     <script>
         function viewSupplier(id) {
             $('#supplierDetailModal').modal('show');
-            
+
             $.ajax({
-                url: '@Url.Action("GetSupplierDetails", "Admin")',
+                url: '/Admin/GetSupplierDetails',
                 type: 'GET',
                 data: { id: id },
                 success: function (response) {
@@ -240,7 +239,7 @@
                         $('#supplierDetailContent').html(response.html);
                     } else {
                         $('#supplierDetailContent').html(
-                            '<div class="alert alert-danger"><i class="ri-error-warning-line me-2"></i>' + 
+                            '<div class="alert alert-danger"><i class="ri-error-warning-line me-2"></i>' +
                             response.message + '</div>'
                         );
                     }
@@ -254,8 +253,8 @@
             });
         }
 
-        function editSupplier(id) {
-            window.location.href = '@Url.Action("EditSupplier", "Admin")?id=' + id;
+               function editSupplier(id) {
+            window.location.href = '/Admin/EditSupplier?id=' + id;
         }
 
         function deleteSupplier(id) {
@@ -271,7 +270,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: '@Url.Action("DeleteSupplier", "Admin")',
+                        url: '/Admin/DeleteSupplier',
                         type: 'POST',
                         data: { id: id },
                         headers: {
@@ -328,7 +327,7 @@
                     var row = $(this);
                     var text = row.text().toLowerCase();
                     var status = row.data('status');
-                    
+
                     var matchSearch = searchText === '' || text.indexOf(searchText) > -1;
                     var matchStatus = statusFilter === '' || status === statusFilter;
 

@@ -1,6 +1,6 @@
-@model SantiyeTalepWebUI.Models.DTOs.OfferListViewModel
+ï»¿@model SantiyeTalepWebUI.Models.DTOs.OfferListViewModel
 @{
-    ViewData["Title"] = "Tüm Teklifler";
+    ViewData["Title"] = "Onaylanan Teklifler";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -26,8 +26,8 @@
         }
 
         .offer-highlight {
-            background-color: #fff3cd !important;
-            border: 2px solid #ffc107 !important;
+            background-color: #d1f2eb !important;
+            border: 2px solid #28a745 !important;
         }
     </style>
 }
@@ -41,12 +41,12 @@
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                         <h4 class="mb-sm-0">
-                            <i class="ri-price-tag-3-line me-2"></i>Tedarikçi Teklifleri
+                            <i class="ri-check-double-line me-2"></i>Onaylanan Teklifler
                         </h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
                                 <li class="breadcrumb-item"><a href="/Admin/Dashboard">Dashboard</a></li>
-                                <li class="breadcrumb-item active">Teklifler</li>
+                                <li class="breadcrumb-item active">Onaylanan Teklifler</li>
                             </ol>
                         </div>
                     </div>
@@ -55,74 +55,16 @@
 
             <!-- Quick Stats -->
             <div class="row mb-4">
-                <div class="col-xl-3 col-md-6">
+                <div class="col-xl-4 col-md-6">
                     <div class="card card-animate">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <p class="text-uppercase fw-medium text-muted mb-0">Toplam Teklifler</p>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <h5 class="text-primary fs-14 mb-0">
-                                        <i class="ri-arrow-right-up-line fs-13 align-middle"></i>
-                                    </h5>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-end justify-content-between mt-4">
-                                <div>
-                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4">
-                                        <span class="counter-value" data-target="@Model.Offers.Count">@Model.Offers.Count</span>
-                                    </h4>
-                                </div>
-                                <div class="avatar-sm flex-shrink-0">
-                                    <span class="avatar-title bg-primary-subtle rounded fs-3">
-                                        <i class="ri-price-tag-3-line text-primary"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-animate">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <p class="text-uppercase fw-medium text-muted mb-0">Bekleyen Teklifler</p>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <h5 class="text-warning fs-14 mb-0">
-                                        <i class="ri-time-line fs-13 align-middle"></i>
-                                    </h5>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-end justify-content-between mt-4">
-                                <div>
-                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-warning">
-                                        <span class="counter-value" data-target="@Model.Offers.Count(o => o.Status == OfferStatus.Pending)">@Model.Offers.Count(o => o.Status == OfferStatus.Pending)</span>
-                                    </h4>
-                                </div>
-                                <div class="avatar-sm flex-shrink-0">
-                                    <span class="avatar-title bg-warning-subtle rounded fs-3">
-                                        <i class="ri-time-line text-warning"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-animate">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <p class="text-uppercase fw-medium text-muted mb-0">Onaylanan</p>
+                                    <p class="text-uppercase fw-medium text-muted mb-0">Onaylanan Teklifler</p>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <h5 class="text-success fs-14 mb-0">
-                                        <i class="ri-check-line fs-13 align-middle"></i>
+                                        <i class="ri-check-double-line fs-13 align-middle"></i>
                                     </h5>
                                 </div>
                             </div>
@@ -134,7 +76,7 @@
                                 </div>
                                 <div class="avatar-sm flex-shrink-0">
                                     <span class="avatar-title bg-success-subtle rounded fs-3">
-                                        <i class="ri-check-line text-success"></i>
+                                        <i class="ri-check-double-line text-success"></i>
                                     </span>
                                 </div>
                             </div>
@@ -142,28 +84,57 @@
                     </div>
                 </div>
 
-                <div class="col-xl-3 col-md-6">
+                <div class="col-xl-4 col-md-6">
                     <div class="card card-animate">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <p class="text-uppercase fw-medium text-muted mb-0">Reddedilen</p>
+                                    <p class="text-uppercase fw-medium text-muted mb-0">Toplam Tutar</p>
                                 </div>
                                 <div class="flex-shrink-0">
-                                    <h5 class="text-danger fs-14 mb-0">
-                                        <i class="ri-close-line fs-13 align-middle"></i>
+                                    <h5 class="text-primary fs-14 mb-0">
+                                        <i class="ri-money-dollar-circle-line fs-13 align-middle"></i>
                                     </h5>
                                 </div>
                             </div>
                             <div class="d-flex align-items-end justify-content-between mt-4">
                                 <div>
-                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-danger">
-                                        <span class="counter-value" data-target="@Model.Offers.Count(o => o.Status == OfferStatus.Rejected)">@Model.Offers.Count(o => o.Status == OfferStatus.Rejected)</span>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-primary">
+                                        <span class="counter-value" data-target="@Model.Offers.Where(o => o.Status == OfferStatus.Approved).Sum(o => o.FinalPrice)">@Model.Offers.Where(o => o.Status == OfferStatus.Approved).Sum(o => o.FinalPrice).ToString("N0")</span>
                                     </h4>
                                 </div>
                                 <div class="avatar-sm flex-shrink-0">
-                                    <span class="avatar-title bg-danger-subtle rounded fs-3">
-                                        <i class="ri-close-line text-danger"></i>
+                                    <span class="avatar-title bg-primary-subtle rounded fs-3">
+                                        <i class="ri-money-dollar-circle-line text-primary"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4 col-md-6">
+                    <div class="card card-animate">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <p class="text-uppercase fw-medium text-muted mb-0">TedarikÃ§i SayÄ±sÄ±</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <h5 class="text-info fs-14 mb-0">
+                                        <i class="ri-user-star-line fs-13 align-middle"></i>
+                                    </h5>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end justify-content-between mt-4">
+                                <div>
+                                    <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-info">
+                                        <span class="counter-value" data-target="@Model.Offers.Where(o => o.Status == OfferStatus.Approved).Select(o => o.SupplierId).Distinct().Count()">@Model.Offers.Where(o => o.Status == OfferStatus.Approved).Select(o => o.SupplierId).Distinct().Count()</span>
+                                    </h4>
+                                </div>
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-info-subtle rounded fs-3">
+                                        <i class="ri-user-star-line text-info"></i>
                                     </span>
                                 </div>
                             </div>
@@ -178,21 +149,23 @@
                     <div class="card">
                         <div class="card-header">
                             <div class="d-flex align-items-center justify-content-between">
-                                <h4 class="card-title mb-0">Tedarikçi Teklifleri</h4>
+                                <h4 class="card-title mb-0">
+                                    <i class="ri-check-line me-2"></i>Onaylanan Teklifler
+                                </h4>
                             </div>
                         </div>
                         <div class="card-body">
                             <!-- Currency Warning -->
-                            <div class="alert alert-info" role="alert">
+                            <div class="alert alert-success" role="alert">
                                 <div class="d-flex">
                                     <div class="flex-shrink-0 me-3">
-                                        <i class="ri-information-line fs-16"></i>
+                                        <i class="ri-checkbox-circle-line fs-16"></i>
                                     </div>
                                     <div class="flex-grow-1">
-                                        <h5 class="alert-heading">Para Birimi Uyarýsý</h5>
+                                        <h5 class="alert-heading">Onaylanan Teklifler</h5>
                                         <p class="mb-0">
-                                            Teklifler farklý para birimlerinde olabilir (?, $, €, £).
-                                            Karþýlaþtýrma yaparken güncel kur deðerlerini dikkate alýnýz.
+                                            Bu sayfada sadece onaylanmÄ±ÅŸ teklifler listelenmektedir.
+                                            Teklifler farklÄ± para birimlerinde olabilir (â‚º, $, â‚¬, Â£).
                                         </p>
                                     </div>
                                 </div>
@@ -200,30 +173,22 @@
 
                             <!-- Filters -->
                             <div class="row g-3 mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <div class="search-box">
                                         <input type="text" class="form-control search" placeholder="Teklif ara..." id="searchInput">
                                         <i class="ri-search-line search-icon"></i>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <select class="form-select" id="statusFilter">
-                                        <option value="">Tüm Durumlar</option>
-                                        <option value="1">Bekleyen</option>
-                                        <option value="2">Onaylanan</option>
-                                        <option value="3">Reddedilen</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <select class="form-select" id="supplierFilter">
-                                        <option value="">Tüm Tedarikçiler</option>
-                                        @foreach (var supplier in Model.Offers.GroupBy(o => new { o.SupplierId, o.SupplierName }).Select(g => g.Key))
+                                        <option value="">TÃ¼m TedarikÃ§iler</option>
+                                        @foreach (var supplier in Model.Offers.Where(o => o.Status == OfferStatus.Approved).GroupBy(o => new { o.SupplierId, o.SupplierName }).Select(g => g.Key))
                                         {
                                             <option value="@supplier.SupplierId">@supplier.SupplierName</option>
                                         }
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <input type="date" class="form-control" id="dateFilter" placeholder="Tarih filtrele">
                                 </div>
                             </div>
@@ -234,25 +199,26 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>Talep</th>
-                                            <th>Tedarikçi</th>
+                                            <th>TedarikÃ§i</th>
                                             <th>Marka</th>
                                             <th>Miktar</th>
                                             <th>Birim Fiyat</th>
-                                            <th>Ýskonto</th>
+                                            <th>Ä°skonto</th>
                                             <th>Toplam</th>
                                             <th>Para Birimi</th>
                                             <th>Teslimat</th>
-                                            <th>Durum</th>
-                                            <th>Tarih</th>
-                                            <th>Eylemler</th>
+                                            <th>Onay Tarihi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @if (Model.Offers.Any())
+                                        @{
+                                            var approvedOffers = Model.Offers.Where(o => o.Status == OfferStatus.Approved).OrderByDescending(o => o.OfferDate);
+                                        }
+                                        @if (approvedOffers.Any())
                                         {
-                                            @foreach (var offer in Model.Offers.OrderByDescending(o => o.OfferDate))
+                                            @foreach (var offer in approvedOffers)
                                             {
-                                                <tr class="offer-row" data-id="@offer.Id" data-status="@((int)offer.Status)" data-supplier="@offer.SupplierId" data-date="@offer.OfferDate.ToString("yyyy-MM-dd")">
+                                                <tr class="offer-row" data-id="@offer.Id" data-supplier="@offer.SupplierId" data-date="@offer.OfferDate.ToString("yyyy-MM-dd")">
                                                     <td>
                                                         <div>
                                                             <h6 class="mb-1">#@offer.RequestId</h6>
@@ -262,7 +228,7 @@
                                                     <td>
                                                         <div class="d-flex align-items-center">
                                                             <div class="avatar-xs me-2">
-                                                                <div class="avatar-title bg-info-subtle text-info rounded-circle">
+                                                                <div class="avatar-title bg-success-subtle text-success rounded-circle">
                                                                     @(offer.SupplierName.Substring(0, 1).ToUpper())
                                                                 </div>
                                                             </div>
@@ -293,15 +259,15 @@
                                                     <td>
                                                         @if (offer.Discount > 0)
                                                         {
-                                                            <span class="fw-medium">%@offer.Discount</span>
+                                                            <span class="badge bg-success-subtle text-success">%@offer.Discount</span>
                                                         }
                                                         else
                                                         {
-                                                            <span class="fw-medium">-</span>
+                                                            <span class="text-muted">-</span>
                                                         }
                                                     </td>
                                                     <td>
-                                                        <h6 class="mb-0 text-primary">@offer.CurrencySymbol@offer.FinalPrice.ToString("N2")</h6>
+                                                        <h6 class="mb-0 text-success">@offer.CurrencySymbol@offer.FinalPrice.ToString("N2")</h6>
                                                     </td>
                                                     <td>
                                                         <div class="d-flex align-items-center">
@@ -320,49 +286,25 @@
                                                         <span class="fw-medium">@offer.DeliveryTypeText</span>
                                                     </td>
                                                     <td>
-                                                        @switch (offer.Status)
-                                                        {
-                                                            case OfferStatus.Pending:
-                                                                <span class="badge bg-warning">Bekleyen</span>
-                                                                break;
-                                                            case OfferStatus.Approved:
-                                                                <span class="badge bg-success">Onaylanan</span>
-                                                                break;
-                                                            case OfferStatus.Rejected:
-                                                                <span class="badge bg-danger">Reddedilen</span>
-                                                                break;
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        <div class="text-muted">@offer.OfferDate.ToString("dd.MM.yyyy")</div>
-                                                        <small class="text-muted">@offer.OfferDate.ToString("HH:mm")</small>
-                                                    </td>
-                                                    <td>
-                                                        <div class="d-flex gap-1">
-                                                            @if (offer.Status == OfferStatus.Pending)
-                                                            {
-                                                                <button class="btn btn-success btn-sm" onclick="approveOffer(@offer.Id)" title="Teklifi Onayla">
-                                                                    <i class="ri-check-line"></i> Onayla
-                                                                </button>
-                                                                <button class="btn btn-danger btn-sm" onclick="rejectOffer(@offer.Id)" title="Teklifi Reddet">
-                                                                    <i class="ri-close-line"></i> Reddet
-                                                                </button>
-                                                            }
+                                                        <div>
+                                                            <div class="text-muted">@offer.OfferDate.ToString("dd.MM.yyyy")</div>
+                                                            <small class="text-muted">@offer.OfferDate.ToString("HH:mm")</small>
                                                         </div>
+                                                        <span class="badge bg-success-subtle text-success mt-1">
+                                                            <i class="ri-check-line"></i> OnaylandÄ±
+                                                        </span>
                                                     </td>
-
-
                                                 </tr>
                                             }
                                         }
                                         else
                                         {
                                             <tr>
-                                                <td colspan="12" class="text-center py-5">
+                                                <td colspan="10" class="text-center py-5">
                                                     <div class="d-flex flex-column align-items-center">
-                                                        <i class="ri-price-tag-line display-4 text-muted mb-3"></i>
-                                                        <h5 class="text-muted">Henüz teklif bulunmuyor</h5>
-                                                        <p class="text-muted mb-0">Tedarikçilerden teklif geldiðinde burada görüntülenecektir.</p>
+                                                        <i class="ri-checkbox-circle-line display-4 text-muted mb-3"></i>
+                                                        <h5 class="text-muted">HenÃ¼z onaylanmÄ±ÅŸ teklif bulunmuyor</h5>
+                                                        <p class="text-muted mb-0">Onaylanan teklifler burada gÃ¶rÃ¼ntÃ¼lenecektir.</p>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -379,30 +321,13 @@
     </div>
 </div>
 
-<!-- Offer Details Modal -->
-<div class="modal fade" id="offerDetailsModal" tabindex="-1" aria-labelledby="offerDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="offerDetailsModalLabel">
-                    <i class="ri-price-tag-3-line me-2"></i>Teklif Detaylarý
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="offerDetailsContent">
-                <!-- Content will be loaded dynamically -->
-            </div>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         // Auto-scroll to specific offer if offerId is provided in URL
         document.addEventListener('DOMContentLoaded', function() {
-            // Counter animasyonlarý
+            // Counter animasyonlarÄ±
             const counters = document.querySelectorAll('.counter-value');
 
             counters.forEach(counter => {
@@ -448,9 +373,9 @@
                         // Show a toast notification
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
-                                icon: 'info',
-                                title: 'Teklif Bulundu',
-                                text: `Teklif #${offerId} vurgulandý`,
+                                icon: 'success',
+                                title: 'Onaylanan Teklif',
+                                text: `Teklif #${offerId} vurgulandÄ±`,
                                 timer: 3000,
                                 showConfirmButton: false,
                                 position: 'top-end',
@@ -466,9 +391,6 @@
         if (document.getElementById('searchInput')) {
             document.getElementById('searchInput').addEventListener('input', filterOffers);
         }
-        if (document.getElementById('statusFilter')) {
-            document.getElementById('statusFilter').addEventListener('change', filterOffers);
-        }
         if (document.getElementById('supplierFilter')) {
             document.getElementById('supplierFilter').addEventListener('change', filterOffers);
         }
@@ -478,16 +400,14 @@
 
         function filterOffers() {
             const searchInput = document.getElementById('searchInput');
-            const statusFilter = document.getElementById('statusFilter');
             const supplierFilter = document.getElementById('supplierFilter');
             const dateFilter = document.getElementById('dateFilter');
 
-            if (!searchInput || !statusFilter || !supplierFilter || !dateFilter) {
+            if (!searchInput || !supplierFilter || !dateFilter) {
                 return;
             }
 
             const searchTerm = searchInput.value.toLowerCase();
-            const statusValue = statusFilter.value;
             const supplierValue = supplierFilter.value;
             const dateValue = dateFilter.value;
 
@@ -503,10 +423,6 @@
                     }
                 }
 
-                if (statusValue && row.dataset.status !== statusValue) {
-                    show = false;
-                }
-
                 if (supplierValue && row.dataset.supplier !== supplierValue) {
                     show = false;
                 }
@@ -517,106 +433,6 @@
 
                 row.style.display = show ? '' : 'none';
             });
-        }
-
-        // Offer actions
-        async function viewOfferDetails(offerId) {
-            // Implementation for viewing offer details
-            if (typeof Swal !== 'undefined') {
-                Swal.fire('Bilgi', 'Teklif detaylarý gösterimi henüz implementlenmedi', 'info');
-            }
-        }
-
-        async function approveOffer(offerId) {
-            if (typeof Swal === 'undefined') {
-                if (confirm('Bu teklifi onaylamak istediðinizden emin misiniz?')) {
-                    submitOfferAction(offerId, 'approve');
-                }
-                return;
-            }
-
-            const result = await Swal.fire({
-                title: 'Teklifi Onayla',
-                text: 'Bu teklifi onaylamak istediðinizden emin misiniz?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Evet, Onayla',
-                cancelButtonText: 'Ýptal',
-                confirmButtonColor: '#28a745'
-            });
-
-            if (result.isConfirmed) {
-                submitOfferAction(offerId, 'approve');
-            }
-        }
-
-        async function rejectOffer(offerId) {
-            if (typeof Swal === 'undefined') {
-                if (confirm('Bu teklifi reddetmek istediðinizden emin misiniz?')) {
-                    submitOfferAction(offerId, 'reject');
-                }
-                return;
-            }
-
-            const result = await Swal.fire({
-                title: 'Teklifi Reddet',
-                text: 'Bu teklifi reddetmek istediðinizden emin misiniz?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Evet, Reddet',
-                cancelButtonText: 'Ýptal',
-                confirmButtonColor: '#dc3545'
-            });
-
-            if (result.isConfirmed) {
-                submitOfferAction(offerId, 'reject');
-            }
-        }
-
-        async function submitOfferAction(offerId, action) {
-            try {
-                const url = action === 'approve' ? `/Admin/ApproveOffer/${offerId}` : `/Admin/RejectOffer/${offerId}`;
-                const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': tokenElement ? tokenElement.value : ''
-                    }
-                });
-
-                if (response.ok) {
-                    const actionText = action === 'approve' ? 'onaylandý' : 'reddedildi';
-                    const message = `Teklif ${actionText} ve tedarikçiye bildirim gönderildi`;
-
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire('Baþarýlý', message, 'success')
-                            .then(() => window.location.reload());
-                    } else {
-                        alert(message);
-                        window.location.reload();
-                    }
-                } else {
-                    const actionText = action === 'approve' ? 'onaylanýrken' : 'reddedilirken';
-                    const errorMessage = `Teklif ${actionText} bir hata oluþtu`;
-
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire('Hata', errorMessage, 'error');
-                    } else {
-                        alert(errorMessage);
-                    }
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                const errorMessage = 'Bir hata oluþtu';
-
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire('Hata', errorMessage, 'error');
-                } else {
-                    alert(errorMessage);
-                }
-            }
         }
     </script>
 }
