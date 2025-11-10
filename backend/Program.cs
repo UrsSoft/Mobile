@@ -25,7 +25,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 // Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SemihConn")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ProjectConnection")));
 
 // HttpClient with retry policy
 builder.Services.AddHttpClient("ProductApi", client =>
