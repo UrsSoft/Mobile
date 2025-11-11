@@ -192,11 +192,14 @@
                 </div>
             </div>
             <!-- end page title -->
-            
             <!-- Notification Alert for New Requests -->
-            @if (Model.NotificationSummary != null && Model.NotificationSummary.UnreadCount > 0)
+            @{
+                var hasUnreadNotifications = Model.NotificationSummary != null && Model.NotificationSummary.UnreadCount > 0;
+            }
+
+            @if (hasUnreadNotifications)
             {
-                <div class="row mb-4">
+                <div class="row mb-4" id="notificationAlertRow">
                     <div class="col-12">
                         <div class="alert alert-info alert-dismissible fade show" role="alert" id="notificationAlert">
                             <div class="d-flex align-items-center">
@@ -215,53 +218,41 @@
                         </div>
                     </div>
                 </div>
-            }
 
-            <!-- Notification Panel (Initially Hidden) -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="notification-panel" id="notificationPanel" style="display: none;">
-                        <div class="notification-panel-header">
-                            <div class="d-flex align-items-center flex-grow-1">
-                                <i class="ri-notification-3-line fs-20 text-primary me-2"></i>
-                                <h5 class="mb-0">Bildirimlerim</h5>
-                                @if (Model.NotificationSummary != null && Model.NotificationSummary.UnreadCount > 0)
-                                {
+                <!-- Notification Panel (Initially Hidden) -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="notification-panel" id="notificationPanel" style="display: none;">
+                            <div class="notification-panel-header">
+                                <div class="d-flex align-items-center flex-grow-1">
+                                    <i class="ri-notification-3-line fs-20 text-primary me-2"></i>
+                                    <h5 class="mb-0">Bildirimlerim</h5>
                                     <span class="badge bg-danger ms-2 notifications-count">@Model.NotificationSummary.UnreadCount</span>
-                                }
-                            </div>
-                            <div class="d-flex gap-2">
-                                @if (Model.NotificationSummary != null && Model.NotificationSummary.UnreadCount > 0)
-                                {
+                                </div>
+                                <div class="d-flex gap-2">
                                     <button class="btn btn-sm btn-outline-primary" onclick="markAllAsReadDashboard()">
                                         <i class="ri-check-double-line"></i> Tümünü Okundu Olarak İşaretle
                                     </button>
-                                }
-                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleNotificationPanel()">
-                                    <i class="ri-close-line"></i> Kapat
-                                </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleNotificationPanel()">
+                                        <i class="ri-close-line"></i> Kapat
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="notification-panel-body">
-                            @{
-                                var unreadNotifications = Model.Notifications?.Where(n => !n.IsRead).Take(10).ToList() ?? new List<NotificationDto>();
-                            }
+                            <div class="notification-panel-body">
+                                @{
+                                    var unreadNotifications = Model.Notifications?.Where(n => !n.IsRead).Take(10).ToList() ?? new List<NotificationDto>();
+                                }
 
-                            @if (unreadNotifications.Any())
-                            {
                                 @foreach (var notification in unreadNotifications)
                                 {
-                                    <div class="notification-item @(!notification.IsRead ? "unread" : "")" data-id="@notification.Id">
+                                    <div class="notification-item unread" data-id="@notification.Id">
                                         <div class="notification-content">
                                             <div class="notification-meta">
                                                 <div class="notification-type-icon bg-@(GetNotificationColor(notification.Type))-subtle text-@(GetNotificationColor(notification.Type))">
                                                     <i class="@GetNotificationIcon(notification.Type)"></i>
                                                 </div>
                                                 <small class="text-muted">@notification.CreatedDate.ToString("dd.MM.yyyy HH:mm")</small>
-                                                @if (!notification.IsRead)
-                                                {
-                                                    <span class="badge bg-primary">Yeni</span>
-                                                }
+                                                <span class="badge bg-primary">Yeni</span>
                                             </div>
                                             @{
                                                 var notificationUrl = GetNotificationUrl(notification.Type, notification.RequestId, notification.OfferId, notification.SupplierId);
@@ -271,62 +262,28 @@
                                             </a>
                                             <p class="notification-message mb-2 text-muted">@notification.Message</p>
                                         </div>
-                                        @if (!notification.IsRead)
-                                        {
-                                            <div class="notification-actions">
-                                                <button class="btn btn-sm btn-outline-primary btn-mark-read" onclick="markAsReadDashboard(@notification.Id)">
-                                                    <i class="ri-check-line"></i> Okundu olarak işaretle
-                                                </button>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                            }
-                            else
-                            {
-                                <div class="notification-empty">
-                                    <div class="avatar-md mx-auto mb-3">
-                                        <div class="avatar-title bg-success-subtle text-success rounded-circle display-6">
-                                            <i class="ri-checkbox-circle-line"></i>
+                                        <div class="notification-actions">
+                                            <button class="btn btn-sm btn-outline-primary btn-mark-read" onclick="markAsReadDashboard(@notification.Id)">
+                                                <i class="ri-check-line"></i> Okundu olarak işaretle
+                                            </button>
                                         </div>
                                     </div>
-                                    <h6>Tüm bildirimler okundu</h6>
-                                    <p class="text-muted">Yeni bildirimler geldiğinde burada görüntülenecektir.</p>
+                                }
+                            </div>
+                            @if (Model.Notifications.Count() > 10)
+                            {
+                                <div class="notification-panel-footer">
+                                    <a href="/Admin/Notifications" class="btn btn-link">
+                                        Tüm Bildirimleri Görüntüle (@Model.Notifications.Count())
+                                    </a>
                                 </div>
                             }
                         </div>
-                        @if (Model.Notifications.Count() > 10)
-                        {
-                            <div class="notification-panel-footer">
-                                <a href="/Admin/Notifications" class="btn btn-link">
-                                    Tüm Bildirimleri Görüntüle (@Model.Notifications.Count())
-                                </a>
-                            </div>
-                        }
                     </div>
                 </div>
-            </div>
+            }
 
-            <!-- Notification Alert -->
-            <div class="row mb-4" id="notificationAlertRow" style="display: none;">
-                <div class="col-12">
-                    <div class="alert alert-info alert-dismissible fade show" role="alert" id="notificationAlert">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0 me-3">
-                                <i class="ri-notification-3-line fs-24 text-info"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="alert-heading mb-1">Yeni Bildirimleriniz Var!</h6>
-                                <p class="mb-0">
-                                    <span class="notifications-count" id="unread-count">0</span> adet okunmamış bildiriminiz bulunuyor.
-                                    <a href="javascript:void(0)" onclick="loadNotifications()" class="alert-link fw-semibold">Bildirimleri görüntülemek için tıklayın</a>.
-                                </p>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
 
             <!-- Product Search Section -->
             <div class="row mb-4">
@@ -1011,48 +968,6 @@
         showProductSearchState('results');
     }
 
-           // ========================================
-        // DASHBOARD NOTIFICATION FUNCTIONS
-        // ========================================
-
-        function toggleNotificationPanel() {
-            const panel = document.getElementById('notificationPanel');
-            if (panel) {
-                if (panel.style.display === 'none') {
-                    panel.style.display = 'block';
-                    setTimeout(() => {
-                        panel.classList.add('show');
-                    }, 10);
-                } else {
-                    panel.classList.remove('show');
-                    setTimeout(() => {
-                        panel.style.display = 'none';
-                    }, 300);
-                }
-            }
-        }
-
-        async function handleNotificationClickDashboard(notificationId, url, event) {
-            event.preventDefault();
-
-            const notificationItem = document.querySelector(`[data-id="${notificationId}"]`);
-            const isUnread = notificationItem && notificationItem.classList.contains('unread');
-
-            if (isUnread) {
-                try {
-                    await markAsReadDashboard(notificationId, event);
-                    setTimeout(() => {
-                        window.location.href = url;
-                    }, 300);
-                } catch (error) {
-                    console.error('Error marking notification as read:', error);
-                    window.location.href = url;
-                }
-            } else {
-                window.location.href = url;
-            }
-        }
-
         async function markAsReadDashboard(notificationId) {
             console.log('Dashboard: markAsRead called with ID:', notificationId);
 
@@ -1069,50 +984,21 @@
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('Error response:', errorText);
-                    toastr.error('Bildirim işaretlenirken hata oluştu', 'Hata');
                     return false;
                 }
 
-                console.log('Dashboard: API response status:', response.status);
+                const result = await response.json();
+                console.log('Dashboard: API response result:', result);
 
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log('Dashboard: API response result:', result);
-
-                            if (result.success) {
-            const notificationItem = document.querySelector(`[data-id="${notificationId}"]`);
-            if (notificationItem) {
-                // Animasyonlu kaldırma
-                notificationItem.style.transition = 'opacity 0.3s, transform 0.3s';
-                notificationItem.style.opacity = '0';
-                notificationItem.style.transform = 'translateX(20px)';
-
-                setTimeout(() => {
-                    notificationItem.remove(); // DOM'dan tamamen kaldır
-                }, 300);
-            }
-
-            updateDashboardNotificationCounts();
-            checkAndHideAlertIfAllReadDashboard();
-
-            // 🔔 Tüm bildirimler okunduysa hatırlatmayı kontrol et
-            setTimeout(() => {
-                if (typeof checkAndRemindUnreadNotifications === 'function') {
-                    checkAndRemindUnreadNotifications();
+                if (result.success) {
+                    // ✅ SAYFA YENİLEME (Dashboard'da bildirim sayısını güncellemek için)
+                    window.location.reload();
+                    return true;
                 }
-            }, 500);
 
-            toastr.success('Bildirim okundu olarak işaretlendi', 'Başarılı');
-
-            return true;
-        }
-
-
-                }
                 return false;
             } catch (error) {
                 console.error('Dashboard: Error marking notification as read:', error);
-                toastr.error('Bir hata oluştu', 'Hata');
                 return false;
             }
         }
@@ -1130,39 +1016,55 @@
                 if (response.ok) {
                     const result = await response.json();
                     if (result.success) {
-                        const unreadItems = document.querySelectorAll('.notification-item.unread');
-                        unreadItems.forEach(item => {
-                            item.classList.remove('unread');
-                            const badge = item.querySelector('.badge.bg-primary');
-                            if (badge) badge.remove();
-                            const actions = item.querySelector('.notification-actions');
-                            if (actions) actions.remove();
-                        });
-
-                        updateDashboardNotificationCounts(0);
-                        const alert = document.getElementById('notificationAlert');
-                        if (alert) alert.style.display = 'none';
-
-                        const headerBadge = document.querySelector('.notification-panel-header .badge');
-                        if (headerBadge) headerBadge.remove();
-
-                        const markAllBtn = document.querySelector('button[onclick="markAllAsReadDashboard()"]');
-                        if (markAllBtn) markAllBtn.style.display = 'none';
-
-                        toastr.success('Tüm bildirimler okundu olarak işaretlendi', 'Başarılı');
-                        console.log('Dashboard: Tüm bildirimler okundu olarak işaretlendi.');
-
-                        // 🔔 Hatırlatmayı durdur
-                        if (typeof stopUnreadNotificationReminder === 'function') {
-                            stopUnreadNotificationReminder();
-                            toastr.info('Bildirim hatırlatmaları durduruldu', 'Bilgi');
-                        }
+                        // ✅ SAYFA YENİLEME (Dashboard'da bildirim sayısını güncellemek için)
+                        window.location.reload();
                     }
                 }
             } catch (error) {
                 console.error('Dashboard: Error marking all notifications as read:', error);
             }
         }
+
+        function toggleNotificationPanel() {
+            const panel = document.getElementById('notificationPanel');
+            const alertRow = document.querySelector('.alert.alert-info'); // Bildirim alert'i
+
+            if (panel) {
+                if (panel.style.display === 'none' || panel.style.display === '') {
+                    panel.style.display = 'block';
+                    setTimeout(() => {
+                        panel.classList.add('show');
+                    }, 10);
+                } else {
+                    panel.classList.remove('show');
+                    setTimeout(() => {
+                        panel.style.display = 'none';
+                    }, 300);
+                }
+            }
+
+            // ✅ Bildirim sayısı 0 ise alert'i gizle
+            const unreadItems = document.querySelectorAll('.notification-item.unread');
+            if (unreadItems.length === 0 && alertRow) {
+                alertRow.style.display = 'none';
+            }
+        }
+
+        function handleNotificationClickDashboard(notificationId, url, event) {
+            event.preventDefault();
+
+            const notificationItem = document.querySelector(`[data-id="${notificationId}"]`);
+            const isUnread = notificationItem && notificationItem.classList.contains('unread');
+
+            if (isUnread) {
+                markAsReadDashboard(notificationId).then(() => {
+                    // Sayfa zaten yenilenecek, yönlendirmeye gerek yok
+                });
+            } else {
+                window.location.href = url;
+            }
+        }
+
 
         function updateDashboardNotificationCounts(count = null) {
             if (count === null) {

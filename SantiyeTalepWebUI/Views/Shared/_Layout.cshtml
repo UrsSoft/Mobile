@@ -410,7 +410,6 @@
     </script>
 
 
-    <!-- 4. DİĞER KÜTÜPHANELERİ YÜKLE -->
     <script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/assets/libs/simplebar/simplebar.min.js"></script>
     <script src="~/assets/libs/node-waves/waves.min.js"></script>
@@ -419,16 +418,10 @@
     <script src="~/assets/js/plugins.js"></script>
     <script src="~/assets/libs/sweetalert2/sweetalert2.min.js"></script>
 
-    <!-- apexcharts -->
     <script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
 
-    <!-- Dashboard init -->
     <script src="~/assets/js/pages/dashboard-crm.init.js"></script>
 
-    <!-- Toastr Notifications -->
-
-
-    <!-- Admin Notifications Script (Global for Layout) -->
     <script>
         // Global variables for notification management
         let notifications = [];
@@ -436,23 +429,16 @@
         let notificationCheckInterval = null;
 
         // Initialize notifications when page loads
-               document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
             console.log('Layout: Initializing notifications');
             loadNotificationSummary();
             loadNotifications();
 
             // Start periodic check for new notifications every 60 seconds
             startNotificationCheck();
-
-            // 🔔 Okunmamış bildirim hatırlatmasını başlat
-            setTimeout(() => {
-                checkAndRemindUnreadNotifications(); // İlk kontrolü yap
-                startUnreadNotificationReminder(); // Periyodik kontrolü başlat
-            }, 5000); // 5 saniye sonra başla (sayfa yüklenmesini bekle)
         });
 
         // Start periodic notification check
-               // Start periodic notification check
         function startNotificationCheck() {
             // Clear existing interval if any
             if (notificationCheckInterval) {
@@ -467,76 +453,65 @@
             }, 60000); // 60 seconds
         }
 
-        // 🔔 OKUNMAMIŞ BİLDİRİM HATIRLATMA SİSTEMİ
-        let unreadReminderInterval = null;
+                   async function goToRelatedPage(type, requestId, offerId, supplierId, notificationId) {
+            console.log('Layout: Going to Dashboard');
 
-        function startUnreadNotificationReminder() {
-            // Mevcut interval'i temizle
-            if (unreadReminderInterval) {
-                clearInterval(unreadReminderInterval);
-            }
-
-            // 15 saniyede bir kontrol et
-            unreadReminderInterval = setInterval(() => {
-                checkAndRemindUnreadNotifications();
-            }, 15000); // 15 saniye
-
-            console.log('✅ Okunmamış bildirim hatırlatma sistemi başlatıldı (15 saniye)');
+            // ✅ Direkt Dashboard'a git (okundu işaretleme YOK)
+            window.location.href = '/Admin/Dashboard';
         }
 
-        function stopUnreadNotificationReminder() {
-            if (unreadReminderInterval) {
-                clearInterval(unreadReminderInterval);
-                unreadReminderInterval = null;
-                console.log('⏹️ Okunmamış bildirim hatırlatma sistemi durduruldu');
-            }
-        }
-
-        async function checkAndRemindUnreadNotifications() {
+        async function loadNotifications() {
             try {
-                const response = await fetch('/Admin/GetNotificationSummary');
+                console.log('Layout: Loading notifications');
+
+                const response = await fetch('/Admin/GetNotifications?unreadOnly=true');
                 const result = await response.json();
 
+                console.log('Layout: Notifications response:', result);
+
                 if (result.success && result.data) {
-                    const unreadCount = result.data.unreadCount || 0;
+                    const newNotifications = result.data;
 
-                    console.log(`🔍 Okunmamış bildirim kontrolü: ${unreadCount} adet`);
+                    // 🔊 YENİ BİLDİRİM VARSA SES ÇAL + TOASTR GÖSTER
+                    const oldUnreadCount = notifications.length;
+                    const newUnreadCount = newNotifications.length;
 
-                    if (unreadCount > 0) {
+                    if (newUnreadCount > oldUnreadCount && oldUnreadCount >= 0) {
+                        console.log('🔔 Yeni bildirim geldi!');
+
                         // Ses çal
                         playNotificationSound();
 
                         // Toastr bildirimi göster
-                        const message = unreadCount === 1
-                            ? '1 okunmamış bildiriminiz var!'
-                            : `${unreadCount} okunmamış bildiriminiz var!`;
+                        const message = newUnreadCount === 1
+                            ? '1 yeni bildiriminiz var!'
+                            : `${newUnreadCount - oldUnreadCount} yeni bildiriminiz var!`;
 
-                        toastr.warning(message, '🔔 Hatırlatma', {
+                        toastr.info(message, '🔔 Yeni Bildirim', {
                             timeOut: 5000,
                             extendedTimeOut: 2000,
                             closeButton: true,
                             progressBar: true,
                             onclick: function() {
-                                // Bildirim dropdown'ını aç
-                                const notificationDropdown = document.getElementById('page-header-notifications-dropdown');
-                                if (notificationDropdown) {
-                                    notificationDropdown.click();
-                                }
+                                toggleNotifications();
                             }
                         });
 
-                        console.log('🔔 Hatırlatma bildirimi gönderildi');
-                    } else {
-                        // Okunmamış bildirim yoksa hatırlatmayı durdur
-                        console.log('✅ Tüm bildirimler okundu, hatırlatma durduruluyor');
-                        stopUnreadNotificationReminder();
+                        // ❌ SAYFA YENİLEME YOK
                     }
+
+                    notifications = newNotifications;
+                    console.log('Layout: Unread notifications loaded, count:', notifications.length);
+                    displayNotifications();
+                } else {
+                    console.warn('Layout: Failed to load notifications:', result);
+                    showNotificationsError();
                 }
             } catch (error) {
-                console.error('❌ Hatırlatma kontrolü hatası:', error);
+                console.error('Layout: Error loading notifications:', error);
+                showNotificationsError();
             }
         }
-
 
         // Load notification summary
         async function loadNotificationSummary() {
@@ -559,51 +534,6 @@
             }
         }
 
-                async function loadNotifications() {
-            try {
-                console.log('Layout: Loading notifications');
-
-                // ✅ Backend'den SADECE okunmamış bildirimleri çek
-                const response = await fetch('/Admin/GetNotifications?unreadOnly=true');
-                const result = await response.json();
-
-                console.log('Layout: Notifications response:', result);
-
-                if (result.success && result.data) {
-                    const newNotifications = result.data; // Artık filtrelemeye gerek yok
-
-                    // 🔊 YENİ BİLDİRİM VARSA SES ÇAL
-                    const oldUnreadCount = notifications.length;
-                    const newUnreadCount = newNotifications.length;
-
-                    // Eğer okunmamış bildirim sayısı arttıysa
-                    if (newUnreadCount > oldUnreadCount && oldUnreadCount >= 0) {
-                        console.log('🔔 Yeni bildirim geldi! Ses çalınıyor...');
-                        playNotificationSound();
-
-                        // Toastr bildirimi göster
-                        toastr.info('Yeni bildiriminiz var!', 'Bildirim', {
-                            timeOut: 3000,
-                            onclick: function() {
-                                toggleNotifications();
-                            }
-                        });
-                    }
-
-                    notifications = newNotifications;
-                    console.log('Layout: Unread notifications loaded, count:', notifications.length);
-                    displayNotifications();
-                } else {
-                    console.warn('Layout: Failed to load notifications:', result);
-                    showNotificationsError();
-                }
-            } catch (error) {
-                console.error('Layout: Error loading notifications:', error);
-                showNotificationsError();
-            }
-        }
-
-
         // Update notification badge
         function updateNotificationBadge() {
             const badge = document.getElementById('notification-badge');
@@ -624,7 +554,7 @@
             }
         }
 
-                // Display notifications
+        // Display notifications
         function displayNotifications() {
             const container = document.getElementById('notifications-container');
             console.log('Layout: Displaying notifications, count:', notifications ? notifications.length : 0);
@@ -688,7 +618,6 @@
             console.log('Layout: Unread notifications displayed:', unreadNotifications.length);
         }
 
-
         // Get notification icon based on type
         function getNotificationIcon(type) {
             switch(type) {
@@ -721,100 +650,93 @@
             console.log('Layout: Toggling notifications');
             loadNotifications();
         }
-                // İlgili sayfaya git ve bildirimi okundu işaretle
-        async function goToRelatedPage(type, requestId, offerId, supplierId, notificationId) {
-            console.log('Layout: Going to related page, type:', type, 'notificationId:', notificationId);
 
-            // Önce bildirimi okundu olarak işaretle
-            const notification = notifications.find(n => n.id === notificationId);
-            if (notification && !notification.isRead) {
-                try {
-                    const response = await fetch(`/Admin/MarkNotificationAsRead`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(notificationId)
-                    });
+        // İlgili sayfaya git ve bildirimi okundu işaretle
+        // async function goToRelatedPage(type, requestId, offerId, supplierId, notificationId) {
+        //     console.log('Layout: Going to related page, type:', type, 'notificationId:', notificationId);
 
-                    const data = await response.json();
+        //     // Önce bildirimi okundu olarak işaretle
+        //     const notification = notifications.find(n => n.id === notificationId);
+        //     if (notification && !notification.isRead) {
+        //         try {
+        //             const response = await fetch(`/Admin/MarkNotificationAsRead`, {
+        //                 method: 'POST',
+        //                 headers: {
+        //                     'Content-Type': 'application/json',
+        //                 },
+        //                 body: JSON.stringify(notificationId)
+        //             });
 
-                    if (data.success) {
-                        console.log('✅ Bildirim okundu olarak işaretlendi');
+        //             const data = await response.json();
 
-                        // ✅ Bildirimi listeden KALDIR (çünkü artık okundu)
-                        notifications = notifications.filter(n => n.id !== notificationId);
+        //             if (data.success) {
+        //                 console.log('✅ Bildirim okundu olarak işaretlendi');
 
-                        // ✅ UI'ı güncelle
-                        displayNotifications();
-                        loadNotificationSummary();
+        //                 // ✅ Bildirimi listeden KALDIR
+        //                 notifications = notifications.filter(n => n.id !== notificationId);
 
-                        // ✅ Dropdown'dan da kaldır
-                        const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
-                        if (notificationElement) {
-                            notificationElement.style.transition = 'opacity 0.3s';
-                            notificationElement.style.opacity = '0';
-                            setTimeout(() => {
-                                notificationElement.remove();
-                            }, 300);
-                        }
+        //                 // ✅ UI'ı güncelle
+        //                 displayNotifications();
+        //                 loadNotificationSummary();
 
-                        // Okunmamış bildirim kalmadıysa hatırlatmayı durdur
-                        if (notifications.length === 0) {
-                            if (typeof stopUnreadNotificationReminder === 'function') {
-                                stopUnreadNotificationReminder();
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error('Layout: Error marking notification as read:', error);
-                }
-            }
+        //                 // ✅ Dropdown'dan da kaldır
+        //                 const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+        //                 if (notificationElement) {
+        //                     notificationElement.style.transition = 'opacity 0.3s';
+        //                     notificationElement.style.opacity = '0';
+        //                     setTimeout(() => {
+        //                         notificationElement.remove();
+        //                     }, 300);
+        //                 }
+        //             }
+        //         } catch (error) {
+        //             console.error('Layout: Error marking notification as read:', error);
+        //         }
+        //     }
 
-            // Sayfaya yönlendir
-            let targetUrl = '/Admin/Dashboard';
+        //     // Sayfaya yönlendir
+        //     let targetUrl = '/Admin/Dashboard';
 
-            switch(type) {
-                case 1: // SupplierRegistration
-                    targetUrl = '/Admin/Suppliers';
-                    break;
-                case 2: // NewRequest
-                    targetUrl = '/Admin/Requests';
-                    if (requestId && requestId !== 'null') {
-                        targetUrl += `?requestId=${requestId}`;
-                    }
-                    break;
-                case 3: // NewOffer
-                    targetUrl = '/Admin/Offers';
-                    if (offerId && offerId !== 'null') {
-                        targetUrl += `?offerId=${offerId}`;
-                    }
-                    break;
-                case 11: // ExcelRequestAssigned
-                    targetUrl = '/Admin/ExcelManagement';
-                    if (requestId && requestId !== 'null') {
-                        targetUrl += `?requestId=${requestId}`;
-                    }
-                    break;
-                case 12: // ExcelOfferUploaded
-                    targetUrl = '/Admin/SupplierExcelManagement';
-                    if (requestId && requestId !== 'null') {
-                        targetUrl += `?requestId=${requestId}`;
-                    }
-                    break;
-                default:
-                    targetUrl = '/Admin/Dashboard';
-                    break;
-            }
+        //     switch(type) {
+        //         case 1: // SupplierRegistration
+        //             targetUrl = '/Admin/Suppliers';
+        //             break;
+        //         case 2: // NewRequest
+        //             targetUrl = '/Admin/Requests';
+        //             if (requestId && requestId !== 'null') {
+        //                 targetUrl += `?requestId=${requestId}`;
+        //             }
+        //             break;
+        //         case 3: // NewOffer
+        //             targetUrl = '/Admin/Offers';
+        //             if (offerId && offerId !== 'null') {
+        //                 targetUrl += `?offerId=${offerId}`;
+        //             }
+        //             break;
+        //         case 11: // ExcelRequestAssigned
+        //             targetUrl = '/Admin/ExcelManagement';
+        //             if (requestId && requestId !== 'null') {
+        //                 targetUrl += `?requestId=${requestId}`;
+        //             }
+        //             break;
+        //         case 12: // ExcelOfferUploaded
+        //             targetUrl = '/Admin/SupplierExcelManagement';
+        //             if (requestId && requestId !== 'null') {
+        //                 targetUrl += `?requestId=${requestId}`;
+        //             }
+        //             break;
+        //         default:
+        //             targetUrl = '/Admin/Dashboard';
+        //             break;
+        //     }
 
-            // Kısa bir gecikme ile yönlendir
-            setTimeout(() => {
-                window.location.href = targetUrl;
-            }, 300);
-        }
+        //     // Kısa bir gecikme ile yönlendir
+        //     setTimeout(() => {
+        //         window.location.href = targetUrl;
+        //     }, 300);
+        // }
 
-
-       
+  
     </script>
 
     <!-- App js -->
